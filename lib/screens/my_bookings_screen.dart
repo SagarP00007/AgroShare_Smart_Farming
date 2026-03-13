@@ -426,7 +426,11 @@ class _ReviewDialogState extends State<_ReviewDialog> {
         borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
       ),
       backgroundColor: AppColors.cardBackground,
-      child: Padding(
+      insetPadding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.lg,
+      ),
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
           mainAxisSize: MainAxisSize.min,

@@ -61,6 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.all(AppSpacing.lg),
             child: Column(
               mainAxisSize: MainAxisSize.min,

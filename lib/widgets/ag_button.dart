@@ -7,6 +7,7 @@ import '../theme/app_spacing.dart';
 /// Primary action button with green background, rounded edges, and white text.
 ///
 /// Supports optional [icon] and [isExpanded] to fill available width.
+/// Includes a subtle press animation for tactile feedback.
 class AgButton extends StatelessWidget {
   const AgButton({
     super.key,
@@ -41,8 +42,8 @@ class AgButton extends StatelessWidget {
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primaryGreen,
         foregroundColor: AppColors.textLight,
-        elevation: 4,
-        shadowColor: AppColors.primaryGreen.withAlpha(80),
+        elevation: 2,
+        shadowColor: AppColors.primaryGreen.withAlpha(50),
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.lg,
           vertical: AppSpacing.md,
@@ -54,6 +55,8 @@ class AgButton extends StatelessWidget {
           fontSize: 16,
           fontWeight: FontWeight.w600,
         ),
+        splashFactory: InkSparkle.splashFactory,
+        animationDuration: const Duration(milliseconds: 200),
       ),
       child: buttonChild,
     );

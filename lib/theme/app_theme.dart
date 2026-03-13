@@ -90,7 +90,7 @@ class AppTheme {
       // ── Cards ──
       cardTheme: CardThemeData(
         color: AppColors.cardBackground,
-        elevation: 2,
+        elevation: 0,
         shadowColor: AppColors.shadow,
         shape: RoundedRectangleBorder(
           borderRadius: AppSpacing.cardRadius,
@@ -103,8 +103,8 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primaryGreen,
           foregroundColor: AppColors.textLight,
-          elevation: 3,
-          shadowColor: AppColors.primaryGreen.withAlpha(80),
+          elevation: 2,
+          shadowColor: AppColors.primaryGreen.withAlpha(60),
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.lg,
             vertical: AppSpacing.md,
@@ -116,6 +116,29 @@ class AppTheme {
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
+          animationDuration: const Duration(milliseconds: 200),
+          splashFactory: InkSparkle.splashFactory,
+        ),
+      ),
+
+      // ── Outlined Buttons ──
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.primaryGreen,
+          side: const BorderSide(color: AppColors.primaryGreen),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.md - 2,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: AppSpacing.buttonRadius,
+          ),
+          textStyle: GoogleFonts.poppins(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+          animationDuration: const Duration(milliseconds: 200),
+          splashFactory: InkSparkle.splashFactory,
         ),
       ),
 
@@ -142,6 +165,35 @@ class AppTheme {
             width: 2,
           ),
         ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: AppSpacing.buttonRadius,
+          borderSide: const BorderSide(color: Colors.redAccent),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: AppSpacing.buttonRadius,
+          borderSide: const BorderSide(color: Colors.redAccent, width: 2),
+        ),
+        labelStyle: GoogleFonts.poppins(
+          color: AppColors.textMuted,
+          fontSize: 14,
+        ),
+        hintStyle: GoogleFonts.poppins(
+          color: AppColors.textMuted,
+          fontSize: 14,
+        ),
+      ),
+
+      // ── Snackbar ──
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+        ),
+        backgroundColor: AppColors.primaryGreen,
+        contentTextStyle: GoogleFonts.poppins(
+          color: AppColors.textLight,
+          fontSize: 14,
+        ),
       ),
 
       // ── Divider ──
@@ -150,6 +202,20 @@ class AppTheme {
         thickness: 1,
         space: AppSpacing.lg,
       ),
+
+      // ── Smooth page transitions ──
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.windows: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.linux: CupertinoPageTransitionsBuilder(),
+        },
+      ),
+
+      // ── Splash ──
+      splashFactory: InkSparkle.splashFactory,
     );
   }
 }

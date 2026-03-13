@@ -103,6 +103,7 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
         ),
       ),
       body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

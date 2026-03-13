@@ -51,6 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SafeArea(
         top: false, // hero extends behind status bar
         child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -78,9 +79,12 @@ class _HomeScreenState extends State<HomeScreen> {
   // ─────────────────────────────────────────────
   Widget _buildHeroBanner(BuildContext context) {
     final topPadding = MediaQuery.of(context).padding.top;
+    final screenHeight = MediaQuery.of(context).size.height;
+    // Cap banner height to prevent overflow on short screens
+    final bannerHeight = (screenHeight * 0.55).clamp(300.0, 440.0) + topPadding;
 
     return SizedBox(
-      height: 440 + topPadding,
+      height: bannerHeight,
       child: Stack(
         fit: StackFit.expand,
         children: [

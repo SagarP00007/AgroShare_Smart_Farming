@@ -30,6 +30,7 @@ class EquipmentDetailScreen extends StatelessWidget {
             // Scrollable content
             Expanded(
               child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [

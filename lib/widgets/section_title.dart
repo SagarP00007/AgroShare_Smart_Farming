@@ -32,12 +32,14 @@ class SectionTitle extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            title,
-            style: GoogleFonts.poppins(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textDark,
+          Expanded(
+            child: Text(
+              title,
+              style: GoogleFonts.poppins(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textDark,
+              ),
             ),
           ),
           ?trailing,

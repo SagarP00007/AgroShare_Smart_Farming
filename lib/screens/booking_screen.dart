@@ -138,6 +138,7 @@ class _BookingScreenState extends State<BookingScreen> {
           children: [
             Expanded(
               child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
                 padding: const EdgeInsets.all(AppSpacing.md),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,

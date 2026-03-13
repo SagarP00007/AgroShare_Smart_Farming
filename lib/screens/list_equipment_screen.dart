@@ -171,6 +171,7 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.all(AppSpacing.md),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

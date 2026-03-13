@@ -6,6 +6,7 @@ import '../theme/app_spacing.dart';
 /// A reusable card with rounded corners, soft shadow, and white background.
 ///
 /// Used for equipment cards, section containers, and info blocks.
+/// Includes Material ripple for tap feedback when [onTap] is provided.
 class AgCard extends StatelessWidget {
   const AgCard({
     super.key,
@@ -29,18 +30,24 @@ class AgCard extends StatelessWidget {
         borderRadius: AppSpacing.cardRadius,
         boxShadow: const [
           BoxShadow(
-            color: AppColors.shadow,
-            blurRadius: 12,
-            offset: Offset(0, 4),
+            color: Color(0x0A000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+          BoxShadow(
+            color: Color(0x08000000),
+            blurRadius: 20,
+            offset: Offset(0, 6),
           ),
         ],
       ),
+      clipBehavior: Clip.antiAlias,
       child: Material(
         color: Colors.transparent,
-        borderRadius: AppSpacing.cardRadius,
         child: InkWell(
           onTap: onTap,
           borderRadius: AppSpacing.cardRadius,
+          splashFactory: InkSparkle.splashFactory,
           child: Padding(
             padding: padding ?? const EdgeInsets.all(AppSpacing.md),
             child: child,
