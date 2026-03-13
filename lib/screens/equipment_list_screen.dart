@@ -5,6 +5,7 @@ import '../data/equipment_data.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../widgets/equipment_card.dart';
+import 'equipment_detail_screen.dart';
 
 /// Scrollable marketplace screen listing available farm equipment.
 class EquipmentListScreen extends StatelessWidget {
@@ -32,7 +33,15 @@ class EquipmentListScreen extends StatelessWidget {
           final item = dummyEquipment[index];
           return EquipmentCard(
             equipment: item,
-            onTap: () {},
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      EquipmentDetailScreen(equipment: item),
+                ),
+              );
+            },
           );
         },
       ),

@@ -13,6 +13,8 @@ final List<Equipment> dummyEquipment = [
     description:
         'Powerful 45 HP tractor ideal for ploughing, tilling, and '
         'hauling. Well-maintained with AC cabin.',
+    isAvailable: true,
+    purchasePrice: 250000,
   ),
   const Equipment(
     id: '2',
@@ -25,6 +27,8 @@ final List<Equipment> dummyEquipment = [
     description:
         'Compact combine harvester suitable for wheat and rice. '
         'High efficiency with low grain loss.',
+    isAvailable: false,
+    purchasePrice: 350000,
   ),
   const Equipment(
     id: '3',
@@ -37,6 +41,8 @@ final List<Equipment> dummyEquipment = [
     description:
         '5 HP diesel pump with 100m pipe set. Perfect for '
         'field irrigation during dry spells.',
+    isAvailable: true,
+    purchasePrice: 45000,
   ),
   const Equipment(
     id: '4',
@@ -49,6 +55,8 @@ final List<Equipment> dummyEquipment = [
     description:
         'Heavy-duty rotavator for soil preparation. '
         '48 blades, 6-foot working width.',
+    isAvailable: true,
+    purchasePrice: 180000,
   ),
   const Equipment(
     id: '5',
@@ -61,6 +69,8 @@ final List<Equipment> dummyEquipment = [
     description:
         'Precision seed drill with 9-row capacity. '
         'Ensures even seed spacing and depth.',
+    isAvailable: false,
+    purchasePrice: 120000,
   ),
   const Equipment(
     id: '6',
@@ -73,5 +83,7 @@ final List<Equipment> dummyEquipment = [
     description:
         'Boom sprayer with 200L tank capacity. '
         'Ideal for pesticide and fertilizer application.',
+    isAvailable: true,
+    purchasePrice: 75000,
   ),
 ];

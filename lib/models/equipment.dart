@@ -9,6 +9,8 @@ class Equipment {
     required this.imageUrl,
     required this.ownerName,
     required this.description,
+    this.isAvailable = true,
+    this.purchasePrice = 0,
   });
 
   final String id;
@@ -19,4 +21,6 @@ class Equipment {
   final String imageUrl;
   final String ownerName;
   final String description;
+  final bool isAvailable;
+  final double purchasePrice;
 }

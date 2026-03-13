@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'theme/app_theme.dart';
-import 'screens/home_screen.dart';
+import 'screens/login_screen.dart';
 
 /// Root widget for the AgroShare application.
 class AgroShareApp extends StatelessWidget {
@@ -13,7 +13,7 @@ class AgroShareApp extends StatelessWidget {
       title: 'AgroShare',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const HomeScreen(),
+      home: const LoginScreen(),
     );
   }
 }

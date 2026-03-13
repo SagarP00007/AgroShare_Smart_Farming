@@ -7,6 +7,9 @@ import '../widgets/ag_button.dart';
 import '../widgets/ag_card.dart';
 import '../widgets/section_title.dart';
 import 'equipment_list_screen.dart';
+import 'list_equipment_screen.dart';
+import 'map_screen.dart';
+import 'my_bookings_screen.dart';
 
 /// Home dashboard screen for AgroShare.
 ///
@@ -214,6 +217,27 @@ class _QuickActionsSection extends StatelessWidget {
             context,
             MaterialPageRoute(
               builder: (_) => const EquipmentListScreen(),
+            ),
+          );
+        } else if (action.label == 'My Bookings') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const MyBookingsScreen(),
+            ),
+          );
+        } else if (action.label == 'Nearby Machines') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const MapScreen(),
+            ),
+          );
+        } else if (action.label == 'List Equipment') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const ListEquipmentScreen(),
             ),
           );
         }

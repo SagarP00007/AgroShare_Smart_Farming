@@ -7,6 +7,7 @@ import '../theme/app_spacing.dart';
 import '../widgets/ag_button.dart';
 import '../widgets/ag_card.dart';
 import '../widgets/section_title.dart';
+import 'booking_screen.dart';
 
 /// Detail screen for a selected piece of equipment.
 ///
@@ -45,7 +46,7 @@ class EquipmentDetailScreen extends StatelessWidget {
             ),
 
             // Fixed bottom booking button
-            _BookingBar(),
+            _BookingBar(equipment: equipment),
           ],
         ),
       ),
@@ -473,6 +474,10 @@ class _DaySlot {
 // ─────────────────────────────────────────────
 
 class _BookingBar extends StatelessWidget {
+  const _BookingBar({required this.equipment});
+
+  final Equipment equipment;
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -497,17 +502,10 @@ class _BookingBar extends StatelessWidget {
         icon: Icons.calendar_today_rounded,
         isExpanded: true,
         onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Booking feature coming soon!',
-                style: GoogleFonts.poppins(),
-              ),
-              backgroundColor: AppColors.primaryGreen,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-              ),
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => BookingScreen(equipment: equipment),
             ),
           );
         },
