@@ -9,6 +9,7 @@ import '../theme/app_spacing.dart';
 import '../widgets/ag_button.dart';
 import '../widgets/ag_card.dart';
 import '../widgets/section_title.dart';
+import 'main_shell.dart';
 
 /// Booking form screen for a selected piece of equipment.
 ///
@@ -104,7 +105,10 @@ class _BookingScreenState extends State<BookingScreen> {
     );
 
     // Pop back to main shell
-    Navigator.of(context).popUntil((route) => route.isFirst);
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const MainShell()),
+      (route) => false,
+    );
   }
 
   @override
@@ -119,6 +123,15 @@ class _BookingScreenState extends State<BookingScreen> {
         backgroundColor: AppColors.primaryGreen,
         foregroundColor: AppColors.textLight,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const MainShell()),
+              (route) => false,
+            );
+          },
+        ),
       ),
       body: SafeArea(
         child: Column(

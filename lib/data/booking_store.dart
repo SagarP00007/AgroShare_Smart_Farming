@@ -15,5 +15,21 @@ class BookingStore {
 
   void add(Booking booking) => _bookings.add(booking);
 
+  void updateStatus(String id, BookingStatus status) {
+    final idx = _bookings.indexWhere((b) => b.id == id);
+    if (idx != -1) {
+      _bookings[idx].status = status;
+    }
+  }
+
+  void completeBooking(String id, double rating, String reviewText) {
+    final idx = _bookings.indexWhere((b) => b.id == id);
+    if (idx != -1) {
+      _bookings[idx].status = BookingStatus.completed;
+      _bookings[idx].rating = rating;
+      _bookings[idx].reviewText = reviewText;
+    }
+  }
+
   int get nextId => _bookings.length + 1;
 }

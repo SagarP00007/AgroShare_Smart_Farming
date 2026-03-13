@@ -19,20 +19,24 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
 
-  static const _screens = <Widget>[
-    HomeScreen(),
-    ExploreScreen(),
-    FindEquipmentScreen(),
-    MyBookingsScreen(),
-    ProfileScreen(),
-  ];
+  void _switchTab(int index) {
+    setState(() => _currentIndex = index);
+  }
 
   @override
   Widget build(BuildContext context) {
+    final screens = <Widget>[
+      HomeScreen(onSwitchTab: _switchTab),
+      const ExploreScreen(),
+      const FindEquipmentScreen(),
+      const MyBookingsScreen(),
+      const ProfileScreen(),
+    ];
+
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
-        children: _screens,
+        children: screens,
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -88,3 +92,4 @@ class _MainShellState extends State<MainShell> {
     );
   }
 }
+

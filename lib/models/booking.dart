@@ -8,6 +8,8 @@ class Booking {
     required this.durationHours,
     required this.totalCost,
     this.status = BookingStatus.upcoming,
+    this.rating,
+    this.reviewText,
   });
 
   final String id;
@@ -17,10 +19,13 @@ class Booking {
   final int durationHours;
   final double totalCost;
   BookingStatus status;
+  double? rating;
+  String? reviewText;
 }
 
 /// Possible states of a booking.
 enum BookingStatus {
   upcoming,
+  active,
   completed,
 }

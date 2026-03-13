@@ -6,8 +6,9 @@ import '../theme/app_spacing.dart';
 import '../widgets/ag_button.dart';
 import '../widgets/ag_card.dart';
 import '../widgets/section_title.dart';
+import 'main_shell.dart';
 
-/// Allows equipment owners to list their farm machines for rental.
+/// Form screen allowing owners to list their equipment for rent or sale.
 class ListEquipmentScreen extends StatefulWidget {
   const ListEquipmentScreen({super.key});
 
@@ -41,6 +42,10 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
 
   // Simulated image
   bool _imageUploaded = false;
+
+  // Listing type
+  String _listingType = 'rent';
+  final _sellingPriceCtrl = TextEditingController();
 
   // My listed equipment (in-memory)
   final List<_ListedItem> _myListings = [];
@@ -138,6 +143,7 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
     _priceCtrl.dispose();
     _locationCtrl.dispose();
     _serviceAreaCtrl.dispose();
+    _sellingPriceCtrl.dispose();
     super.dispose();
   }
 
@@ -153,6 +159,15 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
         backgroundColor: AppColors.primaryGreen,
         foregroundColor: AppColors.textLight,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const MainShell()),
+              (route) => false,
+            );
+          },
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -162,16 +177,22 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
             children: [
               _buildHeader(),
               const SizedBox(height: AppSpacing.lg),
+              _buildListingType(),
+              const SizedBox(height: AppSpacing.lg),
               _buildDetailsForm(),
               const SizedBox(height: AppSpacing.lg),
-              _buildAvailability(),
-              const SizedBox(height: AppSpacing.lg),
+              if (_listingType == 'rent') ...[
+                _buildAvailability(),
+                const SizedBox(height: AppSpacing.lg),
+              ],
               _buildCondition(),
               const SizedBox(height: AppSpacing.lg),
               _buildImageUpload(),
               const SizedBox(height: AppSpacing.lg),
-              _buildRentalOptions(),
-              const SizedBox(height: AppSpacing.lg),
+              if (_listingType == 'rent') ...[
+                _buildRentalOptions(),
+                const SizedBox(height: AppSpacing.lg),
+              ],
               AgButton(
                 label: 'Add Equipment',
                 icon: Icons.add_circle_outline_rounded,
@@ -236,6 +257,140 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+  // ── LISTING TYPE ──
+  Widget _buildListingType() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SectionTitle(
+          title: 'Listing Type',
+          padding: EdgeInsets.only(bottom: AppSpacing.sm),
+        ),
+        AgCard(
+          margin: EdgeInsets.zero,
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Column(
+            children: [
+              _buildRadioTile(
+                value: 'rent',
+                icon: Icons.access_time_rounded,
+                label: 'Rent Equipment',
+                subtitle: 'Allow others to borrow your machine hourly',
+              ),
+              const Divider(height: 1, color: AppColors.divider),
+              _buildRadioTile(
+                value: 'sell',
+                icon: Icons.sell_rounded,
+                label: 'Sell Equipment',
+                subtitle: 'Put your machine up for sale',
+              ),
+            ],
+          ),
+        ),
+        if (_listingType == 'sell') ...[
+          const SizedBox(height: AppSpacing.md),
+          AgCard(
+            margin: EdgeInsets.zero,
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: TextFormField(
+              controller: _sellingPriceCtrl,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: 'Selling Price (₹)',
+                hintText: 'e.g. 250000',
+                prefixIcon: const Icon(Icons.currency_rupee_rounded),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                ),
+              ),
+              style: GoogleFonts.poppins(fontSize: 14),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildRadioTile({
+    required String value,
+    required IconData icon,
+    required String label,
+    required String subtitle,
+  }) {
+    final isSelected = _listingType == value;
+    return InkWell(
+      onTap: () => setState(() => _listingType = value),
+      borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? AppColors.primaryGreen.withAlpha(20)
+                    : AppColors.lightBackground,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+              ),
+              child: Icon(
+                icon,
+                size: 20,
+                color: isSelected
+                    ? AppColors.primaryGreen
+                    : AppColors.textMuted,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: isSelected
+                          ? AppColors.primaryGreen
+                          : AppColors.textDark,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected
+                      ? AppColors.primaryGreen
+                      : AppColors.textMuted,
+                  width: 2,
+                ),
+                color: isSelected
+                    ? AppColors.primaryGreen
+                    : Colors.transparent,
+              ),
+              child: isSelected
+                  ? const Icon(Icons.check, size: 16, color: Colors.white)
+                  : null,
+            ),
+          ],
+        ),
       ),
     );
   }

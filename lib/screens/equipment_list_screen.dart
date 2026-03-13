@@ -5,6 +5,7 @@ import '../data/equipment_data.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../widgets/equipment_card.dart';
+import '../widgets/location_map_modal.dart';
 import 'equipment_detail_screen.dart';
 
 /// Scrollable marketplace screen listing available farm equipment.
@@ -42,6 +43,7 @@ class EquipmentListScreen extends StatelessWidget {
                 ),
               );
             },
+            onLocationTap: () => showLocationModal(context, item),
           );
         },
       ),

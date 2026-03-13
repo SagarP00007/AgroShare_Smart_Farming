@@ -72,6 +72,30 @@ class _EquipmentActionSheet extends StatelessWidget {
 
               const SizedBox(height: AppSpacing.md),
 
+              // Listing type badge
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: equipment.isRent
+                      ? AppColors.primaryGreen.withAlpha(20)
+                      : Colors.orange.withAlpha(25),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  equipment.isRent ? 'FOR RENT' : 'FOR SALE',
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: equipment.isRent
+                        ? AppColors.primaryGreen
+                        : Colors.orange.shade700,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: AppSpacing.sm),
+
               // Name
               Text(
                 equipment.name,
@@ -96,97 +120,93 @@ class _EquipmentActionSheet extends StatelessWidget {
 
               const SizedBox(height: AppSpacing.lg),
 
-              // Price summary row
+              // Price summary — dynamic based on listing type
               Container(
                 padding: const EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
                   color: AppColors.lightBackground,
                   borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
                 ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
+                child: equipment.isRent
+                    ? Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(
-                            'Rent',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              color: AppColors.textMuted,
-                            ),
-                          ),
+                          const Icon(Icons.access_time_rounded,
+                              size: 18, color: AppColors.primaryGreen),
+                          const SizedBox(width: AppSpacing.xs),
                           Text(
                             '₹${equipment.pricePerHour.toInt()}/hr',
                             style: GoogleFonts.poppins(
-                              fontSize: 16,
+                              fontSize: 18,
                               fontWeight: FontWeight.w700,
                               color: AppColors.primaryGreen,
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                    Container(width: 1, height: 36, color: AppColors.divider),
-                    Expanded(
-                      child: Column(
-                        children: [
+                          const SizedBox(width: AppSpacing.sm),
                           Text(
-                            'Buy',
+                            'rental price',
                             style: GoogleFonts.poppins(
                               fontSize: 12,
                               color: AppColors.textMuted,
                             ),
                           ),
+                        ],
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.sell_rounded,
+                              size: 18, color: Colors.orange),
+                          const SizedBox(width: AppSpacing.xs),
                           Text(
                             '₹$numberFormat',
                             style: GoogleFonts.poppins(
-                              fontSize: 16,
+                              fontSize: 18,
                               fontWeight: FontWeight.w700,
                               color: AppColors.textDark,
                             ),
                           ),
+                          const SizedBox(width: AppSpacing.sm),
+                          Text(
+                            'selling price',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
               ),
 
               const SizedBox(height: AppSpacing.lg),
 
-              // Action buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: AgButton(
-                      label: 'Rent / Borrow',
-                      icon: Icons.access_time_rounded,
-                      isExpanded: true,
-                      onPressed: () {
-                        Navigator.pop(context);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                BookingScreen(equipment: equipment),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: _OutlinedButton(
-                      label: 'Buy / Sell',
-                      icon: Icons.shopping_cart_outlined,
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _showBuyDialog(context, equipment, numberFormat);
-                      },
-                    ),
-                  ),
-                ],
-              ),
+              // Action buttons — dynamic
+              if (equipment.isRent)
+                AgButton(
+                  label: 'Book / Borrow',
+                  icon: Icons.access_time_rounded,
+                  isExpanded: true,
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            BookingScreen(equipment: equipment),
+                      ),
+                    );
+                  },
+                )
+              else
+                AgButton(
+                  label: 'Buy Equipment',
+                  icon: Icons.shopping_cart_rounded,
+                  isExpanded: true,
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _showBuyDialog(context, equipment, numberFormat);
+                  },
+                ),
             ],
           ),
         ),
@@ -310,40 +330,3 @@ Widget _infoRow(String label, String value) {
   );
 }
 
-/// Outlined variant button used for Buy/Sell action.
-class _OutlinedButton extends StatelessWidget {
-  const _OutlinedButton({
-    required this.label,
-    required this.icon,
-    required this.onPressed,
-  });
-
-  final String label;
-  final IconData icon;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 48,
-      child: OutlinedButton.icon(
-        onPressed: onPressed,
-        icon: Icon(icon, size: 18, color: AppColors.primaryGreen),
-        label: Text(
-          label,
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.w600,
-            fontSize: 13,
-            color: AppColors.primaryGreen,
-          ),
-        ),
-        style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: AppColors.primaryGreen),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          ),
-        ),
-      ),
-    );
-  }
-}

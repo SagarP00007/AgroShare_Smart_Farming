@@ -12,11 +12,13 @@ class EquipmentCard extends StatelessWidget {
   const EquipmentCard({
     super.key,
     required this.equipment,
-    this.onTap,
+    required this.onTap,
+    this.onLocationTap,
   });
 
   final Equipment equipment;
-  final VoidCallback? onTap;
+  final VoidCallback onTap;
+  final VoidCallback? onLocationTap;
 
   @override
   Widget build(BuildContext context) {
@@ -28,40 +30,78 @@ class EquipmentCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // ── Equipment image ──
-          ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
-            ),
-            child: SizedBox(
-              height: 170,
-              child: Image.asset(
-                equipment.imageUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
+                ),
+                child: SizedBox(
                   height: 170,
-                  color: AppColors.secondaryGreen.withAlpha(30),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.agriculture_rounded,
-                        size: 48,
-                        color: AppColors.primaryGreen.withAlpha(120),
+                  width: double.infinity,
+                  child: Image.asset(
+                    equipment.imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      height: 170,
+                      color: AppColors.secondaryGreen.withAlpha(30),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.agriculture_rounded,
+                            size: 48,
+                            color: AppColors.primaryGreen.withAlpha(120),
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          Text(
+                            equipment.name,
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: AppSpacing.sm),
-                      Text(
-                        equipment.name,
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: AppColors.textMuted,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),
-            ),
+              // Listing type badge
+              Positioned(
+                top: AppSpacing.sm,
+                right: AppSpacing.sm,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: equipment.isRent
+                        ? AppColors.primaryGreen
+                        : Colors.orange.shade700,
+                    borderRadius: BorderRadius.circular(6),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withAlpha(40),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    equipment.isRent ? 'RENT' : 'SELL',
+                    style: GoogleFonts.poppins(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
 
           // ── Details ──
@@ -84,6 +124,46 @@ class EquipmentCard extends StatelessWidget {
 
                 const SizedBox(height: AppSpacing.sm),
 
+                // Location row
+                GestureDetector(
+                  onTap: onLocationTap,
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.location_on_rounded,
+                        size: 14,
+                        color: AppColors.primaryGreen,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        equipment.locationName,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                      if (onLocationTap != null) ...[
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.open_in_new_rounded,
+                          size: 12,
+                          color: AppColors.primaryGreen.withAlpha(150),
+                        ),
+                      ],
+                      const Spacer(),
+                      Text(
+                        '${equipment.distance} km away',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: AppSpacing.sm),
+
                 // Price · Distance · Rating row
                 Row(
                   children: [
@@ -92,15 +172,6 @@ class EquipmentCard extends StatelessWidget {
                       icon: Icons.currency_rupee_rounded,
                       label: '₹${equipment.pricePerHour.toInt()} / hr',
                       color: AppColors.primaryGreen,
-                    ),
-
-                    const SizedBox(width: AppSpacing.sm),
-
-                    // Distance
-                    _InfoChip(
-                      icon: Icons.location_on_outlined,
-                      label: '${equipment.distance} km',
-                      color: AppColors.textMuted,
                     ),
 
                     const Spacer(),
@@ -132,6 +203,14 @@ class EquipmentCard extends StatelessWidget {
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                               color: AppColors.textDark,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '(${equipment.reviewCount})',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              color: AppColors.textMuted,
                             ),
                           ),
                         ],

@@ -6,6 +6,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../widgets/ag_button.dart';
 import '../widgets/ag_card.dart';
+import 'main_shell.dart';
 import '../widgets/section_title.dart';
 import 'booking_screen.dart';
 
@@ -133,7 +134,12 @@ class _ImageBanner extends StatelessWidget {
             left: AppSpacing.md,
             child: _CircleIconButton(
               icon: Icons.arrow_back_rounded,
-              onTap: () => Navigator.pop(context),
+              onTap: () {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => const MainShell()),
+                  (route) => false,
+                );
+              },
             ),
           ),
 
@@ -497,19 +503,143 @@ class _BookingBar extends StatelessWidget {
           ),
         ],
       ),
-      child: AgButton(
-        label: 'Book Machine',
-        icon: Icons.calendar_today_rounded,
-        isExpanded: true,
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => BookingScreen(equipment: equipment),
+      child: equipment.isRent
+          ? AgButton(
+              label: 'Book for Borrow',
+              icon: Icons.calendar_today_rounded,
+              isExpanded: true,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => BookingScreen(equipment: equipment),
+                  ),
+                );
+              },
+            )
+          : AgButton(
+              label: 'Buy Equipment',
+              icon: Icons.shopping_cart_rounded,
+              isExpanded: true,
+              onPressed: () {
+                _showBuyConfirmation(context);
+              },
             ),
-          );
-        },
+    );
+  }
+
+  void _showBuyConfirmation(BuildContext context) {
+    final priceStr = _formatPrice(equipment.purchasePrice);
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        ),
+        title: Text(
+          'Purchase ${equipment.name}',
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
+            color: AppColors.textDark,
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _infoRow('Price', '₹$priceStr'),
+            const SizedBox(height: AppSpacing.sm),
+            _infoRow('Owner', equipment.ownerName),
+            const SizedBox(height: AppSpacing.sm),
+            _infoRow('Location', '${equipment.distance} km away'),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              'Contact the owner to negotiate and finalize the purchase.',
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                color: AppColors.textMuted,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.poppins(color: AppColors.textMuted),
+            ),
+          ),
+          FilledButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Owner contact shared.',
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+                  ),
+                  backgroundColor: AppColors.primaryGreen,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.circular(AppSpacing.radiusSm),
+                  ),
+                ),
+              );
+            },
+            icon: const Icon(Icons.phone_rounded),
+            label: Text(
+              'Contact Owner',
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+            ),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.primaryGreen,
+            ),
+          ),
+        ],
       ),
     );
+  }
+
+  Widget _infoRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.poppins(
+            fontSize: 13,
+            color: AppColors.textMuted,
+          ),
+        ),
+        Text(
+          value,
+          style: GoogleFonts.poppins(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textDark,
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _formatPrice(double price) {
+    final p = price.toInt().toString();
+    final buf = StringBuffer();
+    int count = 0;
+    for (int i = p.length - 1; i >= 0; i--) {
+      buf.write(p[i]);
+      count++;
+      if (i > 0) {
+        if (count == 3 || (count > 3 && (count - 3) % 2 == 0)) {
+          buf.write(',');
+        }
+      }
+    }
+    return buf.toString().split('').reversed.join();
   }
 }
