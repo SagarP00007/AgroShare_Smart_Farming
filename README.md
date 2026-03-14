@@ -425,6 +425,10 @@ This project is privately maintained. All rights reserved.
 ## 👨‍💻 Authors
 
 - **Ramith Naik** — *Full-Stack Developer & Project Lead*
+- **Tejas RK** — *Full-Stack Developer & Project Lead*
+- **Sagar P** — *Full-Stack Developer & Project Lead*
+- **Bhavish Gowda** — *Full-Stack Developer & Project Lead*
+
 
 ---
 
