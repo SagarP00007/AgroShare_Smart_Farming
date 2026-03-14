@@ -17,6 +17,7 @@ class Equipment {
     this.isAvailable = true,
     this.purchasePrice = 0,
     this.listingType = 'rent',
+    this.contactNumber = '',
   });
 
   final String id;
@@ -34,12 +35,11 @@ class Equipment {
   final double longitude;
   final bool isAvailable;
   final double purchasePrice;
-
-  /// 'rent' or 'sell'
-  final String listingType;
+  final String listingType; // 'rent' or 'buy'
+  final String contactNumber;
 
   bool get isRent => listingType == 'rent';
-  bool get isSell => listingType == 'sell';
+  bool get isSell => listingType == 'buy';
 
   /// Create from Firestore document.
   factory Equipment.fromMap(String id, Map<String, dynamic> data) {
@@ -60,6 +60,7 @@ class Equipment {
       isAvailable: data['isAvailable'] ?? true,
       purchasePrice: (data['purchasePrice'] ?? 0).toDouble(),
       listingType: data['listingType'] ?? 'rent',
+      contactNumber: data['contactNumber'] ?? '',
     );
   }
 
@@ -81,6 +82,7 @@ class Equipment {
       'isAvailable': isAvailable,
       'purchasePrice': purchasePrice,
       'listingType': listingType,
+      'contactNumber': contactNumber,
     };
   }
 }

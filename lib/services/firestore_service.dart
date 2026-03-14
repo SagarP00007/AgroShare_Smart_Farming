@@ -64,6 +64,7 @@ class FirestoreService {
   CollectionReference get _bookings => _db.collection('bookings');
   CollectionReference get _groups => _db.collection('community_groups');
   CollectionReference get _reviews => _db.collection('reviews');
+  CollectionReference get _chats => _db.collection('chats');
 
   /// Write a small test document to confirm Firestore connectivity.
   Future<void> writeConnectionTest() async {
@@ -125,6 +126,11 @@ class FirestoreService {
   /// Stream equipment owned by a specific user.
   Stream<QuerySnapshot> userEquipmentStream(String uid) {
     return _equipment.where('ownerId', isEqualTo: uid).snapshots();
+  }
+
+  /// Stream a single equipment document by ID for real-time detail updates.
+  Stream<DocumentSnapshot> equipmentByIdStream(String id) {
+    return _equipment.doc(id).snapshots();
   }
 
   /// Delete an equipment listing.
@@ -243,6 +249,11 @@ class FirestoreService {
     return _groups.orderBy('createdAt', descending: true).snapshots();
   }
 
+  /// Stream a single group by ID.
+  Stream<DocumentSnapshot> groupStream(String groupId) {
+    return _groups.doc(groupId).snapshots();
+  }
+
   /// Join a group — add uid to members array.
   Future<void> joinGroup(String groupId, String uid) {
     try {
@@ -275,6 +286,59 @@ class FirestoreService {
   /// Stream reviews for a user.
   Stream<QuerySnapshot> userReviewsStream(String uid) {
     return _reviews.where('revieweeId', isEqualTo: uid).snapshots();
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // CHAT (real-time messaging between user and owner)
+  // ══════════════════════════════════════════════════════════════
+
+  /// Room ID is sorted pair of UIDs so one room per pair.
+  static String chatRoomId(String uid1, String uid2) {
+    final a = uid1.compareTo(uid2) <= 0 ? uid1 : uid2;
+    final b = uid1.compareTo(uid2) <= 0 ? uid2 : uid1;
+    return '${a}_$b';
+  }
+
+  /// Get or create a chat room between two users. Returns room ID.
+  Future<String> getOrCreateChatRoom(String uid1, String uid2) async {
+    final roomId = chatRoomId(uid1, uid2);
+    final ref = _chats.doc(roomId);
+    final snap = await ref.get();
+    if (snap.exists) return roomId;
+    await ref.set(_sanitizeForFirestore({
+      'participantIds': [uid1, uid2],
+      'lastMessage': '',
+      'lastMessageAt': FieldValue.serverTimestamp(),
+      'createdAt': FieldValue.serverTimestamp(),
+    }));
+    return roomId;
+  }
+
+  /// Send a message and update room lastMessage.
+  Future<void> sendChatMessage({
+    required String roomId,
+    required String senderId,
+    required String text,
+  }) async {
+    final sanitized = _sanitizeForFirestore({
+      'senderId': senderId,
+      'text': text.isEmpty ? '' : text,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+    await _chats.doc(roomId).collection('messages').add(sanitized);
+    await _chats.doc(roomId).update(_sanitizeForFirestore({
+      'lastMessage': text.isEmpty ? '' : text,
+      'lastMessageAt': FieldValue.serverTimestamp(),
+    }));
+  }
+
+  /// Real-time stream of messages in a room.
+  Stream<QuerySnapshot> chatMessagesStream(String roomId) {
+    return _chats
+        .doc(roomId)
+        .collection('messages')
+        .orderBy('createdAt', descending: false)
+        .snapshots();
   }
 
   /// Submit an equipment review and mark the booking as completed, while
@@ -320,18 +384,7 @@ class FirestoreService {
       final reviewRef = _reviews.doc();
 
       await _db.runTransaction((txn) async {
-        // Read current equipment aggregate fields.
         final equipmentSnap = await txn.get(equipmentRef);
-        final data = equipmentSnap.data() as Map<String, dynamic>? ?? <String, dynamic>{};
-
-        final currentRating = (data['rating'] ?? 0).toDouble();
-        final currentCount = (data['reviewCount'] ?? 0).toInt();
-
-        // Ensure reviewCount is stored as an integer and rating as a double.
-        final int newCount = (currentCount + 1).toInt();
-        final double sumRating = (currentRating * currentCount) + ratingValue;
-        final double newRating = newCount > 0 ? sumRating / newCount : 0.0;
-        final double newRatingSafe = newRating.isNaN || !newRating.isFinite ? 0.0 : newRating;
 
         // 6. Add debugging logs before Firestore writes to verify data being sent.
         // ignore: avoid_print
@@ -356,17 +409,33 @@ class FirestoreService {
           txn.update(bookingRef, bookingUpdate);
         }
 
-        final equipmentUpdate = _sanitizeForFirestore(<String, dynamic>{
-          'rating': newRatingSafe.toDouble(),
-          'reviewCount': newCount.toInt(),
-          'isAvailable': true,
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-        
-        if (equipmentUpdate.isNotEmpty) {
+        // Only update equipment if it still exists
+        if (equipmentSnap.exists) {
+          final data = equipmentSnap.data() as Map<String, dynamic>? ?? <String, dynamic>{};
+
+          final currentRating = (data['rating'] ?? 0).toDouble();
+          final currentCount = (data['reviewCount'] ?? 0).toInt();
+
+          final int newCount = (currentCount + 1).toInt();
+          final double sumRating = (currentRating * currentCount) + ratingValue;
+          final double newRating = newCount > 0 ? sumRating / newCount : 0.0;
+          final double newRatingSafe = newRating.isNaN || !newRating.isFinite ? 0.0 : newRating;
+
+          final equipmentUpdate = _sanitizeForFirestore(<String, dynamic>{
+            'rating': newRatingSafe.toDouble(),
+            'reviewCount': newCount.toInt(),
+            'isAvailable': true,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+          
+          if (equipmentUpdate.isNotEmpty) {
+            // ignore: avoid_print
+            print('Equipment Update Request for $safeEquipmentId: $equipmentUpdate');
+            txn.update(equipmentRef, equipmentUpdate);
+          }
+        } else {
           // ignore: avoid_print
-          print('Equipment Update Request for $safeEquipmentId: $equipmentUpdate');
-          txn.update(equipmentRef, equipmentUpdate);
+          print('Warning: equipment $safeEquipmentId not found, skipping equipment update.');
         }
         // ignore: avoid_print
         print('--- END DEBUG INFO ---');

@@ -1,57 +1,132 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../services/auth_service.dart';
+import '../services/firestore_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../widgets/ag_button.dart';
 import '../widgets/ag_card.dart';
 import '../widgets/section_title.dart';
+import 'chat_screen.dart';
 
 /// Displays full details for an equipment group including members and status.
+/// Contact is via in-app chat only; no phone/email shared.
 class GroupDetailScreen extends StatefulWidget {
   const GroupDetailScreen({
     super.key,
     required this.groupName,
+    this.groupId,
   });
 
   final String groupName;
+  final String? groupId;
 
   @override
   State<GroupDetailScreen> createState() => _GroupDetailScreenState();
 }
 
 class _GroupDetailScreenState extends State<GroupDetailScreen> {
-  // Placeholder values for the detail view
   String get _emoji => '🚜';
   String get _name => widget.groupName;
-  String get _location => 'Community';
-  int get _currentMembers => 2;
-  int get _targetMembers => 3;
-  String get _sharePerFarmer => '₹2,00,000';
-  List<String> get _members => ['Member 1', 'Member 2'];
 
   late Map<String, bool> _paymentStatus;
-
-  bool get _isFull => _currentMembers >= _targetMembers;
-  bool get _allPaid =>
-      _isFull && _paymentStatus.values.every((paid) => paid);
+  List<String> _memberIds = [];
+  String _location = 'Community';
+  int _currentMembers = 0;
+  int _targetMembers = 5;
+  String _sharePerFarmer = '₹0';
+  bool _isFull = false;
+  bool get _allPaid => _isFull && _paymentStatus.values.every((paid) => paid);
 
   @override
   void initState() {
     super.initState();
-    _paymentStatus = {
-      for (int i = 0; i < _members.length; i++)
-        _members[i]: i.isEven,
-    };
+    if (widget.groupId == null) {
+      _currentMembers = 2;
+      _targetMembers = 3;
+      _location = 'Community';
+      _sharePerFarmer = '₹2,00,000';
+      _paymentStatus = {'Member 1': true, 'Member 2': false};
+    } else {
+      _paymentStatus = {};
+    }
+  }
+
+  void _applyGroupData(Map<String, dynamic> data) {
+    final members = List<String>.from(data['members'] ?? []);
+    final current = (data['currentMembers'] ?? 0).toInt();
+    final target = (data['targetMembers'] ?? 5).toInt();
+    final price = (data['targetPrice'] ?? 0).toDouble();
+    final share = target > 0 ? (price / target).toInt() : 0;
+    setState(() {
+      _memberIds = members;
+      _currentMembers = current;
+      _targetMembers = target;
+      _location = (data['location'] ?? 'Community') as String;
+      _sharePerFarmer = '₹${share.toStringAsFixed(0)}';
+      _isFull = current >= target;
+      _paymentStatus = {
+        for (int i = 0; i < members.length; i++) 'Member ${i + 1}': i.isEven,
+      };
+    });
   }
 
   void _togglePayment(String member) {
-    if (_paymentStatus[member] == true) return; // already paid
+    if (_paymentStatus[member] == true) return;
     setState(() => _paymentStatus[member] = true);
   }
 
   @override
   Widget build(BuildContext context) {
+    final body = SafeArea(
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildInfoCard(),
+            const SizedBox(height: AppSpacing.lg),
+            _buildStatusCard(),
+            const SizedBox(height: AppSpacing.lg),
+            _buildMemberList(),
+            if (_isFull) ...[
+              const SizedBox(height: AppSpacing.lg),
+              _buildEscrowPayment(),
+            ],
+            const SizedBox(height: AppSpacing.lg),
+            _buildContactViaChatNote(),
+            const SizedBox(height: AppSpacing.md),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _showReportSheet(context),
+                icon: const Icon(Icons.flag_outlined, size: 18),
+                label: const Text('Report User'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.redAccent,
+                  side: const BorderSide(color: Colors.redAccent),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: AppSpacing.sm + 2,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: AppSpacing.buttonRadius,
+                  ),
+                  textStyle: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+          ],
+        ),
+      ),
+    );
+
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
       appBar: AppBar(
@@ -63,88 +138,61 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
         foregroundColor: AppColors.textLight,
         elevation: 0,
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
+      body: widget.groupId != null
+          ? StreamBuilder<DocumentSnapshot>(
+              stream: FirestoreService.instance.groupStream(widget.groupId!),
+              builder: (context, snapshot) {
+                if (snapshot.hasData && snapshot.data!.exists) {
+                  final data =
+                      snapshot.data!.data() as Map<String, dynamic>? ?? {};
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) _applyGroupData(data);
+                  });
+                }
+                return body;
+              },
+            )
+          : body,
+    );
+  }
+
+  /// Note: contact only via in-app chat; no phone/email shared.
+  Widget _buildContactViaChatNote() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: double.infinity,
           padding: const EdgeInsets.all(AppSpacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          decoration: BoxDecoration(
+            color: AppColors.primaryGreen.withAlpha(15),
+            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+            border: Border.all(
+              color: AppColors.primaryGreen.withAlpha(40),
+            ),
+          ),
+          child: Row(
             children: [
-              // ── Equipment Info Card ─────────────────────────────
-              _buildInfoCard(),
-
-              const SizedBox(height: AppSpacing.lg),
-
-              // ── Group Status ────────────────────────────────────
-              _buildStatusCard(),
-
-              const SizedBox(height: AppSpacing.lg),
-
-              // ── Member List ─────────────────────────────────────
-              _buildMemberList(),
-
-              // ── Escrow Payment (only when group is full) ────────
-              if (_isFull) ...[
-                const SizedBox(height: AppSpacing.lg),
-                _buildEscrowPayment(),
-              ],
-
-              const SizedBox(height: AppSpacing.lg),
-
-              // ── Contact Button ──────────────────────────────────
-              AgButton(
-                label: 'Contact Members',
-                icon: Icons.chat_rounded,
-                isExpanded: true,
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Contact information shared.',
-                        style: GoogleFonts.poppins(),
-                      ),
-                      backgroundColor: AppColors.primaryGreen,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(AppSpacing.radiusSm),
-                      ),
-                    ),
-                  );
-                },
+              const Icon(
+                Icons.lock_outline_rounded,
+                size: 20,
+                color: AppColors.primaryGreen,
               ),
-
-              const SizedBox(height: AppSpacing.md),
-
-              // ── Report User Button ───────────────────────────
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () => _showReportSheet(context),
-                  icon: const Icon(Icons.flag_outlined, size: 18),
-                  label: const Text('Report User'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.redAccent,
-                    side: const BorderSide(color: Colors.redAccent),
-                    padding: const EdgeInsets.symmetric(
-                      vertical: AppSpacing.sm + 2,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: AppSpacing.buttonRadius,
-                    ),
-                    textStyle: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  'Contact only via in-app chat. No phone or email is shared with other members.',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textDark,
                   ),
                 ),
               ),
-
-              const SizedBox(height: AppSpacing.lg),
             ],
           ),
         ),
-      ),
+      ],
     );
   }
 
@@ -289,8 +337,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                   ),
                   decoration: BoxDecoration(
                     color: AppColors.primaryGreen,
-                    borderRadius:
-                        BorderRadius.circular(AppSpacing.radiusSm),
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -558,9 +605,15 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
     );
   }
 
-  // ── Member List ────────────────────────────────────────────────
+  // ── Member List (Message via chat only; no contact details) ────
 
   Widget _buildMemberList() {
+    final members = _memberIds.isEmpty
+        ? ['Member 1', 'Member 2']
+        : List.generate(
+            _memberIds.length,
+            (i) => 'Member ${i + 1}',
+          );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -574,11 +627,31 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
           child: Column(
             children: [
-              for (int i = 0; i < _members.length; i++) ...[
+              for (int i = 0; i < members.length; i++) ...[
                 if (i > 0) const Divider(height: 1, color: AppColors.divider),
                 _MemberTile(
-                  name: _members[i],
+                  name: members[i],
                   index: i,
+                  memberId: i < _memberIds.length ? _memberIds[i] : null,
+                  onMessage: i < _memberIds.length
+                      ? () {
+                          final uid = AuthService.instance.currentUser?.uid;
+                          if (uid == null || uid == _memberIds[i]) return;
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ChatScreen(
+                                chatId: '', // Will be created by ChatService
+                                equipmentId: 'group-chat',
+                                equipmentName: 'Group Chat',
+                                equipmentImage: '',
+                                ownerId: _memberIds[i],
+                                ownerName: 'Group member',
+                              ),
+                            ),
+                          );
+                        }
+                      : null,
                 ),
               ],
             ],
@@ -635,10 +708,14 @@ class _MemberTile extends StatelessWidget {
   const _MemberTile({
     required this.name,
     required this.index,
+    this.memberId,
+    this.onMessage,
   });
 
   final String name;
   final int index;
+  final String? memberId;
+  final VoidCallback? onMessage;
 
   // Cycle through avatar colors
   static const _avatarColors = [
@@ -691,15 +768,24 @@ class _MemberTile extends StatelessWidget {
                   runSpacing: AppSpacing.xs,
                   children: [
                     _statChip(
-                      Icons.star_rounded,
-                      '4.0',
-                      Colors.amber,
-                    ),
-                    _statChip(
                       Icons.handshake_outlined,
                       'Member',
                       AppColors.primaryGreen,
                     ),
+                    if (onMessage != null && memberId != null)
+                      TextButton.icon(
+                        onPressed: onMessage,
+                        icon: const Icon(Icons.chat_bubble_outline_rounded,
+                            size: 16),
+                        label: Text(
+                          'Message',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primaryGreen,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ],

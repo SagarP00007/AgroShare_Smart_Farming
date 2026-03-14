@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../l10n/app_localizations.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import 'explore_screen.dart';
@@ -89,31 +90,31 @@ class _MainShellState extends State<MainShell> {
                 fontWeight: FontWeight.w400,
               ),
               elevation: 0,
-              items: const [
+              items: [
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.home_rounded),
-                  activeIcon: Icon(Icons.home_rounded, size: 28),
-                  label: 'Home',
+                  icon: const Icon(Icons.home_rounded),
+                  activeIcon: const Icon(Icons.home_rounded, size: 28),
+                  label: L.tr(context, 'home'),
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.explore_rounded),
-                  activeIcon: Icon(Icons.explore_rounded, size: 28),
-                  label: 'Explore',
+                  icon: const Icon(Icons.explore_rounded),
+                  activeIcon: const Icon(Icons.explore_rounded, size: 28),
+                  label: L.tr(context, 'explore'),
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.search_rounded),
-                  activeIcon: Icon(Icons.search_rounded, size: 28),
-                  label: 'Find',
+                  icon: const Icon(Icons.search_rounded),
+                  activeIcon: const Icon(Icons.search_rounded, size: 28),
+                  label: L.tr(context, 'find'),
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.calendar_month_rounded),
-                  activeIcon: Icon(Icons.calendar_month_rounded, size: 28),
-                  label: 'Bookings',
+                  icon: const Icon(Icons.calendar_month_rounded),
+                  activeIcon: const Icon(Icons.calendar_month_rounded, size: 28),
+                  label: L.tr(context, 'bookings'),
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.person_rounded),
-                  activeIcon: Icon(Icons.person_rounded, size: 28),
-                  label: 'Profile',
+                  icon: const Icon(Icons.person_rounded),
+                  activeIcon: const Icon(Icons.person_rounded, size: 28),
+                  label: L.tr(context, 'profile'),
                 ),
               ],
             ),

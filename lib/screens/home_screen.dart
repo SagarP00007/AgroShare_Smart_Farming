@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../models/equipment.dart';
+import '../services/firestore_service.dart';
 import '../services/location_service.dart';
-
+import '../l10n/app_localizations.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../widgets/ag_button.dart';
 import '../widgets/ag_card.dart';
 import '../widgets/section_title.dart';
 import 'community_screen.dart';
+import 'equipment_detail_screen.dart';
 import 'list_equipment_screen.dart';
 
 /// Home dashboard screen for AgroShare.
@@ -70,6 +73,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 isLoadingLocation: _isLoadingLocation,
                 onSwitchTab: widget.onSwitchTab,
               ),
+              const SizedBox(height: AppSpacing.lg),
+              _FeaturedEquipmentSection(onSwitchTab: widget.onSwitchTab),
               const SizedBox(height: AppSpacing.lg),
               const _SeasonalRecommendationsSection(),
               const SizedBox(height: AppSpacing.xxl),
@@ -165,7 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Current Location',
+                          L.tr(context, 'current_location'),
                           style: GoogleFonts.poppins(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
@@ -200,7 +205,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ] else
                           Text(
-                            'Location unavailable',
+                            L.tr(context, 'location_unavailable'),
                             style: GoogleFonts.poppins(
                               fontSize: 12,
                               color: AppColors.textLight,
@@ -224,7 +229,7 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 // App name
                 Text(
-                  'AgroShare',
+                  L.tr(context, 'app_title'),
                   style: GoogleFonts.poppins(
                     fontSize: 38,
                     fontWeight: FontWeight.w700,
@@ -238,7 +243,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 // Subtitle
                 Text(
-                  'Smart Farm Equipment Sharing Platform',
+                  L.tr(context, 'app_tagline'),
                   style: GoogleFonts.poppins(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
@@ -264,7 +269,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 // Primary CTA
                 AgButton(
-                  label: 'Explore Equipment',
+                  label: L.tr(context, 'explore_equipment'),
                   icon: Icons.search_rounded,
                   onPressed: () {
                     widget.onSwitchTab?.call(1); // Switch to Explore tab
@@ -295,10 +300,10 @@ class _QuickActionsSection extends StatelessWidget {
   final void Function(int)? onSwitchTab;
 
   static const _actions = [
-    _QuickAction(icon: Icons.search_rounded, label: 'Find Equipment', emoji: '🔍'),
-    _QuickAction(icon: Icons.calendar_month_rounded, label: 'My Bookings', emoji: '📅'),
-    _QuickAction(icon: Icons.people_rounded, label: 'Community', emoji: '🤝'),
-    _QuickAction(icon: Icons.add_circle_outline_rounded, label: 'List Equipment', emoji: '➕'),
+    _QuickAction(icon: Icons.search_rounded, labelKey: 'find_equipment', emoji: '🔍'),
+    _QuickAction(icon: Icons.calendar_month_rounded, labelKey: 'my_bookings', emoji: '📅'),
+    _QuickAction(icon: Icons.people_rounded, labelKey: 'community', emoji: '🤝'),
+    _QuickAction(icon: Icons.add_circle_outline_rounded, labelKey: 'list_equipment', emoji: '➕'),
   ];
 
   @override
@@ -308,9 +313,9 @@ class _QuickActionsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SectionTitle(
-            title: 'Quick Actions',
-            padding: EdgeInsets.only(bottom: AppSpacing.sm),
+          SectionTitle(
+            title: L.tr(context, 'quick_actions'),
+            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
           ),
           GridView.builder(
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -332,22 +337,23 @@ class _QuickActionsSection extends StatelessWidget {
   }
 
   Widget _buildActionTile(_QuickAction action, BuildContext context) {
+    final label = L.tr(context, action.labelKey);
     return AgCard(
       margin: EdgeInsets.zero,
       padding: const EdgeInsets.all(AppSpacing.md),
       onTap: () {
-        if (action.label == 'Find Equipment') {
+        if (action.labelKey == 'find_equipment') {
           onSwitchTab?.call(2); // Switch to Find tab
-        } else if (action.label == 'My Bookings') {
+        } else if (action.labelKey == 'my_bookings') {
           onSwitchTab?.call(3); // Switch to Bookings tab
-        } else if (action.label == 'Community') {
+        } else if (action.labelKey == 'community') {
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (_) => const CommunityScreen(),
             ),
           );
-        } else if (action.label == 'List Equipment') {
+        } else if (action.labelKey == 'list_equipment') {
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -370,7 +376,7 @@ class _QuickActionsSection extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            action.label,
+            label,
             textAlign: TextAlign.center,
             style: GoogleFonts.poppins(
               fontSize: 13,
@@ -387,18 +393,186 @@ class _QuickActionsSection extends StatelessWidget {
 class _QuickAction {
   const _QuickAction({
     required this.icon,
-    required this.label,
+    required this.labelKey,
     required this.emoji,
   });
 
   final IconData icon;
-  final String label;
+  final String labelKey;
   final String emoji;
 }
 
 // ─────────────────────────────────────────────
-// SMART FARMING TIP
+// FEATURED EQUIPMENT (real-time from Firestore)
 // ─────────────────────────────────────────────
+
+class _FeaturedEquipmentSection extends StatelessWidget {
+  const _FeaturedEquipmentSection({this.onSwitchTab});
+
+  final void Function(int)? onSwitchTab;
+  static const int _maxItems = 4;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionTitle(
+            title: L.tr(context, 'featured_equipment'),
+            padding: EdgeInsets.zero,
+            trailing: GestureDetector(
+              onTap: () => onSwitchTab?.call(2),
+              child: Text(
+                L.tr(context, 'see_all'),
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primaryGreen,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          StreamBuilder(
+            stream: FirestoreService.instance.equipmentStream(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return const SizedBox.shrink();
+              }
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return SizedBox(
+                  height: 120,
+                  child: Center(
+                    child: SizedBox(
+                      width: 28,
+                      height: 28,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.primaryGreen,
+                      ),
+                    ),
+                  ),
+                );
+              }
+              final docs = snapshot.data?.docs ?? [];
+              final equipment = docs
+                  .map((d) => Equipment.fromMap(
+                        d.id,
+                        d.data() as Map<String, dynamic>,
+                      ))
+                  .where((e) => e.isAvailable)
+                  .take(_maxItems)
+                  .toList();
+              if (equipment.isEmpty) {
+                return const SizedBox.shrink();
+              }
+              return SizedBox(
+                height: 128,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: equipment.length,
+                  separatorBuilder: (_, __) =>
+                      const SizedBox(width: AppSpacing.sm),
+                  itemBuilder: (context, index) {
+                    final item = equipment[index];
+                    return _FeaturedEquipmentChip(
+                      equipment: item,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                EquipmentDetailScreen(equipment: item),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FeaturedEquipmentChip extends StatelessWidget {
+  const _FeaturedEquipmentChip({
+    required this.equipment,
+    required this.onTap,
+  });
+
+  final Equipment equipment;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        child: AgCard(
+          margin: EdgeInsets.zero,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm,
+          ),
+          child: SizedBox(
+            width: 160,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  equipment.name,
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textDark,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '₹${equipment.pricePerHour.toInt()}/hr',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primaryGreen,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.star_rounded,
+                      size: 14,
+                      color: Colors.amber.shade600,
+                    ),
+                    const SizedBox(width: 2),
+                    Text(
+                      equipment.rating.toStringAsFixed(1),
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _SmartFarmingTipCard extends StatelessWidget {
   @override
@@ -408,9 +582,9 @@ class _SmartFarmingTipCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SectionTitle(
-            title: 'Smart Farming Tip',
-            padding: EdgeInsets.only(bottom: AppSpacing.sm),
+          SectionTitle(
+            title: L.tr(context, 'smart_farming_tip'),
+            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
           ),
           AgCard(
             margin: EdgeInsets.zero,
@@ -444,7 +618,7 @@ class _SmartFarmingTipCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Harvest Season Alert 🌾',
+                        '${L.tr(context, 'harvest_alert_title')} 🌾',
                         style: GoogleFonts.poppins(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -453,8 +627,7 @@ class _SmartFarmingTipCard extends StatelessWidget {
                       ),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
-                        'Harvest season is approaching.\n'
-                        'Book harvesters early to avoid price surge.',
+                        L.tr(context, 'harvest_alert_body'),
                         style: GoogleFonts.poppins(
                           fontSize: 13,
                           fontWeight: FontWeight.w400,

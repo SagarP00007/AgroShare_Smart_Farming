@@ -1,0 +1,16 @@
+﻿Analyzing AgroShare...                                          
+
+warning - Unnecessary cast - lib\l10n\app_localizations.dart:53:39 - unnecessary_cast
+   info - Constructors for public widgets should have a named 'key' parameter - lib\l10n\app_localizations.dart:59:9 - use_key_in_widget_constructors
+   info - Constructors for public widgets should have a named 'key' parameter - lib\l10n\locale_provider.dart:8:9 - use_key_in_widget_constructors
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\screens\create_group_screen.dart:160:25 - deprecated_member_use
+   info - The 'children' argument should be last in widget constructor invocations - lib\screens\find_equipment_screen.dart:316:13 - sort_child_properties_last
+warning - Unused import: '../widgets/ag_button.dart' - lib\screens\group_detail_screen.dart:9:8 - unused_import
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\screens\list_equipment_screen.dart:468:17 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\screens\list_equipment_screen.dart:625:13 - deprecated_member_use
+warning - The value of the local variable 'bookingRef' isn't used - lib\services\firestore_service.dart:382:13 - unused_local_variable
+warning - The value of the local variable 'reviewRef' isn't used - lib\services\firestore_service.dart:384:13 - unused_local_variable
+  error - Undefined name 'equipmentSnap' - lib\services\firestore_service.dart:388:13 - undefined_identifier
+  error - Undefined name 'equipmentSnap' - lib\services\firestore_service.dart:389:24 - undefined_identifier
+  error - The named parameter 'localeProvider' is required, but there's no corresponding argument - test\widget_test.dart:7:35 - missing_required_argument
+

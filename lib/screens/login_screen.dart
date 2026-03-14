@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../l10n/app_localizations.dart';
 import '../services/auth_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
@@ -28,12 +29,12 @@ class _LoginScreenState extends State<LoginScreen> {
     final pass = _passwordCtrl.text.trim();
 
     if (email.isEmpty || pass.isEmpty) {
-      _showError('Please fill in all fields');
+      _showError(L.tr(context, 'please_fill_all_fields'));
       return;
     }
 
     if (_isRegister && _nameCtrl.text.trim().isEmpty) {
-      _showError('Please enter your name');
+      _showError(L.tr(context, 'please_enter_name'));
       return;
     }
 
@@ -120,7 +121,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: AppSpacing.lg),
 
                 Text(
-                  'AgroShare',
+                  L.tr(context, 'app_title'),
                   style: GoogleFonts.poppins(
                     fontSize: 30,
                     fontWeight: FontWeight.w700,
@@ -129,7 +130,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  'Smart Farm Equipment Sharing',
+                  L.tr(context, 'app_tagline'),
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     color: AppColors.textMuted,
@@ -144,7 +145,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: _nameCtrl,
                     style: GoogleFonts.poppins(fontSize: 15),
                     decoration: InputDecoration(
-                      labelText: 'Full Name',
+                      labelText: L.tr(context, 'full_name'),
                       labelStyle: GoogleFonts.poppins(color: AppColors.textMuted),
                       prefixIcon: const Icon(
                         Icons.badge_outlined,
@@ -161,7 +162,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   keyboardType: TextInputType.emailAddress,
                   style: GoogleFonts.poppins(fontSize: 15),
                   decoration: InputDecoration(
-                    labelText: 'Email',
+                    labelText: L.tr(context, 'email'),
                     labelStyle: GoogleFonts.poppins(color: AppColors.textMuted),
                     prefixIcon: const Icon(
                       Icons.email_outlined,
@@ -178,7 +179,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   obscureText: _obscure,
                   style: GoogleFonts.poppins(fontSize: 15),
                   decoration: InputDecoration(
-                    labelText: 'Password',
+                    labelText: L.tr(context, 'password'),
                     labelStyle: GoogleFonts.poppins(color: AppColors.textMuted),
                     prefixIcon: const Icon(
                       Icons.lock_outline_rounded,
@@ -205,7 +206,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         color: AppColors.primaryGreen,
                       )
                     : AgButton(
-                        label: _isRegister ? 'Register' : 'Login',
+                        label: _isRegister ? L.tr(context, 'register') : L.tr(context, 'login'),
                         icon: _isRegister
                             ? Icons.person_add_rounded
                             : Icons.login_rounded,
@@ -220,8 +221,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   onPressed: () => setState(() => _isRegister = !_isRegister),
                   child: Text(
                     _isRegister
-                        ? 'Already have an account? Login'
-                        : "Don't have an account? Register",
+                        ? L.tr(context, 'already_have_account')
+                        : L.tr(context, 'dont_have_account'),
                     style: GoogleFonts.poppins(
                       fontSize: 13,
                       color: AppColors.primaryGreen,

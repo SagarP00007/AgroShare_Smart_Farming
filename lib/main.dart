@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 import 'app.dart';
+import 'l10n/locale_provider.dart';
 import 'services/firestore_service.dart';
 
 void main() async {
@@ -14,5 +15,8 @@ void main() async {
   // Seed dummy equipment data on first launch.
   await FirestoreService.instance.seedDummyEquipment();
 
-  runApp(const AgroShareApp());
+  // Load saved locale and translations for multilingual support.
+  final localeProvider = await LocaleProvider.create();
+
+  runApp(AgroShareApp(localeProvider: localeProvider));
 }

@@ -9,8 +9,11 @@ import '../services/storage_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../utils/image_picker_util.dart';
+import '../l10n/app_localizations.dart';
+import '../l10n/locale_provider.dart';
 import '../widgets/ag_card.dart';
 import '../widgets/ag_button.dart';
+import '../widgets/reactive_helpers.dart';
 import '../widgets/section_title.dart';
 import 'login_screen.dart';
 
@@ -22,9 +25,21 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
+/// Locale code -> translation key for language name.
+/// Locale code -> translation key for language name.
+const Map<String, String> _localeToNameKey = {
+  'en': 'languages_english',
+  'hi': 'languages_hindi',
+  'kn': 'languages_kannada',
+};
+
 class _ProfileScreenState extends State<ProfileScreen> {
-  String _selectedLanguage = 'English';
   bool _isUploadingProfilePhoto = false;
+  Key _profileStreamKey = UniqueKey();
+
+  void _retryProfile() {
+    setState(() => _profileStreamKey = UniqueKey());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +50,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: AppColors.lightBackground,
       appBar: AppBar(
         title: Text(
-          'Profile',
+          L.tr(context, 'profile'),
           style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
         ),
         backgroundColor: AppColors.primaryGreen,
@@ -44,12 +59,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
         automaticallyImplyLeading: false,
       ),
       body: StreamBuilder<DocumentSnapshot>(
+        key: _profileStreamKey,
         stream: FirestoreService.instance.userStream(uid),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(color: AppColors.primaryGreen),
+          if (snapshot.hasError) {
+            return ReactiveErrorView(
+              message: 'Failed to load profile.',
+              onRetry: _retryProfile,
             );
+          }
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const ReactiveLoadingView(message: 'Loading profile…');
           }
 
           final data = snapshot.data?.data() as Map<String, dynamic>? ?? {};
@@ -635,17 +655,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ── Section 6: Language Preferences ────────────────────────────
+  // ── Section 6: Language Preferences (all Indian languages) ──────
 
   Widget _buildLanguagePreferences() {
-    const languages = ['English', 'Hindi', 'Kannada', 'Telugu', 'Tamil'];
-    const langIcons = ['🇬🇧', '🇮🇳', '🇮🇳', '🇮🇳', '🇮🇳'];
+    final currentCode = LocaleProviderInherited.of(context)?.locale.languageCode ?? 'en';
+    final localeCodes = AppLocalizations.supportedLocales
+        .map((l) => l.languageCode)
+        .toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionTitle(
-          title: 'Language Preferences',
+        SectionTitle(
+          title: L.tr(context, 'language_preferences'),
           padding: EdgeInsets.zero,
         ),
         const SizedBox(height: AppSpacing.md),
@@ -654,20 +676,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
           child: Column(
             children: [
-              for (int i = 0; i < languages.length; i++) ...[
+              for (int i = 0; i < localeCodes.length; i++) ...[
                 if (i > 0)
                   const Divider(height: 1, color: AppColors.divider),
                 ListTile(
                   leading: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        langIcons[i],
-                        style: const TextStyle(fontSize: 20),
-                      ),
+                      const Text('🇮🇳', style: TextStyle(fontSize: 20)),
                       const SizedBox(width: AppSpacing.sm),
                       Text(
-                        languages[i],
+                        L.tr(context, _localeToNameKey[localeCodes[i]] ?? 'languages_english'),
                         style: GoogleFonts.poppins(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
@@ -677,16 +696,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                   trailing: Icon(
-                    _selectedLanguage == languages[i]
+                    currentCode == localeCodes[i]
                         ? Icons.radio_button_checked_rounded
                         : Icons.radio_button_unchecked_rounded,
-                    color: _selectedLanguage == languages[i]
+                    color: currentCode == localeCodes[i]
                         ? AppColors.primaryGreen
                         : AppColors.textMuted,
                     size: 22,
                   ),
-                  onTap: () =>
-                      setState(() => _selectedLanguage = languages[i]),
+                  onTap: () async {
+                    await LocaleProviderInherited.of(context)?.setLocale(Locale(localeCodes[i]));
+                    if (mounted) setState(() {});
+                  },
                   dense: true,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.md,
@@ -706,7 +727,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return SizedBox(
       width: double.infinity,
       child: AgButton(
-        label: 'Logout',
+        label: L.tr(context, 'logout'),
         icon: Icons.logout_rounded,
         isExpanded: true,
         onPressed: () async {

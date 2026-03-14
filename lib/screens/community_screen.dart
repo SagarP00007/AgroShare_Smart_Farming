@@ -8,14 +8,27 @@ import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../widgets/ag_button.dart';
 import '../widgets/ag_card.dart';
+import '../widgets/reactive_helpers.dart';
 import '../widgets/section_title.dart';
 import 'create_group_screen.dart';
 import 'group_detail_screen.dart';
 import 'main_shell.dart';
 
 /// Community screen — foundation of the Farmer Collaboration System.
-class CommunityScreen extends StatelessWidget {
+/// Real-time groups with error retry.
+class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
+
+  @override
+  State<CommunityScreen> createState() => _CommunityScreenState();
+}
+
+class _CommunityScreenState extends State<CommunityScreen> {
+  Key _streamKey = UniqueKey();
+
+  void _retry() {
+    setState(() => _streamKey = UniqueKey());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,9 +63,9 @@ class CommunityScreen extends StatelessWidget {
               const SizedBox(height: AppSpacing.lg),
               _buildStartGroupButton(context),
               const SizedBox(height: AppSpacing.lg),
-              _buildActiveGroups(),
+              _buildActiveGroups(_streamKey, _retry),
               const SizedBox(height: AppSpacing.lg),
-              _buildMyGroups(),
+              _buildMyGroups(_streamKey, _retry),
               const SizedBox(height: AppSpacing.lg),
             ],
           ),
@@ -125,7 +138,7 @@ class CommunityScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildActiveGroups() {
+  Widget _buildActiveGroups(Key streamKey, VoidCallback onRetry) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -135,14 +148,19 @@ class CommunityScreen extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.md),
         StreamBuilder<QuerySnapshot>(
+          key: streamKey,
           stream: FirestoreService.instance.groupsStream(),
           builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return ReactiveErrorView(
+                message: 'Failed to load groups.',
+                onRetry: onRetry,
+              );
+            }
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(AppSpacing.lg),
-                  child: CircularProgressIndicator(color: AppColors.primaryGreen),
-                ),
+              return const Padding(
+                padding: EdgeInsets.all(AppSpacing.lg),
+                child: ReactiveLoadingView(message: 'Loading groups…'),
               );
             }
             final docs = snapshot.data?.docs ?? [];
@@ -193,7 +211,7 @@ class CommunityScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMyGroups() {
+  Widget _buildMyGroups(Key streamKey, VoidCallback onRetry) {
     final uid = AuthService.instance.currentUser?.uid;
     if (uid == null) return const SizedBox.shrink();
 
@@ -206,11 +224,19 @@ class CommunityScreen extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.md),
         StreamBuilder<QuerySnapshot>(
+          key: streamKey,
           stream: FirestoreService.instance.groupsStream(),
           builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return ReactiveErrorView(
+                message: 'Failed to load groups.',
+                onRetry: onRetry,
+              );
+            }
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: CircularProgressIndicator(color: AppColors.primaryGreen),
+              return const Padding(
+                padding: EdgeInsets.all(AppSpacing.lg),
+                child: ReactiveLoadingView(message: 'Loading groups…'),
               );
             }
             final docs = snapshot.data?.docs ?? [];
@@ -411,6 +437,7 @@ class _EquipmentGroupCard extends StatelessWidget {
                       MaterialPageRoute(
                         builder: (context) => GroupDetailScreen(
                           groupName: '$name Purchase Group',
+                          groupId: groupId,
                         ),
                       ),
                     );

@@ -40,32 +40,7 @@ class EquipmentCard extends StatelessWidget {
                 child: SizedBox(
                   height: 170,
                   width: double.infinity,
-                  child: Image.asset(
-                    equipment.imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      height: 170,
-                      color: AppColors.secondaryGreen.withAlpha(30),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.agriculture_rounded,
-                            size: 48,
-                            color: AppColors.primaryGreen.withAlpha(120),
-                          ),
-                          const SizedBox(height: AppSpacing.sm),
-                          Text(
-                            equipment.name,
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              color: AppColors.textMuted,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  child: _buildEquipmentImage(equipment),
                 ),
               ),
               // Listing type badge
@@ -250,6 +225,62 @@ class EquipmentCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildEquipmentImage(Equipment equipment) {
+    final isNetwork =
+        equipment.imageUrl.isNotEmpty && equipment.imageUrl.startsWith('http');
+    final placeholder = Container(
+      height: 170,
+      color: AppColors.secondaryGreen.withAlpha(30),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.agriculture_rounded,
+            size: 48,
+            color: AppColors.primaryGreen.withAlpha(120),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            equipment.name,
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              color: AppColors.textMuted,
+            ),
+          ),
+        ],
+      ),
+    );
+    if (isNetwork) {
+      return Image.network(
+        equipment.imageUrl,
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            height: 170,
+            color: AppColors.secondaryGreen.withAlpha(30),
+            child: Center(
+              child: SizedBox(
+                width: 28,
+                height: 28,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppColors.primaryGreen,
+                ),
+              ),
+            ),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) => placeholder,
+      );
+    }
+    return Image.asset(
+      equipment.imageUrl,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) => placeholder,
     );
   }
 }

@@ -6,9 +6,10 @@ import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../widgets/ag_button.dart';
 import '../widgets/ag_card.dart';
-import 'main_shell.dart';
 import '../widgets/section_title.dart';
 import 'booking_screen.dart';
+import 'chat_screen.dart';
+import 'main_shell.dart';
 
 /// Detail screen for a selected piece of equipment.
 ///
@@ -74,35 +75,13 @@ class _ImageBanner extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // Equipment image
+          // Equipment image (asset or network for real-time listings)
           ClipRRect(
             borderRadius: const BorderRadius.only(
               bottomLeft: Radius.circular(28),
               bottomRight: Radius.circular(28),
             ),
-            child: Image.asset(
-              equipment.imageUrl,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      AppColors.primaryGreen.withAlpha(180),
-                      AppColors.secondaryGreen.withAlpha(120),
-                    ],
-                  ),
-                ),
-                child: Center(
-                  child: Icon(
-                    Icons.agriculture_rounded,
-                    size: 80,
-                    color: AppColors.textLight.withAlpha(120),
-                  ),
-                ),
-              ),
-            ),
+            child: _buildDetailImage(equipment),
           ),
 
           // Bottom gradient for readability
@@ -160,6 +139,60 @@ class _ImageBanner extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDetailImage(Equipment equipment) {
+    final isNetwork =
+        equipment.imageUrl.isNotEmpty && equipment.imageUrl.startsWith('http');
+    final placeholder = Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primaryGreen.withAlpha(180),
+            AppColors.secondaryGreen.withAlpha(120),
+          ],
+        ),
+      ),
+      child: Center(
+        child: Icon(
+          Icons.agriculture_rounded,
+          size: 80,
+          color: AppColors.textLight.withAlpha(120),
+        ),
+      ),
+    );
+    if (isNetwork) {
+      return Image.network(
+        equipment.imageUrl,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            color: AppColors.primaryGreen.withAlpha(50),
+            child: Center(
+              child: SizedBox(
+                width: 40,
+                height: 40,
+                child: CircularProgressIndicator(
+                  color: AppColors.textLight,
+                  strokeWidth: 2,
+                ),
+              ),
+            ),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) => placeholder,
+      );
+    }
+    return Image.asset(
+      equipment.imageUrl,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) => placeholder,
     );
   }
 }
@@ -239,6 +272,35 @@ class _EquipmentInfoCard extends StatelessWidget {
                     ),
                   ],
                 ),
+                const Spacer(),
+                TextButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ChatScreen(
+                          chatId: '', // Will be created by ChatService
+                          equipmentId: equipment.id,
+                          equipmentName: equipment.name,
+                          equipmentImage: equipment.imageUrl,
+                          ownerId: equipment.ownerId.isEmpty
+                              ? 'unknown'
+                              : equipment.ownerId,
+                          ownerName: equipment.ownerName,
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
+                  label: Text(
+                    'Message',
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primaryGreen,
+                    ),
+                  ),
+                ),
               ],
             ),
 
@@ -278,8 +340,143 @@ class _EquipmentInfoCard extends StatelessWidget {
   Widget _statDivider() {
     return Container(
       width: 1,
-      height: 36,
+      height: 32,
       color: AppColors.divider,
+    );
+  }
+
+  Future<void> _showContactDialog(BuildContext context) async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Contact Owner',
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w600,
+              color: AppColors.textDark,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                equipment.ownerName,
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textDark,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Equipment: ${equipment.name}',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: AppColors.textMuted,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryGreen.withAlpha(10),
+                  borderRadius: BorderRadius.circular(8),
+                  border:
+                      Border.all(color: AppColors.primaryGreen.withAlpha(30)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.phone_rounded,
+                      color: AppColors.primaryGreen,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        equipment.contactNumber.isNotEmpty
+                            ? equipment.contactNumber
+                            : '+91 98765 43210', // Default number
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primaryGreen,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        // Copy phone number to clipboard
+                        final phoneNumber = equipment.contactNumber.isNotEmpty
+                            ? equipment.contactNumber
+                            : '+91 98765 43210';
+                        // TODO: Implement clipboard functionality with phoneNumber
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Phone number copied!'),
+                            backgroundColor: AppColors.primaryGreen,
+                          ),
+                        );
+                      },
+                      icon: Icon(
+                        Icons.copy_rounded,
+                        color: AppColors.primaryGreen,
+                        size: 18,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Call the owner to discuss rental details, availability, and pricing.',
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  color: AppColors.textMuted,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'Close',
+                style: GoogleFonts.poppins(
+                  color: AppColors.textMuted,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final phoneNumber = equipment.contactNumber.isNotEmpty
+                    ? equipment.contactNumber
+                    : '+91 98765 43210';
+                // TODO: Implement phone call functionality
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Calling $phoneNumber...'),
+                    backgroundColor: AppColors.primaryGreen,
+                  ),
+                );
+                Navigator.of(context).pop();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryGreen,
+              ),
+              child: Text(
+                'Call Now',
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -399,9 +596,7 @@ class _AvailabilitySection extends StatelessWidget {
               vertical: AppSpacing.sm,
             ),
             child: Column(
-              children: _schedule
-                  .map((slot) => _buildDayRow(slot))
-                  .toList(),
+              children: _schedule.map((slot) => _buildDayRow(slot)).toList(),
             ),
           ),
         ],
@@ -442,13 +637,9 @@ class _AvailabilitySection extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  available
-                      ? Icons.check_circle_rounded
-                      : Icons.cancel_rounded,
+                  available ? Icons.check_circle_rounded : Icons.cancel_rounded,
                   size: 16,
-                  color: available
-                      ? AppColors.primaryGreen
-                      : Colors.grey,
+                  color: available ? AppColors.primaryGreen : Colors.grey,
                 ),
                 const SizedBox(width: AppSpacing.xs),
                 Text(
@@ -456,9 +647,7 @@ class _AvailabilitySection extends StatelessWidget {
                   style: GoogleFonts.poppins(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: available
-                        ? AppColors.primaryGreen
-                        : Colors.grey,
+                    color: available ? AppColors.primaryGreen : Colors.grey,
                   ),
                 ),
               ],
@@ -556,7 +745,7 @@ class _BookingBar extends StatelessWidget {
             _infoRow('Location', '${equipment.distance} km away'),
             const SizedBox(height: AppSpacing.md),
             Text(
-              'Contact the owner to negotiate and finalize the purchase.',
+              'Message the owner in-app to negotiate and finalize. Your contact details are not shared.',
               style: GoogleFonts.poppins(
                 fontSize: 12,
                 color: AppColors.textMuted,
@@ -576,24 +765,25 @@ class _BookingBar extends StatelessWidget {
           FilledButton.icon(
             onPressed: () {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Owner contact shared.',
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
-                  ),
-                  backgroundColor: AppColors.primaryGreen,
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(AppSpacing.radiusSm),
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ChatScreen(
+                    chatId: '', // Will be created by ChatService
+                    equipmentId: equipment.id,
+                    equipmentName: equipment.name,
+                    equipmentImage: equipment.imageUrl,
+                    ownerId: equipment.ownerId.isEmpty
+                        ? 'unknown'
+                        : equipment.ownerId,
+                    ownerName: equipment.ownerName,
                   ),
                 ),
               );
             },
-            icon: const Icon(Icons.phone_rounded),
+            icon: const Icon(Icons.chat_rounded),
             label: Text(
-              'Contact Owner',
+              'Message Owner',
               style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
             ),
             style: FilledButton.styleFrom(
@@ -629,18 +819,147 @@ class _BookingBar extends StatelessWidget {
   }
 
   String _formatPrice(double price) {
-    final p = price.toInt().toString();
     final buf = StringBuffer();
-    int count = 0;
-    for (int i = p.length - 1; i >= 0; i--) {
-      buf.write(p[i]);
-      count++;
-      if (i > 0) {
-        if (count == 3 || (count > 3 && (count - 3) % 2 == 0)) {
-          buf.write(',');
-        }
-      }
+    final priceStr = price.toInt().toString();
+    for (int i = 0; i < priceStr.length; i++) {
+      if ((priceStr.length - i) % 3 == 0 && i != 0) buf.write(',');
+      buf.write(priceStr[i]);
     }
-    return buf.toString().split('').reversed.join();
+    return buf.toString().split('').reversed.join('');
+  }
+
+  Future<void> _showContactDialog(BuildContext context) async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Contact Owner',
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w600,
+              color: AppColors.textDark,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                equipment.ownerName,
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textDark,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Equipment: ${equipment.name}',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: AppColors.textMuted,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryGreen.withAlpha(10),
+                  borderRadius: BorderRadius.circular(8),
+                  border:
+                      Border.all(color: AppColors.primaryGreen.withAlpha(30)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.phone_rounded,
+                      color: AppColors.primaryGreen,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        equipment.contactNumber.isNotEmpty
+                            ? equipment.contactNumber
+                            : '+91 98765 43210', // Default number
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primaryGreen,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        // Copy phone number to clipboard
+                        final phoneNumber = equipment.contactNumber.isNotEmpty
+                            ? equipment.contactNumber
+                            : '+91 98765 43210';
+                        // TODO: Implement clipboard functionality with phoneNumber
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Phone number copied!'),
+                            backgroundColor: AppColors.primaryGreen,
+                          ),
+                        );
+                      },
+                      icon: Icon(
+                        Icons.copy_rounded,
+                        color: AppColors.primaryGreen,
+                        size: 18,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Call the owner to discuss rental details, availability, and pricing.',
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  color: AppColors.textMuted,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'Close',
+                style: GoogleFonts.poppins(
+                  color: AppColors.textMuted,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final phoneNumber = equipment.contactNumber.isNotEmpty
+                    ? equipment.contactNumber
+                    : '+91 98765 43210';
+                // TODO: Implement phone call functionality
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Calling $phoneNumber...'),
+                    backgroundColor: AppColors.primaryGreen,
+                  ),
+                );
+                Navigator.of(context).pop();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryGreen,
+              ),
+              child: Text(
+                'Call Now',
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 }

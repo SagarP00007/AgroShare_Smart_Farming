@@ -9,6 +9,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../widgets/ag_button.dart';
 import '../widgets/ag_card.dart';
+import '../widgets/reactive_helpers.dart';
 import 'equipment_list_screen.dart';
 import 'main_shell.dart';
 
@@ -90,10 +91,21 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
   }
 }
 
-class _BookingsList extends StatelessWidget {
+class _BookingsList extends StatefulWidget {
   const _BookingsList({required this.status});
 
   final BookingStatus status;
+
+  @override
+  State<_BookingsList> createState() => _BookingsListState();
+}
+
+class _BookingsListState extends State<_BookingsList> {
+  Key _streamKey = UniqueKey();
+
+  void _retry() {
+    setState(() => _streamKey = UniqueKey());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -103,34 +115,43 @@ class _BookingsList extends StatelessWidget {
     }
 
     return StreamBuilder<QuerySnapshot>(
+      key: _streamKey,
       stream: FirestoreService.instance.userBookingsStream(uid),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
+          return ReactiveErrorView(
+            message: 'Failed to load bookings.',
+            onRetry: _retry,
+          );
         }
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(color: AppColors.primaryGreen),
-          );
+          return const ReactiveLoadingView(message: 'Loading bookings…');
         }
 
         final allBookings = snapshot.data?.docs ?? [];
         final bookings = allBookings
             .map((doc) =>
                 Booking.fromMap(doc.id, doc.data() as Map<String, dynamic>))
-            .where((b) => b.status == status)
+            .where((b) => b.status == widget.status)
             .toList();
 
         if (bookings.isEmpty) {
-          return _EmptyState(status: status);
+          return _EmptyState(status: widget.status);
         }
 
-        return ListView.builder(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          itemCount: bookings.length,
-          itemBuilder: (context, index) {
-            return _BookingCard(booking: bookings[index]);
+        return RefreshIndicator(
+          onRefresh: () async {
+            await Future.delayed(const Duration(milliseconds: 400));
           },
+          color: AppColors.primaryGreen,
+          child: ListView.builder(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            physics: const AlwaysScrollableScrollPhysics(),
+            itemCount: bookings.length,
+            itemBuilder: (context, index) {
+              return _BookingCard(booking: bookings[index]);
+            },
+          ),
         );
       },
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -426,36 +427,73 @@ class _DurationSelector extends StatelessWidget {
     return AgCard(
       margin: EdgeInsets.zero,
       padding: const EdgeInsets.all(AppSpacing.md),
-      child: Wrap(
-        spacing: AppSpacing.sm,
-        runSpacing: AppSpacing.sm,
-        children: _options.map((hours) {
-          final isSelected = hours == selected;
-          return ChoiceChip(
-            label: Text(
-              '$hours ${hours == 1 ? 'hour' : 'hours'}',
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: isSelected
-                    ? AppColors.textLight
-                    : AppColors.textDark,
-              ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 2,
+            child: Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
+              children: _options.map((hours) {
+                final isSelected = hours == selected;
+                return ChoiceChip(
+                  label: Text(
+                    '$hours ${hours == 1 ? 'hr' : 'hrs'}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: isSelected
+                          ? AppColors.textLight
+                          : AppColors.textDark,
+                    ),
+                  ),
+                  selected: isSelected,
+                  selectedColor: AppColors.primaryGreen,
+                  backgroundColor: AppColors.lightBackground,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                    side: BorderSide(
+                      color: isSelected
+                          ? AppColors.primaryGreen
+                          : AppColors.divider,
+                    ),
+                  ),
+                  onSelected: (_) => onChanged(hours),
+                );
+              }).toList(),
             ),
-            selected: isSelected,
-            selectedColor: AppColors.primaryGreen,
-            backgroundColor: AppColors.lightBackground,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-              side: BorderSide(
-                color: isSelected
-                    ? AppColors.primaryGreen
-                    : AppColors.divider,
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            flex: 1,
+            child: TextFormField(
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              decoration: InputDecoration(
+                hintText: 'Custom hr',
+                hintStyle: GoogleFonts.poppins(fontSize: 13, color: AppColors.textMuted),
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm,
+                  vertical: AppSpacing.md,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                  borderSide: const BorderSide(color: AppColors.divider),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                  borderSide: const BorderSide(color: AppColors.primaryGreen),
+                ),
               ),
+              onChanged: (val) {
+                final hrs = int.tryParse(val) ?? 0;
+                if (hrs > 0) onChanged(hrs);
+              },
             ),
-            onSelected: (_) => onChanged(hours),
-          );
-        }).toList(),
+          ),
+        ],
       ),
     );
   }
