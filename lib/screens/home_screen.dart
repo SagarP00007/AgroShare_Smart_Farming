@@ -41,7 +41,8 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Fetches real-time GPS for the home banner (no cache).
   Future<void> _determinePosition() async {
     LocationService.instance.invalidateCache();
-    final location = await LocationService.instance.getCurrentLocationRealtime();
+    final location =
+        await LocationService.instance.getCurrentLocationRealtime();
     final address = await LocationService.instance.getAddressFromCoordinates(
       location.latitude,
       location.longitude,
@@ -76,9 +77,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: AppSpacing.lg),
               _FeaturedEquipmentSection(onSwitchTab: widget.onSwitchTab),
               const SizedBox(height: AppSpacing.lg),
-              const _SeasonalRecommendationsSection(),
-              const SizedBox(height: AppSpacing.xxl),
-              _SmartFarmingTipCard(),
+              const _SeasonalSmartSection(),
               const SizedBox(height: AppSpacing.xxl),
             ],
           ),
@@ -258,10 +257,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   'Find nearby tractors, harvesters, and farming\n'
                   'equipment easily.',
                   style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    color: AppColors.textLight.withAlpha(190),
-                    height: 1.5,
+                    fontSize: 16,
+                    color: AppColors.textLight,
+                    height: 1.4,
                   ),
                 ),
 
@@ -300,10 +298,18 @@ class _QuickActionsSection extends StatelessWidget {
   final void Function(int)? onSwitchTab;
 
   static const _actions = [
-    _QuickAction(icon: Icons.search_rounded, labelKey: 'find_equipment', emoji: '🔍'),
-    _QuickAction(icon: Icons.calendar_month_rounded, labelKey: 'my_bookings', emoji: '📅'),
-    _QuickAction(icon: Icons.people_rounded, labelKey: 'community', emoji: '🤝'),
-    _QuickAction(icon: Icons.add_circle_outline_rounded, labelKey: 'list_equipment', emoji: '➕'),
+    _QuickAction(
+        icon: Icons.search_rounded, labelKey: 'find_equipment', emoji: '🔍'),
+    _QuickAction(
+        icon: Icons.calendar_month_rounded,
+        labelKey: 'my_bookings',
+        emoji: '📅'),
+    _QuickAction(
+        icon: Icons.people_rounded, labelKey: 'community', emoji: '🤝'),
+    _QuickAction(
+        icon: Icons.add_circle_outline_rounded,
+        labelKey: 'list_equipment',
+        emoji: '➕'),
   ];
 
   @override
@@ -322,7 +328,8 @@ class _QuickActionsSection extends StatelessWidget {
               crossAxisCount: 2,
               mainAxisSpacing: AppSpacing.sm,
               crossAxisSpacing: AppSpacing.sm,
-              mainAxisExtent: 130, // Fixed height prevents subtitle wrapping overflows
+              mainAxisExtent:
+                  130, // Fixed height prevents subtitle wrapping overflows
             ),
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -569,6 +576,207 @@ class _FeaturedEquipmentChip extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// MERGED SEASONAL RECOMMENDATIONS & SMART FARMING
+// ─────────────────────────────────────────────
+
+class _SeasonalSmartSection extends StatelessWidget {
+  const _SeasonalSmartSection();
+
+  String get _currentSeason {
+    final month = DateTime.now().month;
+    if (month >= 6 && month <= 9) return 'planting';
+    if (month >= 10 || month <= 2) return 'harvesting';
+    return 'preparation';
+  }
+
+  List<Map<String, String>> _getRecommendations() {
+    switch (_currentSeason) {
+      case 'harvesting':
+        return [
+          {
+            'name': 'Mini Harvester',
+            'emoji': '🌾',
+            'desc': 'Best suited for rice harvesting during peak season.'
+          },
+          {
+            'name': 'Paddy Thresher',
+            'emoji': '🚜',
+            'desc': 'Efficient threshing of paddy crops after harvest.'
+          },
+        ];
+      case 'planting':
+        return [
+          {
+            'name': 'Seed Drill',
+            'emoji': '🌱',
+            'desc': 'Ensures uniform depth and spacing for planting seeds.'
+          },
+          {
+            'name': 'Rotavator',
+            'emoji': '🚜',
+            'desc': 'Perfect for secondary tillage and seedbed preparation.'
+          },
+        ];
+      default:
+        return [
+          {
+            'name': 'Plough',
+            'emoji': '🚜',
+            'desc': 'Essential for primary tillage and soil preparation.'
+          },
+          {
+            'name': 'Land Leveler',
+            'emoji': '📐',
+            'desc': 'Creates even field surface for better water management.'
+          },
+        ];
+    }
+  }
+
+  String _getSmartTip() {
+    switch (_currentSeason) {
+      case 'harvesting':
+        return 'Harvest at the right moisture level (20-25%) for better grain quality and storage life.';
+      case 'planting':
+        return 'Test soil pH before planting. Most crops prefer pH 6.0-7.0 for optimal nutrient uptake.';
+      default:
+        return 'Prepare soil by incorporating organic matter to improve structure and fertility for the next season.';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final recommendations = _getRecommendations();
+    final smartTip = _getSmartTip();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionTitle(
+            title: 'Season Recommendations & Smart Tips',
+            padding: const EdgeInsets.only(bottom: AppSpacing.md),
+          ),
+
+          // Smart Farming Tip Card
+          AgCard(
+            margin: const EdgeInsets.only(bottom: AppSpacing.lg),
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppColors.secondaryGreen.withAlpha(50),
+                        AppColors.primaryGreen.withAlpha(30),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                  ),
+                  child: const Icon(
+                    Icons.eco_rounded,
+                    color: AppColors.primaryGreen,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Smart Farming Tip',
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textDark,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        smartTip,
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          color: AppColors.textMuted,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Seasonal Equipment Recommendations
+          ...recommendations.asMap().entries.map((entry) {
+            final index = entry.key;
+            final item = entry.value;
+            return Padding(
+              padding: EdgeInsets.only(
+                  bottom:
+                      index < recommendations.length - 1 ? AppSpacing.md : 0),
+              child: AgCard(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryGreen.withAlpha(15),
+                        borderRadius:
+                            BorderRadius.circular(AppSpacing.radiusSm),
+                      ),
+                      child: Text(
+                        item['emoji']!,
+                        style: const TextStyle(fontSize: 24),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item['name']!,
+                            style: GoogleFonts.poppins(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textDark,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            item['desc']!,
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+        ],
       ),
     );
   }

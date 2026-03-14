@@ -138,10 +138,13 @@
   "languages_telugu": "तेलुगु",
   "languages_tamil": "तमिल",
   "languages_marathi": "मराठी",
-  "languages_gujarati": "गुजराती",
-  "languages_kannada": "कन्नड़",
-  "languages_malayalam": "मलयालम",
-  "languages_punjabi": "पंजाबी",
-  "languages_odia": "ओड़िया",
-  "languages_urdu": "उर्दू"
+  "languages_gujarati": "ગુજરાતી",
+  "languages_kannada": "ಕನ್ನಡ",
+  "languages_malayalam": "മലയാളം",
+  "languages_punjabi": "ਪੰਜਾਬੀ",
+  "languages_odia": "ଓଡ଼ିଆ",
+  "languages_urdu": "اردو",
+  "find_nearby_equipment": "अपने आस-पास के ट्रैक्टर, हार्वेस्टर और खेती के उपकरण आसानी से खोजें।",
+  "season_recommendations": "सीज़न की सिफारिशें",
+  "smart_tips": "स्मार्ट टिप्स"
 }

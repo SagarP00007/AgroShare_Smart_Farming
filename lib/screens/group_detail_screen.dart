@@ -641,7 +641,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                             context,
                             MaterialPageRoute(
                               builder: (_) => ChatScreen(
-                                chatId: '', // Will be created by ChatService
+                                chatId: '',
                                 equipmentId: 'group-chat',
                                 equipmentName: 'Group Chat',
                                 equipmentImage: '',

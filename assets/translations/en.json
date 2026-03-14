@@ -148,10 +148,13 @@
   "languages_telugu": "Telugu",
   "languages_tamil": "Tamil",
   "languages_marathi": "Marathi",
-  "languages_gujarati": "Gujarati",
-  "languages_kannada": "Kannada",
-  "languages_malayalam": "Malayalam",
-  "languages_punjabi": "Punjabi",
-  "languages_odia": "Odia",
-  "languages_urdu": "Urdu"
+  "languages_gujarati": "ગુજરાતી",
+  "languages_kannada": "ಕನ್ನಡ",
+  "languages_malayalam": "മലയാളം",
+  "languages_punjabi": "ਪੰਜਾਬੀ",
+  "languages_odia": "ଓଡ଼ିଆ",
+  "languages_urdu": "اردو",
+  "find_nearby_equipment": "Find nearby tractors, harvesters, and farming equipment easily.",
+  "season_recommendations": "Season Recommendations",
+  "smart_tips": "Smart Tips"
 }
