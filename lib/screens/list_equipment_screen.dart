@@ -1,8 +1,15 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../services/auth_service.dart';
+import '../services/firestore_service.dart';
+import '../services/storage_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
+import '../utils/image_picker_util.dart';
 import '../widgets/ag_button.dart';
 import '../widgets/ag_card.dart';
 import '../widgets/section_title.dart';
@@ -40,15 +47,14 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
   bool _fuelIncluded = false;
   bool _driverIncluded = false;
 
-  // Simulated image
-  bool _imageUploaded = false;
+  // Equipment photo: local file and Firebase Storage URL after upload
+  File? _selectedImageFile;
+  String? _uploadedImageUrl;
+  bool _isUploadingImage = false;
 
   // Listing type
   String _listingType = 'rent';
   final _sellingPriceCtrl = TextEditingController();
-
-  // My listed equipment (in-memory)
-  final List<_ListedItem> _myListings = [];
 
   static const _equipmentTypes = [
     'Tractor',
@@ -65,7 +71,7 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
     'Needs Service',
   ];
 
-  void _addEquipment() {
+  void _addEquipment() async {
     // Validate
     if (_selectedEquipment == null) {
       _showError('Please select equipment type');
@@ -84,44 +90,93 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
       return;
     }
 
-    // Add to listings
-    setState(() {
-      _myListings.add(_ListedItem(
-        name: _selectedEquipment!,
-        price: _priceCtrl.text.trim(),
-        condition: _selectedCondition!,
-        location: _locationCtrl.text.trim(),
-        fuelIncluded: _fuelIncluded,
-        driverIncluded: _driverIncluded,
-        availableDays:
-            _days.entries.where((e) => e.value).map((e) => e.key).toList(),
-      ));
+    try {
+      final uid = AuthService.instance.uid;
+      final userDoc = await FirestoreService.instance.getUser(uid);
+      final userData = userDoc.data() as Map<String, dynamic>? ?? {};
+
+      await FirestoreService.instance.addEquipment({
+        'name': _selectedEquipment!,
+        // Core fields required by spec.
+        'price': double.tryParse(_priceCtrl.text.trim()) ?? 0,
+        'location': _locationCtrl.text.trim(),
+        'ownerId': uid,
+        'listingType': _listingType,
+        'isAvailable': true,
+        'imageUrl': _uploadedImageUrl ?? '',
+
+        // Existing fields used elsewhere in the app.
+        'pricePerHour': double.tryParse(_priceCtrl.text.trim()) ?? 0,
+        'distance': 0.0,
+        'rating': 0.0,
+        'reviewCount': 0,
+        'ownerName': userData['name'] ?? 'Unknown',
+        'description': _descCtrl.text.trim(),
+        'locationName': _locationCtrl.text.trim(),
+        'latitude': 0.0,
+        'longitude': 0.0,
+        'purchasePrice': double.tryParse(_sellingPriceCtrl.text.trim()) ?? 0,
+        'condition': _selectedCondition!,
+        'fuelIncluded': _fuelIncluded,
+        'driverIncluded': _driverIncluded,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      if (!mounted) return;
 
       // Reset form
-      _selectedEquipment = null;
-      _selectedCondition = null;
-      _descCtrl.clear();
-      _priceCtrl.clear();
-      _locationCtrl.clear();
-      _serviceAreaCtrl.clear();
-      _fuelIncluded = false;
-      _driverIncluded = false;
-      _imageUploaded = false;
-    });
+      setState(() {
+        _selectedEquipment = null;
+        _selectedCondition = null;
+        _descCtrl.clear();
+        _priceCtrl.clear();
+        _locationCtrl.clear();
+        _serviceAreaCtrl.clear();
+        _sellingPriceCtrl.clear();
+        _fuelIncluded = false;
+        _driverIncluded = false;
+        _selectedImageFile = null;
+        _uploadedImageUrl = null;
+      });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Equipment listed successfully!',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Equipment listed successfully.',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+          ),
+          backgroundColor: AppColors.primaryGreen,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+          ),
         ),
-        backgroundColor: AppColors.primaryGreen,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-        ),
-      ),
-    );
+      );
+    } catch (e) {
+      if (!mounted) return;
+      _showError('Failed to list equipment: $e');
+    }
+  }
+
+  Future<void> _pickAndUploadImage() async {
+    final file = await pickImageFromSource(context);
+    if (file == null || !mounted) return;
+    setState(() {
+      _selectedImageFile = file;
+      _isUploadingImage = true;
+    });
+    try {
+      final url = await StorageService.instance.uploadEquipmentImage(file);
+      if (!mounted) return;
+      setState(() {
+        _uploadedImageUrl = url;
+        _isUploadingImage = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isUploadingImage = false);
+      _showError('Upload failed: $e');
+    }
   }
 
   void _showError(String msg) {
@@ -195,16 +250,14 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
                 const SizedBox(height: AppSpacing.lg),
               ],
               AgButton(
-                label: 'Add Equipment',
+                label: 'ADD EQUIPMENT',
                 icon: Icons.add_circle_outline_rounded,
                 isExpanded: true,
                 onPressed: _addEquipment,
               ),
               const SizedBox(height: AppSpacing.xl),
-              if (_myListings.isNotEmpty) ...[
-                _buildMyListings(),
-                const SizedBox(height: AppSpacing.xxl),
-              ],
+              _buildMyListings(),
+              const SizedBox(height: AppSpacing.xxl),
             ],
           ),
         ),
@@ -412,7 +465,7 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
             children: [
               // Equipment type dropdown
               DropdownButtonFormField<String>(
-                initialValue: _selectedEquipment,
+                value: _selectedEquipment,
                 decoration: InputDecoration(
                   labelText: 'Equipment Type',
                   labelStyle: GoogleFonts.poppins(color: AppColors.textMuted),
@@ -569,7 +622,7 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
           margin: EdgeInsets.zero,
           padding: const EdgeInsets.all(AppSpacing.md),
           child: DropdownButtonFormField<String>(
-            initialValue: _selectedCondition,
+            value: _selectedCondition,
             decoration: InputDecoration(
               labelText: 'Condition',
               labelStyle: GoogleFonts.poppins(color: AppColors.textMuted),
@@ -593,6 +646,10 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
 
   // ── IMAGE UPLOAD ──
   Widget _buildImageUpload() {
+    final hasImage =
+        (_uploadedImageUrl != null && _uploadedImageUrl!.isNotEmpty) ||
+            _selectedImageFile != null;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -603,33 +660,54 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
         AgCard(
           margin: EdgeInsets.zero,
           padding: const EdgeInsets.all(AppSpacing.lg),
-          onTap: () => setState(() => _imageUploaded = true),
-          child: _imageUploaded
+          onTap: _isUploadingImage ? null : _pickAndUploadImage,
+          child: hasImage
               ? Column(
                   children: [
                     ClipRRect(
                       borderRadius:
                           BorderRadius.circular(AppSpacing.radiusMd),
-                      child: Image.asset(
-                        'assets/images/tractor.webp',
+                      child: SizedBox(
                         height: 140,
                         width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) =>
-                            Container(
-                          height: 140,
-                          color: AppColors.secondaryGreen.withAlpha(20),
-                          child: const Icon(
-                            Icons.image_rounded,
-                            size: 48,
-                            color: AppColors.primaryGreen,
-                          ),
-                        ),
+                        child: _uploadedImageUrl != null &&
+                                _uploadedImageUrl!.isNotEmpty
+                            ? Image.network(
+                                _uploadedImageUrl!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    _placeholder(),
+                              )
+                            : _selectedImageFile != null
+                                ? Stack(
+                                    fit: StackFit.expand,
+                                    children: [
+                                      Image.file(
+                                        _selectedImageFile!,
+                                        fit: BoxFit.cover,
+                                      ),
+                                      if (_isUploadingImage)
+                                        Container(
+                                          color: Colors.black26,
+                                          child: const Center(
+                                            child: CircularProgressIndicator(
+                                              color: AppColors.primaryGreen,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  )
+                                : _placeholder(),
                       ),
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     Text(
-                      'Photo uploaded ✓',
+                      _uploadedImageUrl != null &&
+                              _uploadedImageUrl!.isNotEmpty
+                          ? 'Photo uploaded ✓'
+                          : _isUploadingImage
+                              ? 'Uploading…'
+                              : 'Photo uploaded ✓',
                       style: GoogleFonts.poppins(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
@@ -648,14 +726,14 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
-                        Icons.camera_alt_rounded,
+                        Icons.add_photo_alternate_rounded,
                         size: 30,
                         color: AppColors.primaryGreen.withAlpha(150),
                       ),
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     Text(
-                      'Upload Equipment Photo',
+                      'Add Equipment Photo',
                       style: GoogleFonts.poppins(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
@@ -664,7 +742,7 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Tap to add a photo of your machine',
+                      'Take Photo or Choose From Gallery',
                       style: GoogleFonts.poppins(
                         fontSize: 12,
                         color: AppColors.textMuted,
@@ -674,6 +752,18 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
                 ),
         ),
       ],
+    );
+  }
+
+  Widget _placeholder() {
+    return Container(
+      height: 140,
+      color: AppColors.secondaryGreen.withAlpha(20),
+      child: const Icon(
+        Icons.image_rounded,
+        size: 48,
+        color: AppColors.primaryGreen,
+      ),
     );
   }
 
@@ -758,174 +848,114 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
 
   // ── MY LISTINGS ──
   Widget _buildMyListings() {
+    final uid = AuthService.instance.currentUser?.uid;
+    if (uid == null) return const SizedBox.shrink();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SectionTitle(
+        const SectionTitle(
           title: 'My Listed Equipment',
-          trailing: Text(
-            '${_myListings.length} ${_myListings.length == 1 ? 'machine' : 'machines'}',
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              color: AppColors.textMuted,
-            ),
-          ),
-          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+          padding: EdgeInsets.only(bottom: AppSpacing.sm),
         ),
-        ..._myListings.asMap().entries.map((entry) {
-          final item = entry.value;
-          return _ListedItemCard(item: item);
-        }),
+        StreamBuilder<QuerySnapshot>(
+          stream: FirestoreService.instance.userEquipmentStream(uid),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(AppSpacing.lg),
+                  child: CircularProgressIndicator(color: AppColors.primaryGreen),
+                ),
+              );
+            }
+            final docs = snapshot.data?.docs ?? [];
+            if (docs.isEmpty) {
+              return AgCard(
+                margin: EdgeInsets.zero,
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: Center(
+                  child: Text(
+                    'No equipment listed yet.',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                ),
+              );
+            }
+            return Column(
+              children: docs.map((doc) {
+                final data = doc.data() as Map<String, dynamic>;
+                return AgCard(
+                  margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 50,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          color: AppColors.secondaryGreen.withAlpha(35),
+                          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                        ),
+                        child: const Icon(
+                          Icons.agriculture_rounded,
+                          size: 26,
+                          color: AppColors.primaryGreen,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              data['name'] ?? '',
+                              style: GoogleFonts.poppins(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textDark,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '₹${(data['pricePerHour'] ?? 0).toInt()}/hr  •  ${data['locationName'] ?? ''}',
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.sm,
+                          vertical: AppSpacing.xs,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.secondaryGreen.withAlpha(20),
+                          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                        ),
+                        child: Text(
+                          (data['isAvailable'] ?? true) ? 'Available' : 'Rented',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primaryGreen,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            );
+          },
+        ),
       ],
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
-// DATA
-// ─────────────────────────────────────────────
-
-class _ListedItem {
-  const _ListedItem({
-    required this.name,
-    required this.price,
-    required this.condition,
-    required this.location,
-    required this.fuelIncluded,
-    required this.driverIncluded,
-    required this.availableDays,
-  });
-
-  final String name;
-  final String price;
-  final String condition;
-  final String location;
-  final bool fuelIncluded;
-  final bool driverIncluded;
-  final List<String> availableDays;
-}
-
-// ─────────────────────────────────────────────
-// LISTED ITEM CARD
-// ─────────────────────────────────────────────
-
-class _ListedItemCard extends StatelessWidget {
-  const _ListedItemCard({required this.item});
-
-  final _ListedItem item;
-
-  IconData get _icon {
-    switch (item.name) {
-      case 'Tractor':
-        return Icons.agriculture_rounded;
-      case 'Mini Harvester':
-        return Icons.grass_rounded;
-      case 'Irrigation Pump':
-        return Icons.water_drop_rounded;
-      case 'Rotavator':
-        return Icons.settings_rounded;
-      case 'Seed Drill':
-        return Icons.eco_rounded;
-      default:
-        return Icons.agriculture_rounded;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AgCard(
-      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Row(
-        children: [
-          // Icon
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: AppColors.secondaryGreen.withAlpha(35),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            ),
-            child: Icon(_icon, size: 26, color: AppColors.primaryGreen),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          // Details
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.name,
-                  style: GoogleFonts.poppins(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textDark,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '₹${item.price}/hr  •  ${item.location}',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: AppColors.textMuted,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Row(
-                  children: [
-                    _tag(item.condition, AppColors.primaryGreen),
-                    if (item.fuelIncluded) ...[
-                      const SizedBox(width: AppSpacing.xs),
-                      _tag('Fuel', Colors.orange),
-                    ],
-                    if (item.driverIncluded) ...[
-                      const SizedBox(width: AppSpacing.xs),
-                      _tag('Driver', Colors.blue),
-                    ],
-                  ],
-                ),
-              ],
-            ),
-          ),
-          // Status badge
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.sm,
-              vertical: AppSpacing.xs,
-            ),
-            decoration: BoxDecoration(
-              color: AppColors.secondaryGreen.withAlpha(20),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-            ),
-            child: Text(
-              'Available',
-              style: GoogleFonts.poppins(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: AppColors.primaryGreen,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _tag(String label, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withAlpha(18),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        label,
-        style: GoogleFonts.poppins(
-          fontSize: 10,
-          fontWeight: FontWeight.w500,
-          color: color,
-        ),
-      ),
     );
   }
 }

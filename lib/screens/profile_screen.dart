@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../models/farmer.dart';
+import '../services/auth_service.dart';
+import '../services/firestore_service.dart';
+import '../services/storage_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
+import '../utils/image_picker_util.dart';
 import '../widgets/ag_card.dart';
+import '../widgets/ag_button.dart';
 import '../widgets/section_title.dart';
+import 'login_screen.dart';
 
 /// Profile screen showing farmer overview, trust score, and activity summary.
 class ProfileScreen extends StatefulWidget {
@@ -16,9 +24,13 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   String _selectedLanguage = 'English';
+  bool _isUploadingProfilePhoto = false;
 
   @override
   Widget build(BuildContext context) {
+    final uid = AuthService.instance.currentUser?.uid;
+    if (uid == null) return const SizedBox.shrink();
+
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
       appBar: AppBar(
@@ -31,122 +43,161 @@ class _ProfileScreenState extends State<ProfileScreen> {
         elevation: 0,
         automaticallyImplyLeading: false,
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Section 1: Profile Header ───────────────────────
-              _buildProfileHeader(),
+      body: StreamBuilder<DocumentSnapshot>(
+        stream: FirestoreService.instance.userStream(uid),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(color: AppColors.primaryGreen),
+            );
+          }
 
-              const SizedBox(height: AppSpacing.lg),
+          final data = snapshot.data?.data() as Map<String, dynamic>? ?? {};
+          final farmer = Farmer.fromMap(uid, data);
 
-              // ── Section 2: Trust Score ──────────────────────────
-              _buildTrustScore(),
-
-              const SizedBox(height: AppSpacing.lg),
-
-              // ── Section 3: Activity Summary ────────────────────
-              _buildActivitySummary(),
-
-              const SizedBox(height: AppSpacing.lg),
-
-              // ── Section 4: My Equipment ─────────────────────────
-              _buildMyEquipment(context),
-
-              const SizedBox(height: AppSpacing.lg),
-
-              // ── Section 5: Community Groups ─────────────────────
-              _buildCommunityGroups(),
-
-              const SizedBox(height: AppSpacing.lg),
-
-              // ── Section 6: Reviews ──────────────────────────────
-              _buildReviews(),
-
-              const SizedBox(height: AppSpacing.lg),
-
-              // ── Section 7: Settings ─────────────────────────────
-              _buildSettings(context),
-
-              const SizedBox(height: AppSpacing.lg),
-
-              // ── Section 8: Language Preferences ─────────────────
-              _buildLanguagePreferences(),
-
-              const SizedBox(height: AppSpacing.lg),
-
-              // ── Section 9: Notifications ────────────────────────
-              _buildNotifications(),
-
-              const SizedBox(height: AppSpacing.lg),
-
-              // ── Section 10: Safety & Report ─────────────────────
-              _buildSafetyReport(context),
-
-              const SizedBox(height: AppSpacing.lg),
-            ],
-          ),
-        ),
+          return SafeArea(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildProfileHeader(context, farmer, uid),
+                  const SizedBox(height: AppSpacing.lg),
+                  _buildTrustScore(farmer),
+                  const SizedBox(height: AppSpacing.lg),
+                  _buildActivitySummary(farmer),
+                  const SizedBox(height: AppSpacing.lg),
+                  _buildMyEquipment(context),
+                  const SizedBox(height: AppSpacing.lg),
+                  _buildSettings(context, farmer),
+                  const SizedBox(height: AppSpacing.lg),
+                  _buildLanguagePreferences(),
+                  const SizedBox(height: AppSpacing.lg),
+                  _buildLogout(context),
+                  const SizedBox(height: AppSpacing.lg),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
 
   // ── Section 1: Profile Header ──────────────────────────────────
 
-  Widget _buildProfileHeader() {
+  Future<void> _pickAndUploadProfilePhoto(
+    BuildContext context,
+    String uid,
+  ) async {
+    if (_isUploadingProfilePhoto) return;
+    final file = await pickImageFromSource(context);
+    if (file == null || !context.mounted) return;
+    setState(() => _isUploadingProfilePhoto = true);
+    try {
+      final url =
+          await StorageService.instance.uploadProfileImage(file, uid);
+      if (!context.mounted) return;
+      await FirestoreService.instance.updateProfile(uid, {'profileImage': url});
+      if (!context.mounted) return;
+      setState(() => _isUploadingProfilePhoto = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Profile photo updated.',
+            style: GoogleFonts.poppins(),
+          ),
+          backgroundColor: AppColors.primaryGreen,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      setState(() => _isUploadingProfilePhoto = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Upload failed: $e', style: GoogleFonts.poppins()),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Widget _buildProfileHeader(
+    BuildContext context,
+    Farmer farmer,
+    String uid,
+  ) {
+    final hasProfileImage = farmer.profileImage.isNotEmpty &&
+        farmer.profileImage.startsWith('http');
+
     return AgCard(
       margin: EdgeInsets.zero,
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Row(
         children: [
-          // Avatar with edit badge
-          Stack(
-            children: [
-              CircleAvatar(
-                radius: 38,
-                backgroundColor: AppColors.secondaryGreen.withAlpha(40),
-                child: const Icon(
-                  Icons.person_rounded,
-                  size: 42,
-                  color: AppColors.primaryGreen,
+          GestureDetector(
+            onTap: _isUploadingProfilePhoto
+                ? null
+                : () => _pickAndUploadProfilePhoto(context, uid),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                CircleAvatar(
+                  radius: 38,
+                  backgroundColor: AppColors.secondaryGreen.withAlpha(40),
+                  backgroundImage: hasProfileImage
+                      ? NetworkImage(farmer.profileImage)
+                      : null,
+                  child: hasProfileImage
+                      ? null
+                      : const Icon(
+                          Icons.person_rounded,
+                          size: 42,
+                          color: AppColors.primaryGreen,
+                        ),
                 ),
-              ),
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryGreen,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.cardBackground,
-                      width: 2,
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryGreen,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.cardBackground,
+                        width: 2,
+                      ),
                     ),
-                  ),
-                  child: const Icon(
-                    Icons.edit_rounded,
-                    size: 14,
-                    color: AppColors.textLight,
+                    child: _isUploadingProfilePhoto
+                        ? const Padding(
+                            padding: EdgeInsets.all(4),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.textLight,
+                            ),
+                          )
+                        : const Icon(
+                            Icons.camera_alt_rounded,
+                            size: 14,
+                            color: AppColors.textLight,
+                          ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-
           const SizedBox(width: AppSpacing.md),
-
-          // Name and location
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Ramesh Kumar',
+                  farmer.name.isEmpty ? 'Farmer' : farmer.name,
                   style: GoogleFonts.poppins(
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
@@ -157,20 +208,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Row(
                   children: [
                     const Icon(
-                      Icons.location_on_outlined,
-                      size: 16,
+                      Icons.email_outlined,
+                      size: 14,
                       color: AppColors.textMuted,
                     ),
                     const SizedBox(width: AppSpacing.xs),
-                    Text(
-                      'Angondhalli, Karnataka',
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: AppColors.textMuted,
+                    Expanded(
+                      child: Text(
+                        farmer.email,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: AppColors.textMuted,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
                 ),
+                if (farmer.location.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.location_on_outlined,
+                        size: 14,
+                        color: AppColors.textMuted,
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      Text(
+                        farmer.location,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
@@ -181,21 +255,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // ── Section 2: Trust Score ─────────────────────────────────────
 
-  Widget _buildTrustScore() {
+  Widget _buildTrustScore(Farmer farmer) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionTitle(
-          title: 'Trust Score',
-          padding: EdgeInsets.zero,
-        ),
+        const SectionTitle(title: 'Trust Score', padding: EdgeInsets.zero),
         const SizedBox(height: AppSpacing.md),
         AgCard(
           margin: EdgeInsets.zero,
           padding: const EdgeInsets.all(AppSpacing.lg),
           child: Column(
             children: [
-              // Star rating row
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -214,7 +284,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(width: AppSpacing.md),
                   Text(
-                    '4.7',
+                    farmer.trustScore.toStringAsFixed(1),
                     style: GoogleFonts.poppins(
                       fontSize: 36,
                       fontWeight: FontWeight.w700,
@@ -231,31 +301,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ],
               ),
-
               const SizedBox(height: AppSpacing.md),
               const Divider(color: AppColors.divider),
               const SizedBox(height: AppSpacing.md),
-
-              // Stats
               Row(
                 children: [
                   Expanded(
                     child: _trustStat(
                       Icons.handshake_outlined,
-                      '12',
+                      '${farmer.completedRentals}',
                       'Completed\nRentals',
                       AppColors.primaryGreen,
                     ),
                   ),
-                  Container(
-                    width: 1,
-                    height: 48,
-                    color: AppColors.divider,
-                  ),
+                  Container(width: 1, height: 48, color: AppColors.divider),
                   Expanded(
                     child: _trustStat(
                       Icons.groups_outlined,
-                      '2',
+                      '${farmer.groupPurchases}',
                       'Community\nPurchases',
                       const Color(0xFF1565C0),
                     ),
@@ -269,12 +332,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _trustStat(
-    IconData icon,
-    String value,
-    String label,
-    Color color,
-  ) {
+  Widget _trustStat(IconData icon, String value, String label, Color color) {
     return Column(
       children: [
         Row(
@@ -308,54 +366,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // ── Section 3: Activity Summary ────────────────────────────────
 
-  Widget _buildActivitySummary() {
+  Widget _buildActivitySummary(Farmer farmer) {
+    final uid = AuthService.instance.uid;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionTitle(
-          title: 'Activity Summary',
-          padding: EdgeInsets.zero,
-        ),
+        const SectionTitle(title: 'Activity Summary', padding: EdgeInsets.zero),
         const SizedBox(height: AppSpacing.md),
         Row(
           children: [
             Expanded(
               child: _activityCard(
                 Icons.receipt_long_rounded,
-                '8',
+                '${farmer.completedRentals}',
                 'Total Rentals',
                 AppColors.primaryGreen,
               ),
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(
-              child: _activityCard(
-                Icons.agriculture_rounded,
-                '5',
-                'Equipment\nBorrowed',
-                const Color(0xFFEF6C00),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.md),
-        Row(
-          children: [
-            Expanded(
-              child: _activityCard(
-                Icons.inventory_2_rounded,
-                '2',
-                'Equipment\nListed',
-                const Color(0xFF1565C0),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: _activityCard(
-                Icons.groups_rounded,
-                '3',
-                'Community\nGroups',
-                const Color(0xFF6A1B9A),
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirestoreService.instance.userEquipmentStream(uid),
+                builder: (context, snap) {
+                  final count = snap.data?.docs.length ?? 0;
+                  return _activityCard(
+                    Icons.inventory_2_rounded,
+                    '$count',
+                    'Equipment\nListed',
+                    const Color(0xFF1565C0),
+                  );
+                },
               ),
             ),
           ],
@@ -365,10 +405,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _activityCard(
-    IconData icon,
-    String value,
-    String label,
-    Color color,
+    IconData icon, String value, String label, Color color,
   ) {
     return AgCard(
       margin: EdgeInsets.zero,
@@ -411,109 +448,71 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ── Section 4: My Equipment ────────────────────────────────────
 
   Widget _buildMyEquipment(BuildContext context) {
+    final uid = AuthService.instance.uid;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionTitle(
-          title: 'My Equipment',
-          padding: EdgeInsets.zero,
-        ),
+        const SectionTitle(title: 'My Equipment', padding: EdgeInsets.zero),
         const SizedBox(height: AppSpacing.md),
-        _EquipmentListingCard(
-          emoji: '🚜',
-          name: 'Mahindra Tractor 575 DI',
-          pricePerHour: '₹500/hour',
-          isAvailable: true,
-          onEdit: () => _showSnackbar(context, 'Edit feature coming soon.'),
-          onRemove: () =>
-              _showSnackbar(context, 'Remove feature coming soon.'),
-        ),
-        const SizedBox(height: AppSpacing.md),
-        _EquipmentListingCard(
-          emoji: '💧',
-          name: 'Irrigation Pump Set',
-          pricePerHour: '₹200/hour',
-          isAvailable: false,
-          onEdit: () => _showSnackbar(context, 'Edit feature coming soon.'),
-          onRemove: () =>
-              _showSnackbar(context, 'Remove feature coming soon.'),
+        StreamBuilder<QuerySnapshot>(
+          stream: FirestoreService.instance.userEquipmentStream(uid),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
+                child: CircularProgressIndicator(color: AppColors.primaryGreen),
+              );
+            }
+            final docs = snapshot.data?.docs ?? [];
+            if (docs.isEmpty) {
+              return AgCard(
+                margin: EdgeInsets.zero,
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: Center(
+                  child: Text(
+                    'No equipment listed yet.',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                ),
+              );
+            }
+            return Column(
+              children: docs.map((doc) {
+                final data = doc.data() as Map<String, dynamic>;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                  child: _EquipmentListingCard(
+                    emoji: data['listingType'] == 'rent' ? '🚜' : '💰',
+                    name: data['name'] ?? '',
+                    pricePerHour: '₹${(data['pricePerHour'] ?? 0).toInt()}/hour',
+                    isAvailable: data['isAvailable'] ?? true,
+                    onEdit: () =>
+                        _showSnackbar(context, 'Edit feature coming soon.'),
+                    onRemove: () async {
+                      await FirestoreService.instance.deleteEquipment(doc.id);
+                      if (context.mounted) {
+                        _showSnackbar(context, 'Equipment removed.');
+                      }
+                    },
+                  ),
+                );
+              }).toList(),
+            );
+          },
         ),
       ],
     );
   }
 
-  // ── Section 5: Community Groups ────────────────────────────────
+  // ── Section 5: Settings ────────────────────────────────────────
 
-  Widget _buildCommunityGroups() {
+  Widget _buildSettings(BuildContext context, Farmer farmer) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionTitle(
-          title: 'Community Groups',
-          padding: EdgeInsets.zero,
-        ),
-        const SizedBox(height: AppSpacing.md),
-        _CommunityGroupCard(
-          emoji: '🚜',
-          name: 'Tractor Purchase Group',
-          currentMembers: 3,
-          targetMembers: 3,
-          status: 'Ready to Buy',
-        ),
-        const SizedBox(height: AppSpacing.md),
-        _CommunityGroupCard(
-          emoji: '🌾',
-          name: 'Harvester Purchase Group',
-          currentMembers: 2,
-          targetMembers: 4,
-          status: null,
-        ),
-      ],
-    );
-  }
-
-  // ── Section 6: Reviews ─────────────────────────────────────────
-
-  Widget _buildReviews() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SectionTitle(
-          title: 'Reviews',
-          padding: EdgeInsets.zero,
-        ),
-        const SizedBox(height: AppSpacing.md),
-        const _ReviewCard(
-          rating: 5,
-          review: 'Equipment was well maintained. Highly recommend!',
-          reviewerName: 'Kiran',
-        ),
-        const SizedBox(height: AppSpacing.md),
-        const _ReviewCard(
-          rating: 4,
-          review: 'Owner was cooperative and punctual.',
-          reviewerName: 'Arjun',
-        ),
-        const SizedBox(height: AppSpacing.md),
-        const _ReviewCard(
-          rating: 5,
-          review: 'Great tractor, worked perfectly for our fields.',
-          reviewerName: 'Suresh',
-        ),
-      ],
-    );
-  }
-
-  // ── Section 7: Settings ────────────────────────────────────────
-
-  Widget _buildSettings(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SectionTitle(
-          title: 'Settings',
-          padding: EdgeInsets.zero,
-        ),
+        const SectionTitle(title: 'Settings', padding: EdgeInsets.zero),
         const SizedBox(height: AppSpacing.md),
         AgCard(
           margin: EdgeInsets.zero,
@@ -523,22 +522,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _SettingsTile(
                 icon: Icons.person_outline_rounded,
                 label: 'Edit Profile',
-                onTap: () =>
-                    _showSnackbar(context, 'Edit Profile coming soon.'),
-              ),
-              const Divider(height: 1, color: AppColors.divider),
-              _SettingsTile(
-                icon: Icons.agriculture_outlined,
-                label: 'Update Farm Details',
-                onTap: () =>
-                    _showSnackbar(context, 'Farm Details coming soon.'),
+                onTap: () => _showEditProfileDialog(context, farmer),
               ),
               const Divider(height: 1, color: AppColors.divider),
               _SettingsTile(
                 icon: Icons.phone_outlined,
                 label: 'Change Phone Number',
-                onTap: () =>
-                    _showSnackbar(context, 'Phone update coming soon.'),
+                onTap: () => _showEditPhoneDialog(context, farmer),
               ),
             ],
           ),
@@ -547,7 +537,105 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ── Section 8: Language Preferences ────────────────────────────
+  void _showEditProfileDialog(BuildContext context, Farmer farmer) {
+    final nameCtrl = TextEditingController(text: farmer.name);
+    final locationCtrl = TextEditingController(text: farmer.location);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Edit Profile', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameCtrl,
+              decoration: InputDecoration(
+                labelText: 'Name',
+                labelStyle: GoogleFonts.poppins(),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            TextField(
+              controller: locationCtrl,
+              decoration: InputDecoration(
+                labelText: 'Location',
+                labelStyle: GoogleFonts.poppins(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              await FirestoreService.instance.updateProfile(
+                AuthService.instance.uid,
+                {
+                  'name': nameCtrl.text.trim(),
+                  'location': locationCtrl.text.trim(),
+                },
+              );
+              if (ctx.mounted) Navigator.pop(ctx);
+              if (context.mounted) {
+                _showSnackbar(context, 'Profile updated!');
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryGreen,
+            ),
+            child: const Text('Save', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditPhoneDialog(BuildContext context, Farmer farmer) {
+    final phoneCtrl = TextEditingController(text: farmer.phone);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Change Phone', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+        content: TextField(
+          controller: phoneCtrl,
+          keyboardType: TextInputType.phone,
+          decoration: InputDecoration(
+            labelText: 'Phone Number',
+            labelStyle: GoogleFonts.poppins(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              await FirestoreService.instance.updateProfile(
+                AuthService.instance.uid,
+                {'phone': phoneCtrl.text.trim()},
+              );
+              if (ctx.mounted) Navigator.pop(ctx);
+              if (context.mounted) {
+                _showSnackbar(context, 'Phone number updated!');
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryGreen,
+            ),
+            child: const Text('Save', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Section 6: Language Preferences ────────────────────────────
 
   Widget _buildLanguagePreferences() {
     const languages = ['English', 'Hindi', 'Kannada', 'Telugu', 'Tamil'];
@@ -612,84 +700,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ── Section 9: Notifications ───────────────────────────────────
+  // ── Logout ─────────────────────────────────────────────────────
 
-  Widget _buildNotifications() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SectionTitle(
-          title: 'Notifications',
-          padding: EdgeInsets.zero,
-        ),
-        const SizedBox(height: AppSpacing.md),
-        const _NotificationTile(
-          icon: Icons.access_time_rounded,
-          color: Color(0xFFEF6C00),
-          message: 'Your tractor booking starts in 2 hours.',
-          time: '10 min ago',
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        const _NotificationTile(
-          icon: Icons.group_add_rounded,
-          color: Color(0xFF1565C0),
-          message: 'Harvester group needs one more member.',
-          time: '1 hour ago',
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        const _NotificationTile(
-          icon: Icons.payment_rounded,
-          color: Color(0xFF2E7D32),
-          message: 'Payment received for rental.',
-          time: '3 hours ago',
-        ),
-      ],
-    );
-  }
-
-  // ── Section 10: Safety & Report ────────────────────────────────
-
-  Widget _buildSafetyReport(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SectionTitle(
-          title: 'Safety & Report',
-          padding: EdgeInsets.zero,
-        ),
-        const SizedBox(height: AppSpacing.md),
-        AgCard(
-          margin: EdgeInsets.zero,
-          padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-          child: Column(
-            children: [
-              _SettingsTile(
-                icon: Icons.flag_outlined,
-                label: 'Report Issue',
-                color: Colors.redAccent,
-                onTap: () =>
-                    _showSnackbar(context, 'Report Issue coming soon.'),
-              ),
-              const Divider(height: 1, color: AppColors.divider),
-              _SettingsTile(
-                icon: Icons.support_agent_rounded,
-                label: 'Contact Support',
-                color: const Color(0xFF1565C0),
-                onTap: () =>
-                    _showSnackbar(context, 'Contact Support coming soon.'),
-              ),
-              const Divider(height: 1, color: AppColors.divider),
-              _SettingsTile(
-                icon: Icons.shield_outlined,
-                label: 'Safety Guidelines',
-                color: const Color(0xFFEF6C00),
-                onTap: () =>
-                    _showSnackbar(context, 'Safety Guidelines coming soon.'),
-              ),
-            ],
-          ),
-        ),
-      ],
+  Widget _buildLogout(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: AgButton(
+        label: 'Logout',
+        icon: Icons.logout_rounded,
+        isExpanded: true,
+        onPressed: () async {
+          await AuthService.instance.signOut();
+          if (!context.mounted) return;
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const LoginScreen()),
+            (route) => false,
+          );
+        },
+      ),
     );
   }
 
@@ -764,7 +792,6 @@ class _EquipmentListingCard extends StatelessWidget {
                   ],
                 ),
               ),
-              // Availability badge
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.sm,
@@ -787,10 +814,7 @@ class _EquipmentListingCard extends StatelessWidget {
               ),
             ],
           ),
-
           const SizedBox(height: AppSpacing.md),
-
-          // Action buttons
           Row(
             children: [
               Expanded(
@@ -801,9 +825,7 @@ class _EquipmentListingCard extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.primaryGreen,
                     side: const BorderSide(color: AppColors.primaryGreen),
-                    padding: const EdgeInsets.symmetric(
-                      vertical: AppSpacing.sm,
-                    ),
+                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
                     shape: RoundedRectangleBorder(
                       borderRadius: AppSpacing.buttonRadius,
                     ),
@@ -823,9 +845,7 @@ class _EquipmentListingCard extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.redAccent,
                     side: const BorderSide(color: Colors.redAccent),
-                    padding: const EdgeInsets.symmetric(
-                      vertical: AppSpacing.sm,
-                    ),
+                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
                     shape: RoundedRectangleBorder(
                       borderRadius: AppSpacing.buttonRadius,
                     ),
@@ -844,213 +864,6 @@ class _EquipmentListingCard extends StatelessWidget {
   }
 }
 
-// ── Community Group Card ─────────────────────────────────────────
-
-class _CommunityGroupCard extends StatelessWidget {
-  const _CommunityGroupCard({
-    required this.emoji,
-    required this.name,
-    required this.currentMembers,
-    required this.targetMembers,
-    this.status,
-  });
-
-  final String emoji;
-  final String name;
-  final int currentMembers;
-  final int targetMembers;
-  final String? status;
-
-  bool get _isFull => currentMembers >= targetMembers;
-
-  @override
-  Widget build(BuildContext context) {
-    return AgCard(
-      margin: EdgeInsets.zero,
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(emoji, style: const TextStyle(fontSize: 26)),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Text(
-                  name,
-                  style: GoogleFonts.poppins(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textDark,
-                  ),
-                ),
-              ),
-              if (_isFull)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm,
-                    vertical: AppSpacing.xs,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryGreen,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    'READY',
-                    style: GoogleFonts.poppins(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textLight,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-
-          const SizedBox(height: AppSpacing.sm),
-
-          // Members and status
-          Row(
-            children: [
-              Icon(
-                Icons.people_outline_rounded,
-                size: 16,
-                color: _isFull ? AppColors.primaryGreen : AppColors.textMuted,
-              ),
-              const SizedBox(width: AppSpacing.xs),
-              Text(
-                'Members: $currentMembers / $targetMembers',
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  color: _isFull ? AppColors.primaryGreen : AppColors.textMuted,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              if (status != null) ...[
-                const Spacer(),
-                Text(
-                  status!,
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primaryGreen,
-                  ),
-                ),
-              ],
-            ],
-          ),
-
-          const SizedBox(height: AppSpacing.md),
-
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: () {},
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.primaryGreen,
-                side: const BorderSide(color: AppColors.primaryGreen),
-                padding: const EdgeInsets.symmetric(
-                  vertical: AppSpacing.sm,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: AppSpacing.buttonRadius,
-                ),
-                textStyle: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              child: const Text('View Details'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Review Card ──────────────────────────────────────────────────
-
-class _ReviewCard extends StatelessWidget {
-  const _ReviewCard({
-    required this.rating,
-    required this.review,
-    required this.reviewerName,
-  });
-
-  final int rating;
-  final String review;
-  final String reviewerName;
-
-  @override
-  Widget build(BuildContext context) {
-    return AgCard(
-      margin: EdgeInsets.zero,
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Reviewer and stars
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 16,
-                backgroundColor: AppColors.secondaryGreen.withAlpha(30),
-                child: Text(
-                  reviewerName[0],
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primaryGreen,
-                  ),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Text(
-                reviewerName,
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textDark,
-                ),
-              ),
-              const Spacer(),
-              // Star rating
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: List.generate(
-                  5,
-                  (i) => Icon(
-                    i < rating
-                        ? Icons.star_rounded
-                        : Icons.star_border_rounded,
-                    size: 18,
-                    color: Colors.amber,
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: AppSpacing.sm),
-
-          // Review text
-          Text(
-            '"$review"',
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              color: AppColors.textMuted,
-              fontStyle: FontStyle.italic,
-              height: 1.4,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 // ── Settings Tile Helper ─────────────────────────────────────────
 
 class _SettingsTile extends StatelessWidget {
@@ -1058,17 +871,15 @@ class _SettingsTile extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onTap,
-    this.color,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-  final Color? color;
 
   @override
   Widget build(BuildContext context) {
-    final tileColor = color ?? AppColors.primaryGreen;
+    final tileColor = AppColors.primaryGreen;
 
     return ListTile(
       leading: Container(
@@ -1096,69 +907,6 @@ class _SettingsTile extends StatelessWidget {
       contentPadding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
         vertical: 2,
-      ),
-    );
-  }
-}
-
-// ── Notification Tile Helper ─────────────────────────────────────
-
-class _NotificationTile extends StatelessWidget {
-  const _NotificationTile({
-    required this.icon,
-    required this.color,
-    required this.message,
-    required this.time,
-  });
-
-  final IconData icon;
-  final Color color;
-  final String message;
-  final String time;
-
-  @override
-  Widget build(BuildContext context) {
-    return AgCard(
-      margin: EdgeInsets.zero,
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: color.withAlpha(20),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, size: 20, color: color),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  message,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textDark,
-                    height: 1.3,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  time,
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    color: AppColors.textMuted,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../services/auth_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../widgets/ag_button.dart';
 import 'main_shell.dart';
 
-/// Simple dummy login screen.
-///
-/// Credentials: username `farmer`, password `1234`.
+/// Login / Register screen backed by Firebase Auth.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -17,40 +16,70 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _usernameCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
+  final _nameCtrl = TextEditingController();
   bool _obscure = true;
+  bool _isRegister = false;
+  bool _isLoading = false;
 
-  void _login() {
-    final user = _usernameCtrl.text.trim();
+  void _submit() async {
+    final email = _emailCtrl.text.trim();
     final pass = _passwordCtrl.text.trim();
 
-    if (user == 'farmer' && pass == '1234') {
+    if (email.isEmpty || pass.isEmpty) {
+      _showError('Please fill in all fields');
+      return;
+    }
+
+    if (_isRegister && _nameCtrl.text.trim().isEmpty) {
+      _showError('Please enter your name');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      if (_isRegister) {
+        await AuthService.instance.signUp(
+          email: email,
+          password: pass,
+          name: _nameCtrl.text.trim(),
+        );
+      } else {
+        await AuthService.instance.signIn(email, pass);
+      }
+
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const MainShell()),
       );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Invalid credentials',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
-          ),
-          backgroundColor: Colors.redAccent,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-          ),
-        ),
-      );
+    } catch (e) {
+      _showError(e.toString().replaceAll('Exception: ', '').replaceAll(RegExp(r'\[.*?\]'), '').trim());
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  void _showError(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg, style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
+        backgroundColor: Colors.redAccent,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+        ),
+      ),
+    );
   }
 
   @override
   void dispose() {
-    _usernameCtrl.dispose();
+    _emailCtrl.dispose();
     _passwordCtrl.dispose();
+    _nameCtrl.dispose();
     super.dispose();
   }
 
@@ -109,15 +138,33 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: AppSpacing.xl),
 
-                // Username field
+                // Name field (only for register)
+                if (_isRegister) ...[
+                  TextField(
+                    controller: _nameCtrl,
+                    style: GoogleFonts.poppins(fontSize: 15),
+                    decoration: InputDecoration(
+                      labelText: 'Full Name',
+                      labelStyle: GoogleFonts.poppins(color: AppColors.textMuted),
+                      prefixIcon: const Icon(
+                        Icons.badge_outlined,
+                        color: AppColors.primaryGreen,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                ],
+
+                // Email field
                 TextField(
-                  controller: _usernameCtrl,
+                  controller: _emailCtrl,
+                  keyboardType: TextInputType.emailAddress,
                   style: GoogleFonts.poppins(fontSize: 15),
                   decoration: InputDecoration(
-                    labelText: 'Username',
+                    labelText: 'Email',
                     labelStyle: GoogleFonts.poppins(color: AppColors.textMuted),
                     prefixIcon: const Icon(
-                      Icons.person_outline_rounded,
+                      Icons.email_outlined,
                       color: AppColors.primaryGreen,
                     ),
                   ),
@@ -152,21 +199,34 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: AppSpacing.lg),
 
-                // Login button
-                AgButton(
-                  label: 'Login',
-                  icon: Icons.login_rounded,
-                  isExpanded: true,
-                  onPressed: _login,
-                ),
+                // Submit button
+                _isLoading
+                    ? const CircularProgressIndicator(
+                        color: AppColors.primaryGreen,
+                      )
+                    : AgButton(
+                        label: _isRegister ? 'Register' : 'Login',
+                        icon: _isRegister
+                            ? Icons.person_add_rounded
+                            : Icons.login_rounded,
+                        isExpanded: true,
+                        onPressed: _submit,
+                      ),
 
                 const SizedBox(height: AppSpacing.md),
 
-                Text(
-                  'Demo: farmer / 1234',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: AppColors.textMuted,
+                // Toggle login/register
+                TextButton(
+                  onPressed: () => setState(() => _isRegister = !_isRegister),
+                  child: Text(
+                    _isRegister
+                        ? 'Already have an account? Login'
+                        : "Don't have an account? Register",
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: AppColors.primaryGreen,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ],

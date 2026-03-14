@@ -10,6 +10,7 @@ class Equipment {
     required this.imageUrl,
     required this.ownerName,
     required this.description,
+    this.ownerId = '',
     this.locationName = 'Unknown Location',
     this.latitude = 0.0,
     this.longitude = 0.0,
@@ -26,6 +27,7 @@ class Equipment {
   final int reviewCount;
   final String imageUrl;
   final String ownerName;
+  final String ownerId;
   final String description;
   final String locationName;
   final double latitude;
@@ -38,4 +40,47 @@ class Equipment {
 
   bool get isRent => listingType == 'rent';
   bool get isSell => listingType == 'sell';
+
+  /// Create from Firestore document.
+  factory Equipment.fromMap(String id, Map<String, dynamic> data) {
+    return Equipment(
+      id: id,
+      name: data['name'] ?? '',
+      pricePerHour: (data['pricePerHour'] ?? 0).toDouble(),
+      distance: (data['distance'] ?? 0).toDouble(),
+      rating: (data['rating'] ?? 0).toDouble(),
+      reviewCount: (data['reviewCount'] ?? 0).toInt(),
+      imageUrl: data['imageUrl'] ?? '',
+      ownerName: data['ownerName'] ?? '',
+      ownerId: data['ownerId'] ?? '',
+      description: data['description'] ?? '',
+      locationName: data['locationName'] ?? 'Unknown Location',
+      latitude: (data['latitude'] ?? 0).toDouble(),
+      longitude: (data['longitude'] ?? 0).toDouble(),
+      isAvailable: data['isAvailable'] ?? true,
+      purchasePrice: (data['purchasePrice'] ?? 0).toDouble(),
+      listingType: data['listingType'] ?? 'rent',
+    );
+  }
+
+  /// Convert to Firestore-compatible map.
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name,
+      'pricePerHour': pricePerHour,
+      'distance': distance,
+      'rating': rating,
+      'reviewCount': reviewCount,
+      'imageUrl': imageUrl,
+      'ownerName': ownerName,
+      'ownerId': ownerId,
+      'description': description,
+      'locationName': locationName,
+      'latitude': latitude,
+      'longitude': longitude,
+      'isAvailable': isAvailable,
+      'purchasePrice': purchasePrice,
+      'listingType': listingType,
+    };
+  }
 }

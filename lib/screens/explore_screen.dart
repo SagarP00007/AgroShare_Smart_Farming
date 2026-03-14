@@ -62,7 +62,7 @@ class ExploreScreen extends StatelessWidget {
               ),
             ),
             SizedBox(
-              height: 140,
+              height: 160,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),

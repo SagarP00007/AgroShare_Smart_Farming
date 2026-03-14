@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../data/farmer_data.dart';
-import '../data/report_store.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../widgets/ag_button.dart';
@@ -13,41 +11,37 @@ import '../widgets/section_title.dart';
 class GroupDetailScreen extends StatefulWidget {
   const GroupDetailScreen({
     super.key,
-    required this.emoji,
-    required this.name,
-    required this.location,
-    required this.currentMembers,
-    required this.targetMembers,
-    required this.sharePerFarmer,
-    required this.members,
+    required this.groupName,
   });
 
-  final String emoji;
-  final String name;
-  final String location;
-  final int currentMembers;
-  final int targetMembers;
-  final String sharePerFarmer;
-  final List<String> members;
+  final String groupName;
 
   @override
   State<GroupDetailScreen> createState() => _GroupDetailScreenState();
 }
 
 class _GroupDetailScreenState extends State<GroupDetailScreen> {
+  // Placeholder values for the detail view
+  String get _emoji => '🚜';
+  String get _name => widget.groupName;
+  String get _location => 'Community';
+  int get _currentMembers => 2;
+  int get _targetMembers => 3;
+  String get _sharePerFarmer => '₹2,00,000';
+  List<String> get _members => ['Member 1', 'Member 2'];
+
   late Map<String, bool> _paymentStatus;
 
-  bool get _isFull => widget.currentMembers >= widget.targetMembers;
+  bool get _isFull => _currentMembers >= _targetMembers;
   bool get _allPaid =>
       _isFull && _paymentStatus.values.every((paid) => paid);
 
   @override
   void initState() {
     super.initState();
-    // Initialize dummy payment status: some paid, some pending
     _paymentStatus = {
-      for (int i = 0; i < widget.members.length; i++)
-        widget.members[i]: i.isEven, // alternating paid/pending
+      for (int i = 0; i < _members.length; i++)
+        _members[i]: i.isEven,
     };
   }
 
@@ -408,13 +402,6 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                         side: const BorderSide(color: AppColors.divider),
                       ),
                       onTap: () {
-                        ReportStore.submit(
-                          UserReport(
-                            reportedUser: widget.name,
-                            reason: reasons[i],
-                            timestamp: DateTime.now(),
-                          ),
-                        );
                         Navigator.of(ctx).pop();
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -454,11 +441,11 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
           // Title row
           Row(
             children: [
-              Text(widget.emoji, style: const TextStyle(fontSize: 36)),
+              Text(_emoji, style: const TextStyle(fontSize: 36)),
               const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Text(
-                  widget.name,
+                  _name,
                   style: GoogleFonts.poppins(
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
@@ -477,19 +464,19 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
           _InfoRow(
             icon: Icons.location_on_outlined,
             label: 'Location',
-            value: widget.location,
+            value: _location,
           ),
           const SizedBox(height: AppSpacing.md),
           _InfoRow(
             icon: Icons.people_outline_rounded,
             label: 'Members',
-            value: '${widget.currentMembers} / ${widget.targetMembers}',
+            value: '$_currentMembers / $_targetMembers',
           ),
           const SizedBox(height: AppSpacing.md),
           _InfoRow(
             icon: Icons.currency_rupee_rounded,
             label: 'Share per Farmer',
-            value: widget.sharePerFarmer,
+            value: _sharePerFarmer,
           ),
         ],
       ),
@@ -587,10 +574,10 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
           child: Column(
             children: [
-              for (int i = 0; i < widget.members.length; i++) ...[
+              for (int i = 0; i < _members.length; i++) ...[
                 if (i > 0) const Divider(height: 1, color: AppColors.divider),
                 _MemberTile(
-                  name: widget.members[i],
+                  name: _members[i],
                   index: i,
                 ),
               ],
@@ -664,7 +651,6 @@ class _MemberTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = _avatarColors[index % _avatarColors.length];
-    final farmer = getFarmer(name);
 
     return Padding(
       padding: const EdgeInsets.symmetric(
@@ -706,18 +692,13 @@ class _MemberTile extends StatelessWidget {
                   children: [
                     _statChip(
                       Icons.star_rounded,
-                      '${farmer.trustScore}',
+                      '4.0',
                       Colors.amber,
                     ),
                     _statChip(
                       Icons.handshake_outlined,
-                      '${farmer.completedRentals} rentals',
+                      'Member',
                       AppColors.primaryGreen,
-                    ),
-                    _statChip(
-                      Icons.groups_outlined,
-                      '${farmer.groupPurchases} groups',
-                      const Color(0xFF1565C0),
                     ),
                   ],
                 ),

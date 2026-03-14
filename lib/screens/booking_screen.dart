@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../data/booking_store.dart';
-import '../models/booking.dart';
 import '../models/equipment.dart';
+import '../services/auth_service.dart';
+import '../services/firestore_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../widgets/ag_button.dart';
@@ -72,43 +73,57 @@ class _BookingScreenState extends State<BookingScreen> {
   }
 
   // ── Confirm booking ──
-  void _confirmBooking() {
-    final booking = Booking(
-      id: BookingStore.instance.nextId.toString(),
-      equipmentId: widget.equipment.id,
-      equipmentName: widget.equipment.name,
-      date: DateTime(
+  void _confirmBooking() async {
+    try {
+      final bookingDateTime = DateTime(
         _selectedDate.year,
         _selectedDate.month,
         _selectedDate.day,
         _selectedTime.hour,
         _selectedTime.minute,
-      ),
-      durationHours: _durationHours,
-      totalCost: _totalCost,
-    );
+      );
 
-    BookingStore.instance.add(booking);
+      await FirestoreService.instance.createBooking({
+        'userId': AuthService.instance.uid,
+        'equipmentId': widget.equipment.id,
+        'equipmentName': widget.equipment.name,
+        // Firestore timestamps.
+        'date': Timestamp.fromDate(bookingDateTime),
+        'bookingDate': Timestamp.fromDate(bookingDateTime),
+        'durationHours': _durationHours,
+        'totalCost': _totalCost,
+        'status': 'upcoming',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Booking confirmed with deposit payment!',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Booking confirmed successfully.',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+          ),
+          backgroundColor: AppColors.primaryGreen,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+          ),
         ),
-        backgroundColor: AppColors.primaryGreen,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-        ),
-      ),
-    );
+      );
 
-    // Pop back to main shell
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (context) => const MainShell()),
-      (route) => false,
-    );
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const MainShell()),
+        (route) => false,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Booking failed: $e'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
   }
 
   @override

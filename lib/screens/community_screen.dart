@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../data/farmer_data.dart';
+import '../services/auth_service.dart';
+import '../services/firestore_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../widgets/ag_button.dart';
@@ -12,9 +14,6 @@ import 'group_detail_screen.dart';
 import 'main_shell.dart';
 
 /// Community screen — foundation of the Farmer Collaboration System.
-///
-/// Displays active equipment groups, lets farmers start new groups,
-/// and shows a "My Groups" section for tracking joined groups.
 class CommunityScreen extends StatelessWidget {
   const CommunityScreen({super.key});
 
@@ -47,24 +46,13 @@ class CommunityScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Section 1: Page Header ──────────────────────────
               _buildHeader(),
-
               const SizedBox(height: AppSpacing.lg),
-
-              // ── Section 2: Start Equipment Group ────────────────
               _buildStartGroupButton(context),
-
               const SizedBox(height: AppSpacing.lg),
-
-              // ── Section 3: Active Equipment Groups ──────────────
               _buildActiveGroups(),
-
               const SizedBox(height: AppSpacing.lg),
-
-              // ── Section 4: My Groups ────────────────────────────
               _buildMyGroups(),
-
               const SizedBox(height: AppSpacing.lg),
             ],
           ),
@@ -72,8 +60,6 @@ class CommunityScreen extends StatelessWidget {
       ),
     );
   }
-
-  // ── Section 1 ──────────────────────────────────────────────────
 
   Widget _buildHeader() {
     return AgCard(
@@ -100,18 +86,18 @@ class CommunityScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Farmer Community',
+                  'Equipment Groups',
                   style: GoogleFonts.poppins(
-                    fontSize: 22,
+                    fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textDark,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.xs),
+                const SizedBox(height: 2),
                 Text(
-                  'Connect with farmers to share or buy equipment together.',
+                  'Pool resources to buy expensive farm machinery together.',
                   style: GoogleFonts.poppins(
-                    fontSize: 13,
+                    fontSize: 12,
                     color: AppColors.textMuted,
                     height: 1.4,
                   ),
@@ -123,8 +109,6 @@ class CommunityScreen extends StatelessWidget {
       ),
     );
   }
-
-  // ── Section 2 ──────────────────────────────────────────────────
 
   Widget _buildStartGroupButton(BuildContext context) {
     return AgButton(
@@ -141,8 +125,6 @@ class CommunityScreen extends StatelessWidget {
     );
   }
 
-  // ── Section 3 ──────────────────────────────────────────────────
-
   Widget _buildActiveGroups() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -152,32 +134,69 @@ class CommunityScreen extends StatelessWidget {
           padding: EdgeInsets.zero,
         ),
         const SizedBox(height: AppSpacing.md),
-        _EquipmentGroupCard(
-          emoji: '🚜',
-          name: 'Tractor Purchase Group',
-          location: 'Angondhalli',
-          initialMembers: 2,
-          targetMembers: 3,
-          sharePerFarmer: '₹2,00,000',
-          members: const ['Ramesh', 'Kiran'],
-        ),
-        const SizedBox(height: AppSpacing.md),
-        _EquipmentGroupCard(
-          emoji: '🌾',
-          name: 'Harvester Sharing Group',
-          location: 'Hubballi',
-          initialMembers: 1,
-          targetMembers: 4,
-          sharePerFarmer: '₹75,000',
-          members: const ['Arjun'],
+        StreamBuilder<QuerySnapshot>(
+          stream: FirestoreService.instance.groupsStream(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(AppSpacing.lg),
+                  child: CircularProgressIndicator(color: AppColors.primaryGreen),
+                ),
+              );
+            }
+            final docs = snapshot.data?.docs ?? [];
+            final activeDocs = docs.where((doc) {
+              final data = doc.data() as Map<String, dynamic>;
+              return (data['status'] ?? 'active') == 'active';
+            }).toList();
+            if (activeDocs.isEmpty) {
+              return AgCard(
+                margin: EdgeInsets.zero,
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.group_off_rounded,
+                        size: 40,
+                        color: AppColors.textMuted.withAlpha(120),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(
+                        'No active groups yet. Start one above!',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+            return Column(
+              children: activeDocs.map((doc) {
+                final data = doc.data() as Map<String, dynamic>;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                  child: _EquipmentGroupCard(
+                    groupId: doc.id,
+                    data: data,
+                  ),
+                );
+              }).toList(),
+            );
+          },
         ),
       ],
     );
   }
 
-  // ── Section 4 ──────────────────────────────────────────────────
-
   Widget _buildMyGroups() {
+    final uid = AuthService.instance.currentUser?.uid;
+    if (uid == null) return const SizedBox.shrink();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -186,32 +205,64 @@ class CommunityScreen extends StatelessWidget {
           padding: EdgeInsets.zero,
         ),
         const SizedBox(height: AppSpacing.md),
-        AgCard(
-          margin: EdgeInsets.zero,
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.xl,
-          ),
-          child: Center(
-            child: Column(
-              children: [
-                Icon(
-                  Icons.group_off_rounded,
-                  size: 40,
-                  color: AppColors.textMuted.withAlpha(120),
+        StreamBuilder<QuerySnapshot>(
+          stream: FirestoreService.instance.groupsStream(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
+                child: CircularProgressIndicator(color: AppColors.primaryGreen),
+              );
+            }
+            final docs = snapshot.data?.docs ?? [];
+            final myDocs = docs.where((doc) {
+              final data = doc.data() as Map<String, dynamic>;
+              final members = List<String>.from(data['members'] ?? []);
+              return members.contains(uid);
+            }).toList();
+
+            if (myDocs.isEmpty) {
+              return AgCard(
+                margin: EdgeInsets.zero,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.lg,
+                  vertical: AppSpacing.xl,
                 ),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  "You haven't joined any groups yet.",
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: AppColors.textMuted,
+                child: Center(
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.group_off_rounded,
+                        size: 40,
+                        color: AppColors.textMuted.withAlpha(120),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(
+                        "You haven't joined any groups yet.",
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
+              );
+            }
+
+            return Column(
+              children: myDocs.map((doc) {
+                final data = doc.data() as Map<String, dynamic>;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                  child: _EquipmentGroupCard(
+                    groupId: doc.id,
+                    data: data,
+                  ),
+                );
+              }).toList(),
+            );
+          },
         ),
       ],
     );
@@ -220,72 +271,43 @@ class CommunityScreen extends StatelessWidget {
 
 // ── Equipment Group Card Widget ──────────────────────────────────
 
-/// A card displaying an active equipment group with join/details buttons.
-///
-/// Tracks member count locally. When the group is full, displays a
-/// "Ready to Purchase" label and a "READY" badge.
-class _EquipmentGroupCard extends StatefulWidget {
+class _EquipmentGroupCard extends StatelessWidget {
   const _EquipmentGroupCard({
-    required this.emoji,
-    required this.name,
-    required this.location,
-    required this.initialMembers,
-    required this.targetMembers,
-    required this.sharePerFarmer,
-    required this.members,
+    required this.groupId,
+    required this.data,
   });
 
-  final String emoji;
-  final String name;
-  final String location;
-  final int initialMembers;
-  final int targetMembers;
-  final String sharePerFarmer;
-  final List<String> members;
-
-  @override
-  State<_EquipmentGroupCard> createState() => _EquipmentGroupCardState();
-}
-
-class _EquipmentGroupCardState extends State<_EquipmentGroupCard> {
-  late int _currentMembers;
-  late List<String> _memberNames;
-  bool _hasJoined = false;
-
-  bool get _isFull => _currentMembers >= widget.targetMembers;
-
-  @override
-  void initState() {
-    super.initState();
-    _currentMembers = widget.initialMembers;
-    _memberNames = List<String>.from(widget.members);
-  }
-
-  void _joinGroup() {
-    if (_hasJoined || _isFull) return;
-    setState(() {
-      _currentMembers++;
-      _memberNames.add('You');
-      _hasJoined = true;
-    });
-  }
+  final String groupId;
+  final Map<String, dynamic> data;
 
   @override
   Widget build(BuildContext context) {
+    final name = data['equipmentType'] ?? 'Equipment Group';
+    final currentMembers = (data['currentMembers'] ?? 0).toInt();
+    final targetMembers = (data['targetMembers'] ?? 5).toInt();
+    final targetPrice = (data['targetPrice'] ?? 0).toDouble();
+    final members = List<String>.from(data['members'] ?? []);
+    final isFull = currentMembers >= targetMembers;
+    final uid = AuthService.instance.currentUser?.uid;
+    final hasJoined = uid != null && members.contains(uid);
+    final sharePerFarmer = targetMembers > 0
+        ? (targetPrice / targetMembers).toInt()
+        : 0;
+
     return AgCard(
       margin: EdgeInsets.zero,
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Title row + READY badge
+          // Title row
           Row(
             children: [
-              Text(widget.emoji, style: const TextStyle(fontSize: 28)),
+              const Text('🚜', style: TextStyle(fontSize: 28)),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
-                  widget.name,
+                  '$name Purchase Group',
                   style: GoogleFonts.poppins(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -293,7 +315,26 @@ class _EquipmentGroupCardState extends State<_EquipmentGroupCard> {
                   ),
                 ),
               ),
-              if (_isFull) _buildReadyBadge(),
+              if (isFull)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: AppSpacing.xs,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryGreen,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    'READY',
+                    style: GoogleFonts.poppins(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textLight,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ),
             ],
           ),
 
@@ -302,14 +343,10 @@ class _EquipmentGroupCardState extends State<_EquipmentGroupCard> {
           // Location
           Row(
             children: [
-              const Icon(
-                Icons.location_on_outlined,
-                size: 16,
-                color: AppColors.textMuted,
-              ),
+              const Icon(Icons.location_on_outlined, size: 16, color: AppColors.textMuted),
               const SizedBox(width: AppSpacing.xs),
               Text(
-                widget.location,
+                data['location'] ?? 'Unknown',
                 style: GoogleFonts.poppins(
                   fontSize: 13,
                   color: AppColors.textMuted,
@@ -320,281 +357,137 @@ class _EquipmentGroupCardState extends State<_EquipmentGroupCard> {
 
           const SizedBox(height: AppSpacing.sm),
 
-          // Trust score chips for members
-          _buildTrustScoreRow(),
-
-          const SizedBox(height: AppSpacing.md),
-
-          // Stats row
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-              vertical: AppSpacing.sm,
-            ),
-            decoration: BoxDecoration(
-              color: _isFull
-                  ? const Color(0xFFE8F5E9)
-                  : AppColors.secondaryGreen.withAlpha(20),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Members
-                Row(
-                  children: [
-                    Icon(
-                      _isFull
-                          ? Icons.check_circle_rounded
-                          : Icons.people_outline_rounded,
-                      size: 18,
-                      color: AppColors.primaryGreen,
-                    ),
-                    const SizedBox(width: AppSpacing.xs),
-                    Text(
-                      'Members: $_currentMembers / ${widget.targetMembers}',
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.primaryGreen,
-                      ),
-                    ),
-                  ],
-                ),
-                // Share per farmer
-                Text(
-                  widget.sharePerFarmer,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primaryGreen,
-                  ),
-                ),
-              ],
+          // Progress bar
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: targetMembers > 0 ? currentMembers / targetMembers : 0,
+              backgroundColor: AppColors.divider,
+              color: isFull ? AppColors.primaryGreen : Colors.amber,
+              minHeight: 6,
             ),
           ),
 
           const SizedBox(height: AppSpacing.sm),
 
-          // Label for share
-          Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              'Share per Farmer',
-              style: GoogleFonts.poppins(
-                fontSize: 11,
-                color: AppColors.textMuted,
+          // Members count + share
+          Row(
+            children: [
+              Icon(
+                Icons.people_outline_rounded,
+                size: 16,
+                color: isFull ? AppColors.primaryGreen : AppColors.textMuted,
               ),
-            ),
+              const SizedBox(width: AppSpacing.xs),
+              Text(
+                'Members: $currentMembers / $targetMembers',
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  color: isFull ? AppColors.primaryGreen : AppColors.textMuted,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '₹${sharePerFarmer.toStringAsFixed(0)} per farmer',
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primaryGreen,
+                ),
+              ),
+            ],
           ),
-
-          // "Ready to Purchase" label when full
-          if (_isFull) ...[
-            const SizedBox(height: AppSpacing.sm),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(
-                vertical: AppSpacing.sm,
-                horizontal: AppSpacing.md,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.primaryGreen,
-                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.verified_rounded,
-                    size: 18,
-                    color: AppColors.textLight,
-                  ),
-                  const SizedBox(width: AppSpacing.xs),
-                  Text(
-                    'Ready to Purchase',
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textLight,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
 
           const SizedBox(height: AppSpacing.md),
 
           // Action buttons
           Row(
             children: [
-              // Join Group — outlined style (disabled when joined or full)
               Expanded(
                 child: OutlinedButton(
-                  onPressed: (_hasJoined || _isFull) ? null : _joinGroup,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.primaryGreen,
-                    disabledForegroundColor: AppColors.textMuted,
-                    side: BorderSide(
-                      color: (_hasJoined || _isFull)
-                          ? AppColors.divider
-                          : AppColors.primaryGreen,
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      vertical: AppSpacing.sm + 2,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: AppSpacing.buttonRadius,
-                    ),
-                    textStyle: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  child: Text(_hasJoined ? 'Joined ✓' : 'Join Group'),
-                ),
-              ),
-
-              const SizedBox(width: AppSpacing.sm),
-
-              // View Details — navigates to GroupDetailScreen
-              Expanded(
-                child: ElevatedButton(
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (context) => GroupDetailScreen(
-                          emoji: widget.emoji,
-                          name: widget.name,
-                          location: widget.location,
-                          currentMembers: _currentMembers,
-                          targetMembers: widget.targetMembers,
-                          sharePerFarmer: widget.sharePerFarmer,
-                          members: _memberNames,
+                          groupName: '$name Purchase Group',
                         ),
                       ),
                     );
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryGreen,
-                    foregroundColor: AppColors.textLight,
-                    elevation: 2,
-                    shadowColor: AppColors.primaryGreen.withAlpha(80),
-                    padding: const EdgeInsets.symmetric(
-                      vertical: AppSpacing.sm + 2,
-                    ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primaryGreen,
+                    side: const BorderSide(color: AppColors.primaryGreen),
+                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
                     shape: RoundedRectangleBorder(
                       borderRadius: AppSpacing.buttonRadius,
                     ),
                     textStyle: GoogleFonts.poppins(
-                      fontSize: 14,
+                      fontSize: 13,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   child: const Text('View Details'),
                 ),
               ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── READY Badge ────────────────────────────────────────────────
-
-  Widget _buildReadyBadge() {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm + 2,
-        vertical: AppSpacing.xs,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.primaryGreen,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primaryGreen.withAlpha(60),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Text(
-        'READY',
-        style: GoogleFonts.poppins(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          color: AppColors.textLight,
-          letterSpacing: 1.0,
-        ),
-      ),
-    );
-  }
-
-  // ── Trust Score Row ────────────────────────────────────────────
-
-  Widget _buildTrustScoreRow() {
-    // Compute average trust score for current members
-    final farmers = _memberNames.map(getFarmer).toList();
-    final avgScore = farmers.isEmpty
-        ? 0.0
-        : farmers.fold<double>(0, (sum, f) => sum + f.trustScore) /
-            farmers.length;
-
-    return Wrap(
-      spacing: AppSpacing.sm,
-      runSpacing: AppSpacing.xs,
-      children: [
-        // Average badge
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.sm,
-            vertical: AppSpacing.xs,
-          ),
-          decoration: BoxDecoration(
-            color: Colors.amber.withAlpha(30),
-            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-            border: Border.all(color: Colors.amber.withAlpha(80)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.star_rounded, size: 14, color: Colors.amber),
-              const SizedBox(width: 3),
-              Text(
-                'Avg Trust: ${avgScore.toStringAsFixed(1)}',
-                style: GoogleFonts.poppins(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.amber[800],
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: AgButton(
+                  label: hasJoined ? 'Joined ✓' : (isFull ? 'Full' : 'Join Group'),
+                  onPressed: hasJoined || isFull
+                      ? () {}
+                      : () async {
+                          if (uid == null) return;
+                          try {
+                            await FirestoreService.instance
+                                .joinGroup(groupId, uid);
+                          } catch (e) {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Failed to join: $e'),
+                                backgroundColor: Colors.redAccent,
+                              ),
+                            );
+                          }
+                        },
                 ),
               ),
             ],
           ),
-        ),
-        // Per-member scores
-        ...farmers.map(
-          (f) => Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.sm,
-              vertical: AppSpacing.xs,
-            ),
-            decoration: BoxDecoration(
-              color: AppColors.lightBackground,
-              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-            ),
-            child: Text(
-              '${f.name} ⭐${f.trustScore}',
-              style: GoogleFonts.poppins(
-                fontSize: 11,
-                color: AppColors.textMuted,
-                fontWeight: FontWeight.w500,
+
+          if (isFull) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(AppSpacing.sm),
+              decoration: BoxDecoration(
+                color: AppColors.primaryGreen.withAlpha(15),
+                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.check_circle_rounded,
+                    size: 18,
+                    color: AppColors.primaryGreen,
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  Text(
+                    'Ready to Purchase!',
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primaryGreen,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-        ),
-      ],
+          ],
+        ],
+      ),
     );
   }
 }

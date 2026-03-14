@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../services/auth_service.dart';
+import '../services/firestore_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../widgets/ag_button.dart';
@@ -39,24 +42,66 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
     super.dispose();
   }
 
-  void _handleCreate() {
+  void _handleCreate() async {
     if (!_formKey.currentState!.validate()) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Group created successfully.',
-          style: GoogleFonts.poppins(),
-        ),
-        backgroundColor: AppColors.primaryGreen,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-        ),
-      ),
-    );
+    try {
+      final uid = AuthService.instance.uid;
+      final userDoc = await FirestoreService.instance.getUser(uid);
+      final userData = userDoc.data() as Map<String, dynamic>? ?? {};
 
-    Navigator.of(context).pop();
+      final totalPrice =
+          double.tryParse(_priceController.text.trim()) ?? 0.0;
+      final membersNeeded =
+          int.tryParse(_membersController.text.trim()) ?? 5;
+      final priceShare =
+          membersNeeded > 0 ? totalPrice / membersNeeded : 0.0;
+
+      await FirestoreService.instance.createGroup({
+        // New canonical fields as per spec.
+        'equipmentName': _selectedEquipment ?? '',
+        'location': _locationController.text.trim(),
+        'membersNeeded': membersNeeded,
+        'currentMembers': 1,
+        'priceShare': priceShare,
+        'status': 'active',
+
+        // Existing fields kept for backward compatibility with UI.
+        'equipmentType': _selectedEquipment ?? '',
+        'targetPrice': totalPrice,
+        'targetMembers': membersNeeded,
+        'description': _descriptionController.text.trim(),
+        'createdBy': uid,
+        'creatorName': userData['name'] ?? 'Unknown',
+        'members': [uid],
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Group created successfully.',
+            style: GoogleFonts.poppins(),
+          ),
+          backgroundColor: AppColors.primaryGreen,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+          ),
+        ),
+      );
+
+      Navigator.of(context).pop();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to create group: $e'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
   }
 
   @override
@@ -112,7 +157,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                       _buildLabel('Equipment Name'),
                       const SizedBox(height: AppSpacing.sm),
                       DropdownButtonFormField<String>(
-                        initialValue: _selectedEquipment,
+                        value: _selectedEquipment,
                         decoration: _inputDecoration('Select equipment'),
                         items: _equipmentOptions
                             .map(

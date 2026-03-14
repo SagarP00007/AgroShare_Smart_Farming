@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../data/booking_store.dart';
 import '../models/booking.dart';
+import '../services/auth_service.dart';
+import '../services/firestore_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../widgets/ag_button.dart';
@@ -78,19 +80,10 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
       ),
       body: TabBarView(
         controller: _tabController,
-        children: [
-          _BookingsList(
-            status: BookingStatus.upcoming,
-            onStateChange: () => setState(() {}),
-          ),
-          _BookingsList(
-            status: BookingStatus.active,
-            onStateChange: () => setState(() {}),
-          ),
-          _BookingsList(
-            status: BookingStatus.completed,
-            onStateChange: () => setState(() {}),
-          ),
+        children: const [
+          _BookingsList(status: BookingStatus.upcoming),
+          _BookingsList(status: BookingStatus.active),
+          _BookingsList(status: BookingStatus.completed),
         ],
       ),
     );
@@ -98,28 +91,46 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
 }
 
 class _BookingsList extends StatelessWidget {
-  const _BookingsList({required this.status, required this.onStateChange});
+  const _BookingsList({required this.status});
 
   final BookingStatus status;
-  final VoidCallback onStateChange;
 
   @override
   Widget build(BuildContext context) {
-    final store = BookingStore.instance;
-    final bookings =
-        store.bookings.where((b) => b.status == status).toList().reversed.toList();
-
-    if (bookings.isEmpty) {
-      return _EmptyState(status: status);
+    final uid = AuthService.instance.currentUser?.uid;
+    if (uid == null) {
+      return const Center(child: Text('Not logged in'));
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      itemCount: bookings.length,
-      itemBuilder: (context, index) {
-        return _BookingCard(
-          booking: bookings[index],
-          onStateChange: onStateChange,
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirestoreService.instance.userBookingsStream(uid),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        }
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(color: AppColors.primaryGreen),
+          );
+        }
+
+        final allBookings = snapshot.data?.docs ?? [];
+        final bookings = allBookings
+            .map((doc) =>
+                Booking.fromMap(doc.id, doc.data() as Map<String, dynamic>))
+            .where((b) => b.status == status)
+            .toList();
+
+        if (bookings.isEmpty) {
+          return _EmptyState(status: status);
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          itemCount: bookings.length,
+          itemBuilder: (context, index) {
+            return _BookingCard(booking: bookings[index]);
+          },
         );
       },
     );
@@ -127,14 +138,14 @@ class _BookingsList extends StatelessWidget {
 }
 
 class _BookingCard extends StatelessWidget {
-  const _BookingCard({required this.booking, required this.onStateChange});
+  const _BookingCard({required this.booking});
 
   final Booking booking;
-  final VoidCallback onStateChange;
 
-  void _startBooking(BuildContext context) {
-    BookingStore.instance.updateStatus(booking.id, BookingStatus.active);
-    onStateChange();
+  void _startBooking(BuildContext context) async {
+    await FirestoreService.instance
+        .updateBookingStatus(booking.id, 'active');
+    if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Rental started! Machine is now active.',
@@ -149,9 +160,15 @@ class _BookingCard extends StatelessWidget {
       context: context,
       builder: (ctx) => _ReviewDialog(
         booking: booking,
-        onSubmitted: (rating, review) {
-          BookingStore.instance.completeBooking(booking.id, rating, review);
-          onStateChange();
+        onSubmitted: (rating, review) async {
+          await FirestoreService.instance.submitEquipmentReview(
+            bookingId: booking.id,
+            equipmentId: booking.equipmentId,
+            userId: booking.userId,
+            rating: rating,
+            reviewText: review,
+          );
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Equipment returned successfully.',

@@ -26,6 +26,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   LatLng? _currentPosition;
+  String? _currentAddress;
   bool _isLoadingLocation = true;
 
   @override
@@ -34,11 +35,18 @@ class _HomeScreenState extends State<HomeScreen> {
     _determinePosition();
   }
 
+  /// Fetches real-time GPS for the home banner (no cache).
   Future<void> _determinePosition() async {
-    final location = await LocationService.instance.getFastLocation();
+    LocationService.instance.invalidateCache();
+    final location = await LocationService.instance.getCurrentLocationRealtime();
+    final address = await LocationService.instance.getAddressFromCoordinates(
+      location.latitude,
+      location.longitude,
+    );
     if (mounted) {
       setState(() {
         _currentPosition = location;
+        _currentAddress = address ?? 'Unknown Location';
         _isLoadingLocation = false;
       });
     }
@@ -176,7 +184,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           )
                         else if (_currentPosition != null) ...[
                           Text(
-                            'Angondhalli, Karnataka',
+                            _currentAddress ?? 'Unknown Location',
                             style: GoogleFonts.poppins(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
@@ -304,14 +312,19 @@ class _QuickActionsSection extends StatelessWidget {
             title: 'Quick Actions',
             padding: EdgeInsets.only(bottom: AppSpacing.sm),
           ),
-          GridView.count(
-            crossAxisCount: 2,
+          GridView.builder(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: AppSpacing.sm,
+              crossAxisSpacing: AppSpacing.sm,
+              mainAxisExtent: 130, // Fixed height prevents subtitle wrapping overflows
+            ),
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: AppSpacing.sm,
-            crossAxisSpacing: AppSpacing.sm,
-            childAspectRatio: 1.65,
-            children: _actions.map((a) => _buildActionTile(a, context)).toList(),
+            itemCount: _actions.length,
+            itemBuilder: (context, index) {
+              return _buildActionTile(_actions[index], context);
+            },
           ),
         ],
       ),
