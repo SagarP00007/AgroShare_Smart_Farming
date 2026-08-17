@@ -64,6 +64,31 @@ class AuthService {
     return cred;
   }
 
+  /// Sign in anonymously for quick demo testing without requiring email registration.
+  Future<UserCredential> signInAnonymously() async {
+    final cred = await _auth.signInAnonymously();
+    try {
+      final uid = cred.user!.uid;
+      final doc = await _db.collection('users').doc(uid).get();
+      if (!doc.exists) {
+        await _db.collection('users').doc(uid).set({
+          'name': 'Demo Farmer',
+          'email': 'demo@agroshare.app',
+          'location': 'Karnataka',
+          'phone': '',
+          'trustScore': 4.5,
+          'completedRentals': 2,
+          'groupPurchases': 1,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+    } catch (e) {
+      // ignore: avoid_print
+      print('Firestore anonymous user profile setup error: $e');
+    }
+    return cred;
+  }
+
   /// Sign out.
   Future<void> signOut() => _auth.signOut();
 }

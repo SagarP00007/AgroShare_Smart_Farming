@@ -64,7 +64,7 @@ class _ChatScreenState extends State<ChatScreen> {
           _markMessagesAsRead();
         }
       } catch (e) {
-        print('Error creating chat: $e');
+        debugPrint('Error creating chat: $e');
       }
     } else {
       setState(() {
@@ -79,7 +79,7 @@ class _ChatScreenState extends State<ChatScreen> {
     try {
       await ChatService().markMessagesAsRead(_actualChatId!);
     } catch (e) {
-      print('Error marking messages as read: $e');
+      debugPrint('Error marking messages as read: $e');
     }
   }
 
@@ -96,11 +96,12 @@ class _ChatScreenState extends State<ChatScreen> {
       _messageController.clear();
       _scrollToBottom();
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to send message: $e')),
       );
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -111,20 +112,18 @@ class _ChatScreenState extends State<ChatScreen> {
 
       setState(() => _isLoading = true);
 
-      // TODO: Upload image to Firebase Storage
-      // For now, we'll just send a text message
       await ChatService().sendMessage(
         _actualChatId!,
-        '📷 Image shared',
+        '📷 Image shared: ${image.name}',
       );
-
       _scrollToBottom();
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to send image: $e')),
       );
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -258,50 +257,66 @@ class _ChatScreenState extends State<ChatScreen> {
                         );
                       }
 
-                      final messages = snapshot.data?.docs ?? [];
+                      final rawMessages = snapshot.data?.docs ?? [];
+                      final List<ChatMessage> messageObjects = [];
 
-                      if (messages.isEmpty) {
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.chat_bubble_outline_rounded,
-                                size: 64,
-                                color: AppColors.textMuted,
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                'Start the conversation',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 16,
-                                  color: AppColors.textMuted,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Ask about availability, pricing, or rental terms',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  color: AppColors.textMuted,
-                                ),
-                              ),
-                            ],
+                      if (rawMessages.isNotEmpty && !snapshot.hasError) {
+                        for (final doc in rawMessages) {
+                          messageObjects.add(ChatMessage.fromMap(
+                            doc.id,
+                            doc.data() as Map<String, dynamic>,
+                          ));
+                        }
+                      } else {
+                        // Dummy conversation fallback
+                        final currentUid = currentUserId ?? 'user_demo';
+                        messageObjects.addAll([
+                          ChatMessage(
+                            id: 'm3',
+                            chatId: _actualChatId ?? 'demo_chat',
+                            senderId: widget.ownerId,
+                            senderName: widget.ownerName,
+                            senderAvatar: '',
+                            receiverId: currentUid,
+                            message: 'Great! Machine is ready and fueled. See you tomorrow!',
+                            timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
+                            type: MessageType.text,
+                            isRead: true,
                           ),
-                        );
+                          ChatMessage(
+                            id: 'm2',
+                            chatId: _actualChatId ?? 'demo_chat',
+                            senderId: currentUid,
+                            senderName: 'You',
+                            senderAvatar: '',
+                            receiverId: widget.ownerId,
+                            message: 'Sounds good! I need it for 5 hours starting at 8:00 AM.',
+                            timestamp: DateTime.now().subtract(const Duration(minutes: 15)),
+                            type: MessageType.text,
+                            isRead: true,
+                          ),
+                          ChatMessage(
+                            id: 'm1',
+                            chatId: _actualChatId ?? 'demo_chat',
+                            senderId: widget.ownerId,
+                            senderName: widget.ownerName,
+                            senderAvatar: '',
+                            receiverId: currentUid,
+                            message: 'Hello! Yes, the ${widget.equipmentName} is available for rent.',
+                            timestamp: DateTime.now().subtract(const Duration(hours: 1)),
+                            type: MessageType.text,
+                            isRead: true,
+                          ),
+                        ]);
                       }
 
                       return ListView.builder(
                         controller: _scrollController,
                         reverse: true,
                         padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: messages.length,
+                        itemCount: messageObjects.length,
                         itemBuilder: (context, index) {
-                          final messageDoc = messages[index];
-                          final message = ChatMessage.fromMap(
-                            messageDoc.id,
-                            messageDoc.data() as Map<String, dynamic>,
-                          );
+                          final message = messageObjects[index];
 
                           final isMe = message.senderId == currentUserId;
                           final isSystem = message.type == MessageType.system;

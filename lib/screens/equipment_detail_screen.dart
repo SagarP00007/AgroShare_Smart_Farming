@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../models/equipment.dart';
@@ -301,6 +302,15 @@ class _EquipmentInfoCard extends StatelessWidget {
                     ),
                   ),
                 ),
+                IconButton(
+                  onPressed: () => _showContactDialog(context),
+                  icon: const Icon(
+                    Icons.phone_outlined,
+                    color: AppColors.primaryGreen,
+                    size: 20,
+                  ),
+                  tooltip: 'Call Owner',
+                ),
               ],
             ),
 
@@ -408,19 +418,18 @@ class _EquipmentInfoCard extends StatelessWidget {
                     ),
                     IconButton(
                       onPressed: () {
-                        // Copy phone number to clipboard
                         final phoneNumber = equipment.contactNumber.isNotEmpty
                             ? equipment.contactNumber
                             : '+91 98765 43210';
-                        // TODO: Implement clipboard functionality with phoneNumber
+                        Clipboard.setData(ClipboardData(text: phoneNumber));
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('Phone number copied!'),
+                            content: Text('Phone number $phoneNumber copied!'),
                             backgroundColor: AppColors.primaryGreen,
                           ),
                         );
                       },
-                      icon: Icon(
+                      icon: const Icon(
                         Icons.copy_rounded,
                         color: AppColors.primaryGreen,
                         size: 18,
@@ -755,6 +764,11 @@ class _BookingBar extends StatelessWidget {
           ],
         ),
         actions: [
+          IconButton(
+            onPressed: () => _showContactDialog(context),
+            icon: const Icon(Icons.phone, color: AppColors.primaryGreen),
+            tooltip: 'Call Owner',
+          ),
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
@@ -891,19 +905,18 @@ class _BookingBar extends StatelessWidget {
                     ),
                     IconButton(
                       onPressed: () {
-                        // Copy phone number to clipboard
                         final phoneNumber = equipment.contactNumber.isNotEmpty
                             ? equipment.contactNumber
                             : '+91 98765 43210';
-                        // TODO: Implement clipboard functionality with phoneNumber
+                        Clipboard.setData(ClipboardData(text: phoneNumber));
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('Phone number copied!'),
+                            content: Text('Phone number $phoneNumber copied!'),
                             backgroundColor: AppColors.primaryGreen,
                           ),
                         );
                       },
-                      icon: Icon(
+                      icon: const Icon(
                         Icons.copy_rounded,
                         color: AppColors.primaryGreen,
                         size: 18,

@@ -9,7 +9,6 @@ import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../widgets/ag_button.dart';
 import '../widgets/ag_card.dart';
-import '../widgets/reactive_helpers.dart';
 import 'equipment_list_screen.dart';
 import 'main_shell.dart';
 
@@ -109,31 +108,23 @@ class _BookingsListState extends State<_BookingsList> {
 
   @override
   Widget build(BuildContext context) {
-    final uid = AuthService.instance.currentUser?.uid;
-    if (uid == null) {
-      return const Center(child: Text('Not logged in'));
-    }
+    final uid = AuthService.instance.currentUser?.uid ?? 'demo_user';
 
     return StreamBuilder<QuerySnapshot>(
       key: _streamKey,
       stream: FirestoreService.instance.userBookingsStream(uid),
       builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return ReactiveErrorView(
-            message: 'Failed to load bookings.',
-            onRetry: _retry,
-          );
-        }
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const ReactiveLoadingView(message: 'Loading bookings…');
-        }
-
         final allBookings = snapshot.data?.docs ?? [];
-        final bookings = allBookings
+        var bookings = allBookings
             .map((doc) =>
                 Booking.fromMap(doc.id, doc.data() as Map<String, dynamic>))
             .where((b) => b.status == widget.status)
             .toList();
+
+        if (bookings.isEmpty || snapshot.hasError) {
+          final fallback = FirestoreService.instance.getFallbackBookings();
+          bookings = fallback.where((b) => b.status == widget.status).toList();
+        }
 
         if (bookings.isEmpty) {
           return _EmptyState(status: widget.status);

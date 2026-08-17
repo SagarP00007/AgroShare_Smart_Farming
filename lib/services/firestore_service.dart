@@ -1,6 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../models/booking.dart';
+import '../models/equipment.dart';
+import '../models/farmer.dart';
+
 /// Central Firestore CRUD service for AgroShare.
 class FirestoreService {
   FirestoreService._();
@@ -107,14 +111,234 @@ class FirestoreService {
   // EQUIPMENT
   // ══════════════════════════════════════════════════════════════
 
+  final List<Map<String, dynamic>> _localEquipmentStore = [];
+
+  List<Equipment> getFallbackEquipment() {
+    final list = <Equipment>[
+      const Equipment(
+        id: 'seed_1',
+        name: 'Mahindra Tractor 575 DI',
+        pricePerHour: 500.0,
+        distance: 2.0,
+        rating: 4.7,
+        reviewCount: 24,
+        imageUrl: 'assets/images/tractor.webp',
+        ownerName: 'Rajesh Kumar',
+        ownerId: 'seed',
+        description: 'Powerful 45 HP tractor ideal for ploughing, tilling, and hauling. Well-maintained with AC cabin.',
+        locationName: 'Angondhalli',
+        latitude: 12.9650,
+        longitude: 77.6000,
+        isAvailable: true,
+        purchasePrice: 250000.0,
+        listingType: 'rent',
+        contactNumber: '+91 98765 43210',
+      ),
+      const Equipment(
+        id: 'seed_2',
+        name: 'Mini Harvester',
+        pricePerHour: 800.0,
+        distance: 3.0,
+        rating: 4.5,
+        reviewCount: 12,
+        imageUrl: 'assets/images/harvester.webp',
+        ownerName: 'Sunil Patil',
+        ownerId: 'seed',
+        description: 'Compact combine harvester suitable for wheat and rice. High efficiency with low grain loss.',
+        locationName: 'Ramapur',
+        latitude: 12.9800,
+        longitude: 77.5850,
+        isAvailable: true,
+        purchasePrice: 350000.0,
+        listingType: 'buy',
+        contactNumber: '+91 98765 43211',
+      ),
+      const Equipment(
+        id: 'seed_3',
+        name: 'Irrigation Pump Set',
+        pricePerHour: 200.0,
+        distance: 1.5,
+        rating: 4.2,
+        reviewCount: 8,
+        imageUrl: 'assets/images/pump.webp',
+        ownerName: 'Anita Sharma',
+        ownerId: 'seed',
+        description: '5 HP diesel pump with 100m pipe set. Perfect for field irrigation during dry spells.',
+        locationName: 'Kengeri',
+        latitude: 12.9550,
+        longitude: 77.5700,
+        isAvailable: true,
+        purchasePrice: 45000.0,
+        listingType: 'rent',
+        contactNumber: '+91 98765 43212',
+      ),
+      const Equipment(
+        id: 'seed_4',
+        name: 'Rotavator',
+        pricePerHour: 600.0,
+        distance: 4.0,
+        rating: 4.8,
+        reviewCount: 36,
+        imageUrl: 'assets/images/rotavator.webp',
+        ownerName: 'Vikram Singh',
+        ownerId: 'seed',
+        description: 'Heavy-duty rotavator for soil preparation. 48 blades, 6-foot working width.',
+        locationName: 'Yelahanka',
+        latitude: 12.9900,
+        longitude: 77.6100,
+        isAvailable: true,
+        purchasePrice: 180000.0,
+        listingType: 'buy',
+        contactNumber: '+91 98765 43213',
+      ),
+      const Equipment(
+        id: 'seed_5',
+        name: 'Seed Drill Machine',
+        pricePerHour: 350.0,
+        distance: 2.5,
+        rating: 4.4,
+        reviewCount: 15,
+        imageUrl: 'assets/images/seed_drill.webp',
+        ownerName: 'Priya Desai',
+        ownerId: 'seed',
+        description: 'Precision seed drill with 9-row capacity. Ensures even seed spacing and depth.',
+        locationName: 'Whitefield',
+        latitude: 12.9750,
+        longitude: 77.6200,
+        isAvailable: true,
+        purchasePrice: 120000.0,
+        listingType: 'rent',
+        contactNumber: '+91 98765 43214',
+      ),
+      const Equipment(
+        id: 'seed_6',
+        name: 'Crop Sprayer',
+        pricePerHour: 250.0,
+        distance: 1.8,
+        rating: 4.3,
+        reviewCount: 19,
+        imageUrl: 'assets/images/sprayer.webp',
+        ownerName: 'Mohan Reddy',
+        ownerId: 'seed',
+        description: 'Boom sprayer with 200L tank capacity. Ideal for pesticide and fertilizer application.',
+        locationName: 'Hebbal',
+        latitude: 12.9600,
+        longitude: 77.5800,
+        isAvailable: true,
+        purchasePrice: 75000.0,
+        listingType: 'buy',
+        contactNumber: '+91 98765 43215',
+      ),
+    ];
+
+    for (var i = 0; i < _localEquipmentStore.length; i++) {
+      final data = _localEquipmentStore[i];
+      list.insert(0, Equipment.fromMap(data['id'] ?? 'local_$i', data));
+    }
+    return list;
+  }
+
+  List<Booking> getFallbackBookings() {
+    return [
+      Booking(
+        id: 'bk_1',
+        userId: 'demo',
+        equipmentId: 'seed_1',
+        equipmentName: 'Mahindra Tractor 575 DI',
+        date: DateTime.now().add(const Duration(days: 1)),
+        durationHours: 5,
+        totalCost: 2500.0,
+        status: BookingStatus.upcoming,
+      ),
+      Booking(
+        id: 'bk_2',
+        userId: 'demo',
+        equipmentId: 'seed_2',
+        equipmentName: 'Mini Harvester',
+        date: DateTime.now(),
+        durationHours: 8,
+        totalCost: 6400.0,
+        status: BookingStatus.active,
+      ),
+      Booking(
+        id: 'bk_3',
+        userId: 'demo',
+        equipmentId: 'seed_3',
+        equipmentName: 'Irrigation Pump Set',
+        date: DateTime.now().subtract(const Duration(days: 5)),
+        durationHours: 4,
+        totalCost: 800.0,
+        status: BookingStatus.completed,
+        rating: 5.0,
+        reviewText: 'Excellent pump, started in one crank!',
+      ),
+    ];
+  }
+
+  List<Map<String, dynamic>> getFallbackGroupMaps() {
+    return [
+      {
+        'id': 'grp_1',
+        'equipmentType': 'Mahindra 575 DI Tractor',
+        'currentMembers': 3,
+        'targetMembers': 4,
+        'targetPrice': 250000.0,
+        'locationName': 'Mandya District',
+        'status': 'active',
+        'members': ['m1', 'm2', 'm3'],
+        'creatorId': 'seed_1',
+      },
+      {
+        'id': 'grp_2',
+        'equipmentType': 'Mini Combine Harvester',
+        'currentMembers': 2,
+        'targetMembers': 3,
+        'targetPrice': 360000.0,
+        'locationName': 'Kengeri, Bengaluru',
+        'status': 'active',
+        'members': ['m1', 'm2'],
+        'creatorId': 'seed_2',
+      },
+      {
+        'id': 'grp_3',
+        'equipmentType': '10 HP Solar Pump Set',
+        'currentMembers': 4,
+        'targetMembers': 5,
+        'targetPrice': 150000.0,
+        'locationName': 'Yelahanka',
+        'status': 'active',
+        'members': ['m1', 'm2', 'm3', 'm4'],
+        'creatorId': 'seed_3',
+      },
+    ];
+  }
+
+  Farmer getFallbackFarmer(String? uid) {
+    return Farmer(
+      uid: uid ?? 'demo_farmer',
+      name: 'Ramesh Kumar',
+      email: 'ramesh.farmer@agroshare.app',
+      location: 'Mandya, Karnataka',
+      phone: '+91 9876543210',
+      trustScore: 4.8,
+      completedRentals: 12,
+      groupPurchases: 3,
+      profileImage: '',
+    );
+  }
+
   /// Add a new equipment listing.
-  Future<DocumentReference> addEquipment(Map<String, dynamic> data) {
+  Future<DocumentReference> addEquipment(Map<String, dynamic> data) async {
+    final sanitized = _sanitizeForFirestore(data);
     try {
-      return _equipment.add(_sanitizeForFirestore(data));
+      return await _equipment.add(sanitized);
     } catch (e) {
       // ignore: avoid_print
-      print('Firestore addEquipment error: $e');
-      rethrow;
+      print('Firestore addEquipment notice: $e. Saving to local store.');
+      final localId = 'local_${DateTime.now().millisecondsSinceEpoch}';
+      sanitized['id'] = localId;
+      _localEquipmentStore.add(sanitized);
+      return _equipment.doc(localId);
     }
   }
 

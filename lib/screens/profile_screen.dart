@@ -13,7 +13,6 @@ import '../l10n/app_localizations.dart';
 import '../l10n/locale_provider.dart';
 import '../widgets/ag_card.dart';
 import '../widgets/ag_button.dart';
-import '../widgets/reactive_helpers.dart';
 import '../widgets/section_title.dart';
 import 'login_screen.dart';
 
@@ -27,10 +26,19 @@ class ProfileScreen extends StatefulWidget {
 
 /// Locale code -> translation key for language name.
 /// Locale code -> translation key for language name.
-const Map<String, String> _localeToNameKey = {
-  'en': 'languages_english',
-  'hi': 'languages_hindi',
-  'kn': 'languages_kannada',
+const Map<String, String> _localeToNames = {
+  'en': 'English',
+  'hi': 'Hindi (हिंदी)',
+  'kn': 'Kannada (ಕನ್ನಡ)',
+  'bn': 'Bengali (বাংলা)',
+  'te': 'Telugu (తెలుగు)',
+  'ta': 'Tamil (தமிழ்)',
+  'mr': 'Marathi (मराठी)',
+  'gu': 'Gujarati (ગુજરાતી)',
+  'ml': 'Malayalam (മലയാളം)',
+  'pa': 'Punjabi (ਪੰਜਾਬੀ)',
+  'or': 'Odia (ଓଡ଼ିଆ)',
+  'ur': 'Urdu (اردو)',
 };
 
 class _ProfileScreenState extends State<ProfileScreen> {
@@ -44,7 +52,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final uid = AuthService.instance.currentUser?.uid;
-    if (uid == null) return const SizedBox.shrink();
 
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
@@ -60,20 +67,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       body: StreamBuilder<DocumentSnapshot>(
         key: _profileStreamKey,
-        stream: FirestoreService.instance.userStream(uid),
+        stream: FirestoreService.instance.userStream(uid ?? 'guest'),
         builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return ReactiveErrorView(
-              message: 'Failed to load profile.',
-              onRetry: _retryProfile,
-            );
-          }
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const ReactiveLoadingView(message: 'Loading profile…');
+          final data = snapshot.data?.data() as Map<String, dynamic>? ?? {};
+          var farmer = Farmer.fromMap(uid ?? 'guest', data);
+          if (data.isEmpty || snapshot.hasError || farmer.name.isEmpty) {
+            farmer = FirestoreService.instance.getFallbackFarmer(uid);
           }
 
-          final data = snapshot.data?.data() as Map<String, dynamic>? ?? {};
-          final farmer = Farmer.fromMap(uid, data);
+          final activeUid = uid ?? 'guest_farmer';
 
           return SafeArea(
             child: SingleChildScrollView(
@@ -82,15 +84,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildProfileHeader(context, farmer, uid),
+                  _buildProfileHeader(context, farmer, activeUid),
                   const SizedBox(height: AppSpacing.lg),
                   _buildTrustScore(farmer),
                   const SizedBox(height: AppSpacing.lg),
-                  _buildActivitySummary(farmer),
+                  _buildActivitySummary(farmer, activeUid),
                   const SizedBox(height: AppSpacing.lg),
-                  _buildMyEquipment(context),
+                  _buildMyEquipment(context, activeUid),
                   const SizedBox(height: AppSpacing.lg),
-                  _buildSettings(context, farmer),
+                  _buildSettings(context, farmer, activeUid),
                   const SizedBox(height: AppSpacing.lg),
                   _buildLanguagePreferences(),
                   const SizedBox(height: AppSpacing.lg),
@@ -101,6 +103,59 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildGuestView(BuildContext context) {
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          children: [
+            const SizedBox(height: AppSpacing.xl),
+            CircleAvatar(
+              radius: 48,
+              backgroundColor: AppColors.secondaryGreen.withAlpha(40),
+              child: const Icon(
+                Icons.person_outline_rounded,
+                size: 56,
+                color: AppColors.primaryGreen,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              'Welcome, Farmer!',
+              style: GoogleFonts.poppins(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textDark,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              'Sign in to manage your equipment listings, view bookings, and access your profile.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: AppColors.textMuted,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            AgButton(
+              label: 'Log In / Register',
+              icon: Icons.login_rounded,
+              isExpanded: true,
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                );
+              },
+            ),
+            const SizedBox(height: AppSpacing.xxl),
+            _buildLanguagePreferences(),
+          ],
+        ),
       ),
     );
   }
@@ -386,8 +441,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // ── Section 3: Activity Summary ────────────────────────────────
 
-  Widget _buildActivitySummary(Farmer farmer) {
-    final uid = AuthService.instance.uid;
+  Widget _buildActivitySummary(Farmer farmer, String uid) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -467,8 +521,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // ── Section 4: My Equipment ────────────────────────────────────
 
-  Widget _buildMyEquipment(BuildContext context) {
-    final uid = AuthService.instance.uid;
+  Widget _buildMyEquipment(BuildContext context, String uid) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -509,7 +562,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     pricePerHour: '₹${(data['pricePerHour'] ?? 0).toInt()}/hour',
                     isAvailable: data['isAvailable'] ?? true,
                     onEdit: () =>
-                        _showSnackbar(context, 'Edit feature coming soon.'),
+                        _showEditEquipmentDialog(context, doc.id, data),
                     onRemove: () async {
                       await FirestoreService.instance.deleteEquipment(doc.id);
                       if (context.mounted) {
@@ -526,9 +579,104 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  void _showEditEquipmentDialog(
+    BuildContext context,
+    String docId,
+    Map<String, dynamic> data,
+  ) {
+    final nameCtrl = TextEditingController(text: data['name'] ?? '');
+    final priceCtrl = TextEditingController(
+      text: ((data['pricePerHour'] ?? data['price']) ?? 0).toInt().toString(),
+    );
+    final locationCtrl = TextEditingController(text: data['locationName'] ?? data['location'] ?? '');
+    bool isAvailable = data['isAvailable'] ?? true;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: Text(
+            'Edit Equipment',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameCtrl,
+                  decoration: InputDecoration(
+                    labelText: 'Equipment Name',
+                    labelStyle: GoogleFonts.poppins(),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                TextField(
+                  controller: priceCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'Price per Hour (₹)',
+                    labelStyle: GoogleFonts.poppins(),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                TextField(
+                  controller: locationCtrl,
+                  decoration: InputDecoration(
+                    labelText: 'Location',
+                    labelStyle: GoogleFonts.poppins(),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                SwitchListTile(
+                  title: Text(
+                    'Available for Rent',
+                    style: GoogleFonts.poppins(fontSize: 14),
+                  ),
+                  value: isAvailable,
+                  activeColor: AppColors.primaryGreen,
+                  onChanged: (val) {
+                    setDialogState(() => isAvailable = val);
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final price = double.tryParse(priceCtrl.text.trim()) ?? 0.0;
+                await FirestoreService.instance.updateEquipment(docId, {
+                  'name': nameCtrl.text.trim(),
+                  'pricePerHour': price,
+                  'price': price,
+                  'locationName': locationCtrl.text.trim(),
+                  'location': locationCtrl.text.trim(),
+                  'isAvailable': isAvailable,
+                });
+                if (ctx.mounted) Navigator.pop(ctx);
+                if (context.mounted) {
+                  _showSnackbar(context, 'Equipment updated successfully!');
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryGreen,
+              ),
+              child: const Text('Save', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // ── Section 5: Settings ────────────────────────────────────────
 
-  Widget _buildSettings(BuildContext context, Farmer farmer) {
+  Widget _buildSettings(BuildContext context, Farmer farmer, String uid) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -686,7 +834,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const Text('🇮🇳', style: TextStyle(fontSize: 20)),
                       const SizedBox(width: AppSpacing.sm),
                       Text(
-                        L.tr(context, _localeToNameKey[localeCodes[i]] ?? 'languages_english'),
+                        _localeToNames[localeCodes[i]] ?? localeCodes[i].toUpperCase(),
                         style: GoogleFonts.poppins(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,

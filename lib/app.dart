@@ -40,20 +40,40 @@ class AgroShareApp extends StatelessWidget {
                 child: child ?? const SizedBox.shrink(),
               );
             },
-            home: StreamBuilder(
-              stream: AuthService.instance.authStateChanges,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Scaffold(
-                    body: Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                  );
+            home: Builder(
+              builder: (context) {
+                Stream<dynamic>? authStream;
+                try {
+                  authStream = AuthService.instance.authStateChanges;
+                } catch (e) {
+                  // ignore: avoid_print
+                  print('Auth stream error: $e');
+                  authStream = null;
                 }
-                if (snapshot.hasData) {
-                  return const MainShell();
+
+                if (authStream == null) {
+                  return const LoginScreen();
                 }
-                return const LoginScreen();
+
+                return StreamBuilder(
+                  stream: authStream,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Scaffold(
+                        body: Center(
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    }
+                    if (snapshot.hasError) {
+                      return const LoginScreen();
+                    }
+                    if (snapshot.hasData) {
+                      return const MainShell();
+                    }
+                    return const LoginScreen();
+                  },
+                );
               },
             ),
           ),

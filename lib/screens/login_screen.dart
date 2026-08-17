@@ -216,6 +216,29 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: AppSpacing.md),
 
+                // Quick Demo Sign In
+                OutlinedButton.icon(
+                  onPressed: _isLoading ? null : _submitAnonymous,
+                  icon: const Icon(Icons.flash_on_rounded, size: 18),
+                  label: Text(
+                    'Quick Demo Sign-In (No Registration)',
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primaryGreen,
+                    side: const BorderSide(color: AppColors.primaryGreen),
+                    minimumSize: const Size(double.infinity, 48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: AppSpacing.buttonRadius,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: AppSpacing.sm),
+
                 // Toggle login/register
                 TextButton(
                   onPressed: () => setState(() => _isRegister = !_isRegister),
@@ -236,5 +259,21 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
+  }
+
+  void _submitAnonymous() async {
+    setState(() => _isLoading = true);
+    try {
+      await AuthService.instance.signInAnonymously();
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MainShell()),
+      );
+    } catch (e) {
+      _showError('Demo sign in error: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 }

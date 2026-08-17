@@ -46,7 +46,14 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     try {
-      final uid = AuthService.instance.uid;
+      final user = AuthService.instance.currentUser;
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please sign in to create a group.')),
+        );
+        return;
+      }
+      final uid = user.uid;
       final userDoc = await FirestoreService.instance.getUser(uid);
       final userData = userDoc.data() as Map<String, dynamic>? ?? {};
 

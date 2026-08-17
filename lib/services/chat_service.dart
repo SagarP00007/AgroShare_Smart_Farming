@@ -201,7 +201,7 @@ class ChatService {
 
     int unreadCount = 0;
     for (final chatDoc in chats.docs) {
-      final chat = Chat.fromMap(chatDoc.id, chatDoc.data()!);
+      final chat = Chat.fromMap(chatDoc.id, chatDoc.data());
       if (chat.hasUnreadMessages(currentUserId)) {
         unreadCount++;
       }

@@ -62,9 +62,21 @@ class LocaleProvider extends ChangeNotifier {
 
   /// Call once after SharedPreferences is ready (e.g. in main after Firebase init).
   static Future<LocaleProvider> create() async {
-    final prefs = await SharedPreferences.getInstance();
-    final provider = LocaleProvider(prefs);
-    await provider.loadLocalizations();
-    return provider;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final provider = LocaleProvider(prefs);
+      try {
+        await provider.loadLocalizations();
+      } catch (e) {
+        // ignore: avoid_print
+        print('Warning loading localizations: $e');
+      }
+      return provider;
+    } catch (e) {
+      // ignore: avoid_print
+      print('Warning initializing SharedPreferences for LocaleProvider: $e');
+      final prefs = await SharedPreferences.getInstance();
+      return LocaleProvider(prefs);
+    }
   }
 }

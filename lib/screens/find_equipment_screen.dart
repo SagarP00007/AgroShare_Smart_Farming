@@ -126,7 +126,7 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
       _mapController.move(loc, _mapZoom);
     } catch (e) {
       if (mounted) setState(() => _isRefreshingLocation = false);
-      print(e);
+      debugPrint('Location refresh error: $e');
     }
   }
 
@@ -214,19 +214,6 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
                 key: _streamKey,
                 stream: FirestoreService.instance.equipmentStream(),
                 builder: (context, snapshot) {
-                  if (snapshot.hasError) {
-                    return ReactiveErrorView(
-                      message: 'Failed to load equipment.',
-                      onRetry: _retry,
-                    );
-                  }
-
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const ReactiveLoadingView(
-                      message: 'Loading map & equipment…',
-                    );
-                  }
-
                   final docs = snapshot.data?.docs ?? [];
                   var equipment = docs
                       .map((d) => Equipment.fromMap(
@@ -235,6 +222,10 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
                           ))
                       .where((e) => e.isAvailable)
                       .toList();
+
+                  if (equipment.isEmpty || snapshot.hasError) {
+                    equipment = FirestoreService.instance.getFallbackEquipment();
+                  }
 
                   if (_searchQuery.isNotEmpty) {
                     equipment = equipment

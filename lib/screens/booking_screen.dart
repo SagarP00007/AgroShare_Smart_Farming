@@ -85,7 +85,7 @@ class _BookingScreenState extends State<BookingScreen> {
       );
 
       await FirestoreService.instance.createBooking({
-        'userId': AuthService.instance.uid,
+        'userId': AuthService.instance.currentUser?.uid ?? 'guest_user',
         'equipmentId': widget.equipment.id,
         'equipmentName': widget.equipment.name,
         // Firestore timestamps.
