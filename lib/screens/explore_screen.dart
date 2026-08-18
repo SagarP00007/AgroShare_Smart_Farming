@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../l10n/app_localizations.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import 'main_shell.dart';
@@ -59,7 +60,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
             ),
             const SizedBox(width: 12),
             Text(
-              'Explore',
+              L.tr(context, 'explore'),
               style: GoogleFonts.poppins(
                 fontWeight: FontWeight.w600,
                 fontSize: 20,
@@ -74,7 +75,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
             onPressed: _refreshNews,
-            tooltip: 'Refresh News',
+            tooltip: L.tr(context, 'refresh_news'),
           ),
           const SizedBox(width: 8),
         ],
@@ -130,7 +131,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Good Day, Farmer!',
+                            L.tr(context, 'good_day_farmer'),
                             style: GoogleFonts.poppins(
                               fontSize: 20,
                               fontWeight: FontWeight.w600,
@@ -141,7 +142,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Stay updated with the latest farming news and technologies',
+                        L.tr(context, 'stay_updated_news'),
                         style: GoogleFonts.poppins(
                           fontSize: 14,
                           color: AppColors.textMuted,
@@ -158,7 +159,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
                 child: SectionTitle(
-                  title: 'Equipment Knowledge',
+                  title: L.tr(context, 'equipment_knowledge'),
                   padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                 ),
               ),
@@ -185,7 +186,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
                 child: SectionTitle(
-                  title: 'New Agri Technologies',
+                  title: L.tr(context, 'new_agri_technologies'),
                   padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                 ),
               ),
@@ -206,7 +207,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
                 child: SectionTitle(
-                  title: 'Daily Agriculture News',
+                  title: L.tr(context, 'daily_farming_news'),
                   padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                 ),
               ),
@@ -229,7 +230,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
                   if (snapshot.hasError) {
                     return ReactiveHelpers.errorState(
-                      'Failed to load news',
+                      L.tr(context, 'failed_to_load_news'),
                       onRetry: _refreshNews,
                     );
                   }
@@ -237,8 +238,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   final newsArticles = snapshot.data ?? [];
                   if (newsArticles.isEmpty) {
                     return ReactiveHelpers.emptyState(
-                      'No news available',
-                      'Check back later for farming updates',
+                      L.tr(context, 'no_news_available'),
+                      L.tr(context, 'check_back_later'),
                     );
                   }
 

@@ -1,34 +1,58 @@
+import 'dart:convert';
 import 'dart:io';
 
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:http/http.dart' as http;
 
-/// Handles file uploads to Firebase Storage.
+/// Handles file uploads to Cloudinary (free tier, no credit card needed).
+/// Replaces Firebase Storage which requires the paid Blaze plan.
 class StorageService {
   StorageService._();
   static final StorageService instance = StorageService._();
 
-  final FirebaseStorage _storage = FirebaseStorage.instanceFor(bucket: 'gs://agroshare-f1f57.appspot.com');
+  static const String _cloudName = 'bl6cxq4f';
+  static const String _uploadPreset = 'agroshare_unsigned';
+  static const String _uploadUrl =
+      'https://api.cloudinary.com/v1_1/$_cloudName/image/upload';
 
-  /// Uploads an equipment image to equipment_images/{timestamp}.jpg
-  /// and returns the download URL.
+  /// Uploads an equipment image to Cloudinary under the
+  /// `equipment_images` folder and returns the secure download URL.
   Future<String> uploadEquipmentImage(File file) async {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final ref = _storage.ref().child('equipment_images/$timestamp.jpg');
-    await ref.putFile(
-      file,
-      SettableMetadata(contentType: 'image/jpeg'),
-    );
-    return ref.getDownloadURL();
+    return _upload(file, folder: 'equipment_images', publicId: 'eq_$timestamp');
   }
 
-  /// Uploads a profile image to profile_images/{userId}.jpg
-  /// and returns the download URL.
+  /// Uploads a profile image to Cloudinary under the
+  /// `profile_images` folder and returns the secure download URL.
   Future<String> uploadProfileImage(File file, String userId) async {
-    final ref = _storage.ref().child('profile_images/$userId.jpg');
-    await ref.putFile(
-      file,
-      SettableMetadata(contentType: 'image/jpeg'),
-    );
-    return ref.getDownloadURL();
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    return _upload(file, folder: 'profile_images', publicId: '${userId}_$timestamp');
+  }
+
+  /// Core unsigned-upload helper.
+  Future<String> _upload(
+    File file, {
+    required String folder,
+    String? publicId,
+  }) async {
+    final request = http.MultipartRequest('POST', Uri.parse(_uploadUrl))
+      ..fields['upload_preset'] = _uploadPreset
+      ..fields['folder'] = folder;
+
+    if (publicId != null) {
+      request.fields['public_id'] = publicId;
+    }
+
+    request.files.add(await http.MultipartFile.fromPath('file', file.path));
+
+    final streamed = await request.send();
+    final response = await http.Response.fromStream(streamed);
+
+    if (response.statusCode != 200) {
+      throw Exception('Cloudinary upload failed (${response.statusCode}): '
+          '${response.body}');
+    }
+
+    final data = json.decode(response.body) as Map<String, dynamic>;
+    return data['secure_url'] as String;
   }
 }

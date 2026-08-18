@@ -164,7 +164,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                       _buildLabel('Equipment Name'),
                       const SizedBox(height: AppSpacing.sm),
                       DropdownButtonFormField<String>(
-                        value: _selectedEquipment,
+                        initialValue: _selectedEquipment,
                         decoration: _inputDecoration('Select equipment'),
                         items: _equipmentOptions
                             .map(

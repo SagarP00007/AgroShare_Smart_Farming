@@ -25,6 +25,15 @@ class AppLocalizations {
     Locale('en'),
     Locale('hi'),
     Locale('kn'),
+    Locale('ta'),
+    Locale('te'),
+    Locale('bn'),
+    Locale('mr'),
+    Locale('gu'),
+    Locale('ml'),
+    Locale('pa'),
+    Locale('or'),
+    Locale('ur'),
   ];
 
   static const String _basePath = 'assets/translations';
@@ -50,13 +59,13 @@ class AppLocalizations {
     final path = '$_basePath/${locale.languageCode}.json';
     final str = await rootBundle.loadString(path);
     final map = json.decode(str) as Map<String, dynamic>;
-    return map.map((k, v) => MapEntry(k as String, (v ?? k).toString()));
+    return map.map((k, v) => MapEntry(k, (v ?? k).toString()));
   }
 }
 
 /// InheritedWidget to expose [AppLocalizations] down the tree.
 class InheritedL10n extends InheritedWidget {
-  const InheritedL10n({required this.data, required super.child});
+  const InheritedL10n({super.key, required this.data, required super.child});
 
   final AppLocalizations data;
 

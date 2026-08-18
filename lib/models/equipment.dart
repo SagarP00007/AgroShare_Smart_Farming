@@ -1,3 +1,5 @@
+import 'package:geolocator/geolocator.dart';
+
 /// Data model for a piece of farm equipment available for sharing.
 class Equipment {
   const Equipment({
@@ -40,6 +42,22 @@ class Equipment {
 
   bool get isRent => listingType == 'rent';
   bool get isSell => listingType == 'buy';
+
+  /// Calculates dynamic geodesic distance (in km) from user's current GPS position
+  double calculateDistanceKm(double? userLat, double? userLng) {
+    if (userLat == null || userLng == null || (latitude == 0.0 && longitude == 0.0)) {
+      return distance;
+    }
+    final meters = Geolocator.distanceBetween(userLat, userLng, latitude, longitude);
+    final km = meters / 1000.0;
+    return double.parse(km.toStringAsFixed(1));
+  }
+
+  /// Returns user-friendly formatted distance string e.g. "2.3 km away"
+  String formattedDistance(double? userLat, double? userLng) {
+    final dist = calculateDistanceKm(userLat, userLng);
+    return '$dist km away';
+  }
 
   /// Create from Firestore document.
   factory Equipment.fromMap(String id, Map<String, dynamic> data) {

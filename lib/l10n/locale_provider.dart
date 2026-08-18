@@ -6,6 +6,7 @@ import 'app_localizations.dart';
 /// Provides [LocaleProvider] down the tree so screens can call setLocale.
 class LocaleProviderInherited extends InheritedWidget {
   const LocaleProviderInherited({
+    super.key,
     required this.provider,
     required super.child,
   });

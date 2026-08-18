@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/equipment.dart';
 import '../services/firestore_service.dart';
 import '../services/location_service.dart';
@@ -38,7 +39,7 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
 
   String? _selectedCrop;
   String? _selectedTask;
-  Key _streamKey = UniqueKey();
+  final Key _streamKey = UniqueKey();
 
   // Equipment search suggestions
   static const List<String> _equipmentSuggestions = [
@@ -68,10 +69,6 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
     'disc harrow',
     'mould board plow'
   ];
-
-  void _retry() {
-    setState(() => _streamKey = UniqueKey());
-  }
 
   LatLng _userLocation = const LatLng(
     LocationService.defaultLat,
@@ -174,7 +171,7 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
       backgroundColor: AppColors.lightBackground,
       appBar: AppBar(
         title: Text(
-          'Find Equipment',
+          L.tr(context, 'find_equipment'),
           style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
         ),
         backgroundColor: AppColors.primaryGreen,
@@ -265,9 +262,9 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.md),
                         child: SectionTitle(
-                          title: 'Available Equipment',
+                          title: L.tr(context, 'available_equipment'),
                           trailing: Text(
-                            '${equipment.length} machines',
+                            '${equipment.length} ${L.tr(context, 'machines')}',
                             style: GoogleFonts.poppins(
                               fontSize: 12,
                               color: AppColors.textMuted,
@@ -277,12 +274,12 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
                         ),
                       ),
                       if (equipment.isEmpty)
-                        const Padding(
+                        Padding(
                           padding:
-                              EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                              const EdgeInsets.symmetric(horizontal: AppSpacing.md),
                           child: ReactiveEmptyView(
-                            title: 'No equipment matches',
-                            subtitle: 'Try changing your search or filters.',
+                            title: L.tr(context, 'no_equipment_matches'),
+                            subtitle: L.tr(context, 'try_changing_filters'),
                             icon: Icons.search_off_rounded,
                           ),
                         )
@@ -295,6 +292,7 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
                             children: equipment.map((item) {
                               return _FirestoreEquipmentCard(
                                 equipment: item,
+                                userLocation: _userLocation,
                                 onTap: () {
                                   Navigator.push(
                                     context,
@@ -444,6 +442,7 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
                 flags: InteractiveFlag.all,
               ),
             ),
+            mapController: _mapController,
             children: [
               TileLayer(
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -453,7 +452,6 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
                 markers: [userMarker, ...equipmentMarkers],
               ),
             ],
-            mapController: _mapController,
           ),
 
           // Modern location loading indicator
@@ -481,7 +479,7 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(
+                    SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
@@ -615,7 +613,7 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
             onChanged: _onSearchChanged,
             onTap: () => _updateSearchSuggestions(_searchCtrl.text),
             decoration: InputDecoration(
-              hintText: 'Search equipment (tractor, harvester, pump...)',
+              hintText: L.tr(context, 'search_placeholder'),
               hintStyle: GoogleFonts.poppins(
                 fontSize: 14,
                 color: AppColors.textMuted,
@@ -815,7 +813,7 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
                 children: [
                   // Filter by Task
                   Text(
-                    'Filter by Task',
+                    L.tr(context, 'filter_by_task'),
                     style: GoogleFonts.poppins(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -827,7 +825,7 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      _buildFilterChip('All', _selectedTask == null, () {
+                      _buildFilterChip(L.tr(context, 'all'), _selectedTask == null, () {
                         setState(() => _selectedTask = null);
                       }),
                       ..._tasks.map((task) => _buildFilterChip(
@@ -842,7 +840,7 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
 
                   // Filter by Crop
                   Text(
-                    'Filter by Crop',
+                    L.tr(context, 'filter_by_crop'),
                     style: GoogleFonts.poppins(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -854,7 +852,7 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      _buildFilterChip('All', _selectedCrop == null, () {
+                      _buildFilterChip(L.tr(context, 'all'), _selectedCrop == null, () {
                         setState(() => _selectedCrop = null);
                       }),
                       ..._crops.map((crop) => _buildFilterChip(
@@ -946,10 +944,12 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
 class _FirestoreEquipmentCard extends StatelessWidget {
   const _FirestoreEquipmentCard({
     required this.equipment,
+    this.userLocation,
     this.onTap,
   });
 
   final Equipment equipment;
+  final LatLng? userLocation;
   final VoidCallback? onTap;
 
   static const _imageHeight = 140.0;
@@ -992,6 +992,10 @@ class _FirestoreEquipmentCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasImage =
         equipment.imageUrl.isNotEmpty && equipment.imageUrl.startsWith('http');
+    final distanceText = equipment.formattedDistance(
+      userLocation?.latitude,
+      userLocation?.longitude,
+    );
 
     return AgCard(
       margin: const EdgeInsets.only(bottom: AppSpacing.md),
@@ -1048,13 +1052,49 @@ class _FirestoreEquipmentCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  equipment.name,
-                  style: GoogleFonts.poppins(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textDark,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        equipment.name,
+                        style: GoogleFonts.poppins(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textDark,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryGreen.withAlpha(15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.near_me_rounded,
+                            size: 12,
+                            color: AppColors.primaryGreen,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            distanceText,
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primaryGreen,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -1110,8 +1150,8 @@ class _FirestoreEquipmentCard extends StatelessWidget {
                         ),
                         child: Text(
                           equipment.isRent
-                              ? 'Borrow Equipment'
-                              : 'Buy Equipment',
+                              ? L.tr(context, 'borrow_equipment')
+                              : L.tr(context, 'buy_equipment'),
                           style: GoogleFonts.poppins(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,

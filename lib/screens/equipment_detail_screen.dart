@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/equipment.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
@@ -324,20 +325,20 @@ class _EquipmentInfoCard extends StatelessWidget {
                 _StatItem(
                   icon: Icons.currency_rupee_rounded,
                   value: '₹${equipment.pricePerHour.toInt()}',
-                  label: 'per hour',
+                  label: L.tr(context, 'per_hour'),
                 ),
                 _statDivider(),
                 _StatItem(
                   icon: Icons.location_on_outlined,
                   value: '${equipment.distance} km',
-                  label: 'away',
+                  label: L.tr(context, 'away'),
                 ),
                 _statDivider(),
                 _StatItem(
                   icon: Icons.star_rounded,
                   iconColor: Colors.amber,
                   value: equipment.rating.toString(),
-                  label: 'rating',
+                  label: L.tr(context, 'rating'),
                 ),
               ],
             ),
@@ -547,9 +548,9 @@ class _DescriptionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SectionTitle(
-            title: 'Description',
-            padding: EdgeInsets.only(bottom: AppSpacing.sm),
+          SectionTitle(
+            title: L.tr(context, 'description'),
+            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
           ),
           AgCard(
             margin: EdgeInsets.zero,
@@ -704,7 +705,7 @@ class _BookingBar extends StatelessWidget {
       ),
       child: equipment.isRent
           ? AgButton(
-              label: 'Book for Borrow',
+              label: L.tr(context, 'book_for_borrow'),
               icon: Icons.calendar_today_rounded,
               isExpanded: true,
               onPressed: () {
@@ -717,7 +718,7 @@ class _BookingBar extends StatelessWidget {
               },
             )
           : AgButton(
-              label: 'Buy Equipment',
+              label: L.tr(context, 'buy_equipment'),
               icon: Icons.shopping_cart_rounded,
               isExpanded: true,
               onPressed: () {

@@ -43,11 +43,7 @@ const Map<String, String> _localeToNames = {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _isUploadingProfilePhoto = false;
-  Key _profileStreamKey = UniqueKey();
-
-  void _retryProfile() {
-    setState(() => _profileStreamKey = UniqueKey());
-  }
+  final Key _profileStreamKey = UniqueKey();
 
   @override
   Widget build(BuildContext context) {
@@ -107,58 +103,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildGuestView(BuildContext context) {
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          children: [
-            const SizedBox(height: AppSpacing.xl),
-            CircleAvatar(
-              radius: 48,
-              backgroundColor: AppColors.secondaryGreen.withAlpha(40),
-              child: const Icon(
-                Icons.person_outline_rounded,
-                size: 56,
-                color: AppColors.primaryGreen,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              'Welcome, Farmer!',
-              style: GoogleFonts.poppins(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textDark,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              'Sign in to manage your equipment listings, view bookings, and access your profile.',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                color: AppColors.textMuted,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            AgButton(
-              label: 'Log In / Register',
-              icon: Icons.login_rounded,
-              isExpanded: true,
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                );
-              },
-            ),
-            const SizedBox(height: AppSpacing.xxl),
-            _buildLanguagePreferences(),
-          ],
-        ),
-      ),
-    );
-  }
 
   // ── Section 1: Profile Header ──────────────────────────────────
 
@@ -634,7 +578,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     style: GoogleFonts.poppins(fontSize: 14),
                   ),
                   value: isAvailable,
-                  activeColor: AppColors.primaryGreen,
+                  activeTrackColor: AppColors.primaryGreen,
                   onChanged: (val) {
                     setDialogState(() => isAvailable = val);
                   },

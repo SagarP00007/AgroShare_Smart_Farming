@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../l10n/app_localizations.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../widgets/ag_button.dart';
 import '../widgets/ag_card.dart';
-import '../widgets/reactive_helpers.dart';
 import '../widgets/section_title.dart';
 import 'create_group_screen.dart';
 import 'group_detail_screen.dart';
@@ -36,7 +36,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
       backgroundColor: AppColors.lightBackground,
       appBar: AppBar(
         title: Text(
-          'Community',
+          L.tr(context, 'community'),
           style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
         ),
         backgroundColor: AppColors.primaryGreen,
@@ -99,7 +99,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Equipment Groups',
+                  L.tr(context, 'equipment_groups'),
                   style: GoogleFonts.poppins(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
@@ -108,7 +108,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Pool resources to buy expensive farm machinery together.',
+                  L.tr(context, 'pool_resources'),
                   style: GoogleFonts.poppins(
                     fontSize: 12,
                     color: AppColors.textMuted,
@@ -125,7 +125,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
   Widget _buildStartGroupButton(BuildContext context) {
     return AgButton(
-      label: 'Start Equipment Group',
+      label: L.tr(context, 'start_equipment_group'),
       icon: Icons.group_add_rounded,
       isExpanded: true,
       onPressed: () {
@@ -142,8 +142,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionTitle(
-          title: 'Active Equipment Groups',
+        SectionTitle(
+          title: L.tr(context, 'active_equipment_groups'),
           padding: EdgeInsets.zero,
         ),
         const SizedBox(height: AppSpacing.md),
@@ -201,8 +201,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionTitle(
-          title: 'My Joined Groups',
+        SectionTitle(
+          title: L.tr(context, 'my_joined_groups'),
           padding: EdgeInsets.zero,
         ),
         const SizedBox(height: AppSpacing.md),
@@ -374,13 +374,15 @@ class _EquipmentGroupCard extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  child: const Text('View Details'),
+                  child: Text(L.tr(context, 'view_details')),
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: AgButton(
-                  label: hasJoined ? 'Joined ✓' : (isFull ? 'Full' : 'Join Group'),
+                  label: hasJoined
+                      ? L.tr(context, 'joined')
+                      : (isFull ? L.tr(context, 'full') : L.tr(context, 'join_group')),
                   onPressed: hasJoined || isFull
                       ? () {}
                       : () async {
@@ -422,7 +424,7 @@ class _EquipmentGroupCard extends StatelessWidget {
                   ),
                   const SizedBox(width: AppSpacing.xs),
                   Text(
-                    'Ready to Purchase!',
+                    L.tr(context, 'ready_to_purchase'),
                     style: GoogleFonts.poppins(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,

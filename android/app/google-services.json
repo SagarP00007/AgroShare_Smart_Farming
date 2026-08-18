@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "1050173012384",
-    "project_id": "agroshare-f1f57",
-    "storage_bucket": "agroshare-f1f57.appspot.com"
+    "project_number": "1007937607264",
+    "project_id": "agroshare-app-2026",
+    "storage_bucket": "agroshare-app-2026.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1050173012384:android:8f902195b1abf51a978cc5",
+        "mobilesdk_app_id": "1:1007937607264:android:60c6d35917610561961505",
         "android_client_info": {
           "package_name": "com.example.agroshare"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBHruvXF94Suc0dmjm_8NiBT3pH_JaEy2E"
+          "current_key": "AIzaSyAAAHL0ePohBi3lF4j3-CDhi0zHlJXJw_I"
         }
       ],
       "services": {

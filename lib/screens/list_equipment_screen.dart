@@ -4,8 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:geocoding/geocoding.dart';
+
+import '../l10n/app_localizations.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
+import '../services/location_service.dart';
 import '../services/storage_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
@@ -103,6 +107,27 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
         } catch (_) {}
       }
 
+      // Resolve real GPS coordinates: try geocoding address first, then fallback to device GPS
+      double latitude = LocationService.defaultLat;
+      double longitude = LocationService.defaultLng;
+
+      try {
+        final locText = _locationCtrl.text.trim();
+        if (locText.isNotEmpty) {
+          final locations = await locationFromAddress(locText);
+          if (locations.isNotEmpty) {
+            latitude = locations.first.latitude;
+            longitude = locations.first.longitude;
+          }
+        }
+      } catch (_) {
+        try {
+          final pos = await LocationService.instance.getFastLocation();
+          latitude = pos.latitude;
+          longitude = pos.longitude;
+        } catch (_) {}
+      }
+
       await FirestoreService.instance.addEquipment({
         'name': _selectedEquipment!,
         'price': double.tryParse(_priceCtrl.text.trim()) ?? 0,
@@ -118,8 +143,8 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
         'ownerName': ownerName,
         'description': _descCtrl.text.trim(),
         'locationName': _locationCtrl.text.trim(),
-        'latitude': 12.9716,
-        'longitude': 77.5946,
+        'latitude': latitude,
+        'longitude': longitude,
         'purchasePrice': double.tryParse(_sellingPriceCtrl.text.trim()) ?? 0,
         'condition': _selectedCondition!,
         'fuelIncluded': _fuelIncluded,
@@ -284,7 +309,7 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
                 const SizedBox(height: AppSpacing.lg),
               ],
               AgButton(
-                label: 'ADD EQUIPMENT',
+                label: L.tr(context, 'list_equipment'),
                 icon: Icons.add_circle_outline_rounded,
                 isExpanded: true,
                 onPressed: _addEquipment,
@@ -325,7 +350,7 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'List Your Equipment',
+                  L.tr(context, 'list_your_equipment'),
                   style: GoogleFonts.poppins(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
@@ -334,7 +359,7 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Share your farm machines and earn rental income.',
+                  L.tr(context, 'share_and_earn'),
                   style: GoogleFonts.poppins(
                     fontSize: 12,
                     color: AppColors.textMuted,
@@ -353,9 +378,9 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionTitle(
-          title: 'Listing Type',
-          padding: EdgeInsets.only(bottom: AppSpacing.sm),
+        SectionTitle(
+          title: L.tr(context, 'listing_type'),
+          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
         ),
         AgCard(
           margin: EdgeInsets.zero,
@@ -365,15 +390,15 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
               _buildRadioTile(
                 value: 'rent',
                 icon: Icons.access_time_rounded,
-                label: 'Rent Equipment',
-                subtitle: 'Allow others to borrow your machine hourly',
+                label: L.tr(context, 'rent_equipment'),
+                subtitle: L.tr(context, 'rent_subtitle'),
               ),
               const Divider(height: 1, color: AppColors.divider),
               _buildRadioTile(
                 value: 'sell',
                 icon: Icons.sell_rounded,
-                label: 'Sell Equipment',
-                subtitle: 'Put your machine up for sale',
+                label: L.tr(context, 'sell_equipment'),
+                subtitle: L.tr(context, 'sell_subtitle'),
               ),
             ],
           ),
@@ -499,7 +524,7 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
             children: [
               // Equipment type dropdown
               DropdownButtonFormField<String>(
-                value: _selectedEquipment,
+                initialValue: _selectedEquipment,
                 decoration: InputDecoration(
                   labelText: 'Equipment Type',
                   labelStyle: GoogleFonts.poppins(color: AppColors.textMuted),
@@ -656,7 +681,7 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
           margin: EdgeInsets.zero,
           padding: const EdgeInsets.all(AppSpacing.md),
           child: DropdownButtonFormField<String>(
-            value: _selectedCondition,
+            initialValue: _selectedCondition,
             decoration: InputDecoration(
               labelText: 'Condition',
               labelStyle: GoogleFonts.poppins(color: AppColors.textMuted),

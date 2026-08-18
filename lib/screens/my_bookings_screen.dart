@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/booking.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
@@ -42,7 +43,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
       backgroundColor: AppColors.lightBackground,
       appBar: AppBar(
         title: Text(
-          'My Bookings',
+          L.tr(context, 'my_bookings'),
           style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
         ),
         backgroundColor: AppColors.primaryGreen,
@@ -71,10 +72,10 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
             fontWeight: FontWeight.w500,
             fontSize: 14,
           ),
-          tabs: const [
-            Tab(text: 'Upcoming'),
-            Tab(text: 'Active'),
-            Tab(text: 'History'),
+          tabs: [
+            Tab(text: L.tr(context, 'upcoming')),
+            Tab(text: L.tr(context, 'active')),
+            Tab(text: L.tr(context, 'history')),
           ],
         ),
       ),
@@ -100,11 +101,7 @@ class _BookingsList extends StatefulWidget {
 }
 
 class _BookingsListState extends State<_BookingsList> {
-  Key _streamKey = UniqueKey();
-
-  void _retry() {
-    setState(() => _streamKey = UniqueKey());
-  }
+  final Key _streamKey = UniqueKey();
 
   @override
   Widget build(BuildContext context) {
@@ -196,7 +193,7 @@ class _BookingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final statusColor = _getStatusColor(booking.status);
-    final statusLabel = _getStatusLabel(booking.status);
+    final statusLabel = _getStatusLabel(context, booking.status);
 
     final months = [
       'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -272,22 +269,22 @@ class _BookingCard extends StatelessWidget {
               Expanded(
                 child: _DetailItem(
                   icon: Icons.calendar_today_rounded,
-                  label: 'Date',
+                  label: L.tr(context, 'date'),
                   value: dateStr,
                 ),
               ),
               Expanded(
                 child: _DetailItem(
                   icon: Icons.timer_outlined,
-                  label: 'Duration',
+                  label: L.tr(context, 'duration'),
                   value:
-                      '${booking.durationHours} ${booking.durationHours == 1 ? 'hr' : 'hrs'}',
+                      '${booking.durationHours} ${booking.durationHours == 1 ? L.tr(context, 'hr') : L.tr(context, 'hrs')}',
                 ),
               ),
               Expanded(
                 child: _DetailItem(
                   icon: Icons.currency_rupee_rounded,
-                  label: 'Cost',
+                  label: L.tr(context, 'cost'),
                   value: '₹${booking.totalCost.toInt()}',
                   valueColor: AppColors.primaryGreen,
                 ),
@@ -301,7 +298,7 @@ class _BookingCard extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: AgButton(
-                label: 'Start Rental',
+                label: L.tr(context, 'start_rental'),
                 icon: Icons.play_arrow_rounded,
                 onPressed: () => _startBooking(context),
               ),
@@ -312,7 +309,7 @@ class _BookingCard extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: AgButton(
-                label: 'RETURN EQUIPMENT',
+                label: L.tr(context, 'return_equipment'),
                 icon: Icons.keyboard_return_rounded,
                 onPressed: () => _returnEquipment(context),
               ),
@@ -371,14 +368,14 @@ class _BookingCard extends StatelessWidget {
     }
   }
 
-  String _getStatusLabel(BookingStatus status) {
+  String _getStatusLabel(BuildContext context, BookingStatus status) {
     switch (status) {
       case BookingStatus.upcoming:
-        return 'Upcoming';
+        return L.tr(context, 'upcoming');
       case BookingStatus.active:
-        return 'Active';
+        return L.tr(context, 'active');
       case BookingStatus.completed:
-        return 'Completed';
+        return L.tr(context, 'history');
     }
   }
 }
