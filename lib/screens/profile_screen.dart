@@ -15,6 +15,7 @@ import '../widgets/ag_card.dart';
 import '../widgets/ag_button.dart';
 import '../widgets/section_title.dart';
 import 'login_screen.dart';
+import 'payment_history_screen.dart';
 
 /// Profile screen showing farmer overview, trust score, and activity summary.
 class ProfileScreen extends StatefulWidget {
@@ -24,11 +25,10 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-/// Locale code -> translation key for language name.
-/// Locale code -> translation key for language name.
+/// Locale code to language name.
 const Map<String, String> _localeToNames = {
   'en': 'English',
-  'hi': 'Hindi (हिंदी)',
+  'hi': 'Hindi (हिन्दी)',
   'kn': 'Kannada (ಕನ್ನಡ)',
   'bn': 'Bengali (বাংলা)',
   'te': 'Telugu (తెలుగు)',
@@ -103,8 +103,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-
-  // ── Section 1: Profile Header ──────────────────────────────────
+  // ── Section 1: Profile Header ──
 
   Future<void> _pickAndUploadProfilePhoto(
     BuildContext context,
@@ -115,22 +114,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (file == null || !context.mounted) return;
     setState(() => _isUploadingProfilePhoto = true);
     try {
-      final url =
-          await StorageService.instance.uploadProfileImage(file, uid);
+      final url = await StorageService.instance.uploadProfileImage(file, uid);
       if (!context.mounted) return;
       await FirestoreService.instance.updateProfile(uid, {'profileImage': url});
       if (!context.mounted) return;
       setState(() => _isUploadingProfilePhoto = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Profile photo updated.',
-            style: GoogleFonts.poppins(),
-          ),
-          backgroundColor: AppColors.primaryGreen,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      _showSnackbar(context, 'Profile photo updated.');
     } catch (e) {
       if (!context.mounted) return;
       setState(() => _isUploadingProfilePhoto = false);
@@ -272,7 +261,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ── Section 2: Trust Score ─────────────────────────────────────
+  // ── Section 2: Trust Score ──
 
   Widget _buildTrustScore(Farmer farmer) {
     return Column(
@@ -296,7 +285,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: const Icon(
-                      Icons.star_rounded,
+                      Icons.shield_rounded,
                       size: 28,
                       color: Colors.amber,
                     ),
@@ -336,6 +325,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Container(width: 1, height: 48, color: AppColors.divider),
                   Expanded(
                     child: _trustStat(
+                      Icons.verified_outlined,
+                      '${farmer.verifiedReturns}',
+                      'Verified\nReturns',
+                      Colors.teal,
+                    ),
+                  ),
+                  Container(width: 1, height: 48, color: AppColors.divider),
+                  Expanded(
+                    child: _trustStat(
                       Icons.groups_outlined,
                       '${farmer.groupPurchases}',
                       'Community\nPurchases',
@@ -362,7 +360,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Text(
               value,
               style: GoogleFonts.poppins(
-                fontSize: 20,
+                fontSize: 18,
                 fontWeight: FontWeight.w700,
                 color: color,
               ),
@@ -383,7 +381,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ── Section 3: Activity Summary ────────────────────────────────
+  // ── Section 3: Activity Summary ──
 
   Widget _buildActivitySummary(Farmer farmer, String uid) {
     return Column(
@@ -423,7 +421,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _activityCard(
-    IconData icon, String value, String label, Color color,
+    IconData icon,
+    String value,
+    String label,
+    Color color,
   ) {
     return AgCard(
       margin: EdgeInsets.zero,
@@ -463,7 +464,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ── Section 4: My Equipment ────────────────────────────────────
+  // ── Section 4: My Equipment ──
 
   Widget _buildMyEquipment(BuildContext context, String uid) {
     return Column(
@@ -499,14 +500,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: docs.map((doc) {
                 final data = doc.data() as Map<String, dynamic>;
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                   child: _EquipmentListingCard(
-                    emoji: data['listingType'] == 'rent' ? '🚜' : '💰',
-                    name: data['name'] ?? '',
-                    pricePerHour: '₹${(data['pricePerHour'] ?? 0).toInt()}/hour',
+                    emoji: '🚜',
+                    name: data['name'] ?? 'Equipment',
+                    pricePerHour: '₹${data['pricePerHour'] ?? 0}/hr',
                     isAvailable: data['isAvailable'] ?? true,
-                    onEdit: () =>
-                        _showEditEquipmentDialog(context, doc.id, data),
+                    onEdit: () => _showSnackbar(context, 'Edit functionality coming soon.'),
                     onRemove: () async {
                       await FirestoreService.instance.deleteEquipment(doc.id);
                       if (context.mounted) {
@@ -523,104 +523,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _showEditEquipmentDialog(
+  // ── Section 5: Settings ──
+
+  Widget _buildSettings(
     BuildContext context,
-    String docId,
-    Map<String, dynamic> data,
+    Farmer farmer,
+    String uid,
   ) {
-    final nameCtrl = TextEditingController(text: data['name'] ?? '');
-    final priceCtrl = TextEditingController(
-      text: ((data['pricePerHour'] ?? data['price']) ?? 0).toInt().toString(),
-    );
-    final locationCtrl = TextEditingController(text: data['locationName'] ?? data['location'] ?? '');
-    bool isAvailable = data['isAvailable'] ?? true;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          title: Text(
-            'Edit Equipment',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameCtrl,
-                  decoration: InputDecoration(
-                    labelText: 'Equipment Name',
-                    labelStyle: GoogleFonts.poppins(),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                TextField(
-                  controller: priceCtrl,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'Price per Hour (₹)',
-                    labelStyle: GoogleFonts.poppins(),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                TextField(
-                  controller: locationCtrl,
-                  decoration: InputDecoration(
-                    labelText: 'Location',
-                    labelStyle: GoogleFonts.poppins(),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                SwitchListTile(
-                  title: Text(
-                    'Available for Rent',
-                    style: GoogleFonts.poppins(fontSize: 14),
-                  ),
-                  value: isAvailable,
-                  activeTrackColor: AppColors.primaryGreen,
-                  onChanged: (val) {
-                    setDialogState(() => isAvailable = val);
-                  },
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final price = double.tryParse(priceCtrl.text.trim()) ?? 0.0;
-                await FirestoreService.instance.updateEquipment(docId, {
-                  'name': nameCtrl.text.trim(),
-                  'pricePerHour': price,
-                  'price': price,
-                  'locationName': locationCtrl.text.trim(),
-                  'location': locationCtrl.text.trim(),
-                  'isAvailable': isAvailable,
-                });
-                if (ctx.mounted) Navigator.pop(ctx);
-                if (context.mounted) {
-                  _showSnackbar(context, 'Equipment updated successfully!');
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryGreen,
-              ),
-              child: const Text('Save', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ── Section 5: Settings ────────────────────────────────────────
-
-  Widget _buildSettings(BuildContext context, Farmer farmer, String uid) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -628,19 +537,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: AppSpacing.md),
         AgCard(
           margin: EdgeInsets.zero,
-          padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+          padding: EdgeInsets.zero,
           child: Column(
             children: [
               _SettingsTile(
-                icon: Icons.person_outline_rounded,
-                label: 'Edit Profile',
-                onTap: () => _showEditProfileDialog(context, farmer),
+                icon: Icons.history_rounded,
+                label: 'Payment History & Receipts',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const PaymentHistoryScreen()),
+                  );
+                },
               ),
               const Divider(height: 1, color: AppColors.divider),
               _SettingsTile(
-                icon: Icons.phone_outlined,
-                label: 'Change Phone Number',
-                onTap: () => _showEditPhoneDialog(context, farmer),
+                icon: Icons.person_outline_rounded,
+                label: 'Edit Profile Information',
+                onTap: () => _showEditProfileDialog(context, farmer, uid),
               ),
             ],
           ),
@@ -649,143 +563,127 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _showEditProfileDialog(BuildContext context, Farmer farmer) {
+  void _showEditProfileDialog(
+    BuildContext context,
+    Farmer farmer,
+    String uid,
+  ) {
     final nameCtrl = TextEditingController(text: farmer.name);
     final locationCtrl = TextEditingController(text: farmer.location);
+    final phoneCtrl = TextEditingController(text: farmer.phone);
 
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Edit Profile', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        ),
+        title: Text(
+          'Edit Profile',
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w600,
+            color: AppColors.textDark,
+          ),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: nameCtrl,
-              decoration: InputDecoration(
-                labelText: 'Name',
-                labelStyle: GoogleFonts.poppins(),
-              ),
+              decoration: const InputDecoration(labelText: 'Name'),
             ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: AppSpacing.sm),
             TextField(
               controller: locationCtrl,
-              decoration: InputDecoration(
-                labelText: 'Location',
-                labelStyle: GoogleFonts.poppins(),
-              ),
+              decoration: const InputDecoration(labelText: 'Location'),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            TextField(
+              controller: phoneCtrl,
+              decoration: const InputDecoration(labelText: 'Phone'),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.poppins(color: AppColors.textMuted),
+            ),
           ),
           ElevatedButton(
-            onPressed: () async {
-              await FirestoreService.instance.updateProfile(
-                AuthService.instance.uid,
-                {
-                  'name': nameCtrl.text.trim(),
-                  'location': locationCtrl.text.trim(),
-                },
-              );
-              if (ctx.mounted) Navigator.pop(ctx);
-              if (context.mounted) {
-                _showSnackbar(context, 'Profile updated!');
-              }
-            },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryGreen,
             ),
-            child: const Text('Save', style: TextStyle(color: Colors.white)),
+            onPressed: () async {
+              await FirestoreService.instance.updateProfile(uid, {
+                'name': nameCtrl.text.trim(),
+                'location': locationCtrl.text.trim(),
+                'phone': phoneCtrl.text.trim(),
+              });
+              if (!ctx.mounted) return;
+              Navigator.pop(ctx);
+              if (mounted) setState(() {});
+            },
+            child: Text(
+              'Save',
+              style: GoogleFonts.poppins(color: AppColors.textLight),
+            ),
           ),
         ],
       ),
     );
   }
 
-  void _showEditPhoneDialog(BuildContext context, Farmer farmer) {
-    final phoneCtrl = TextEditingController(text: farmer.phone);
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Change Phone', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-        content: TextField(
-          controller: phoneCtrl,
-          keyboardType: TextInputType.phone,
-          decoration: InputDecoration(
-            labelText: 'Phone Number',
-            labelStyle: GoogleFonts.poppins(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              await FirestoreService.instance.updateProfile(
-                AuthService.instance.uid,
-                {'phone': phoneCtrl.text.trim()},
-              );
-              if (ctx.mounted) Navigator.pop(ctx);
-              if (context.mounted) {
-                _showSnackbar(context, 'Phone number updated!');
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryGreen,
-            ),
-            child: const Text('Save', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Section 6: Language Preferences (all Indian languages) ──────
+  // ── Section 6: Language Preferences ──
 
   Widget _buildLanguagePreferences() {
     final currentCode = LocaleProviderInherited.of(context)?.locale.languageCode ?? 'en';
-    final localeCodes = AppLocalizations.supportedLocales
-        .map((l) => l.languageCode)
-        .toList();
+    final localeCodes = _localeToNames.keys.toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SectionTitle(
-          title: L.tr(context, 'language_preferences'),
-          padding: EdgeInsets.zero,
-        ),
+        const SectionTitle(title: 'App Language', padding: EdgeInsets.zero),
         const SizedBox(height: AppSpacing.md),
         AgCard(
           margin: EdgeInsets.zero,
-          padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-          child: Column(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+          child: ExpansionTile(
+            shape: const Border(),
+            leading: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: AppColors.primaryGreen.withAlpha(20),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.language_rounded,
+                size: 20,
+                color: AppColors.primaryGreen,
+              ),
+            ),
+            title: Text(
+              _localeToNames[currentCode] ?? 'English',
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textDark,
+              ),
+            ),
             children: [
               for (int i = 0; i < localeCodes.length; i++) ...[
-                if (i > 0)
-                  const Divider(height: 1, color: AppColors.divider),
+                if (i > 0) const Divider(height: 1, color: AppColors.divider),
                 ListTile(
-                  leading: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text('🇮🇳', style: TextStyle(fontSize: 20)),
-                      const SizedBox(width: AppSpacing.sm),
-                      Text(
-                        _localeToNames[localeCodes[i]] ?? localeCodes[i].toUpperCase(),
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.textDark,
-                        ),
-                      ),
-                    ],
+                  title: Text(
+                    _localeToNames[localeCodes[i]] ?? localeCodes[i].toUpperCase(),
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textDark,
+                    ),
                   ),
                   trailing: Icon(
                     currentCode == localeCodes[i]
@@ -794,16 +692,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     color: currentCode == localeCodes[i]
                         ? AppColors.primaryGreen
                         : AppColors.textMuted,
-                    size: 22,
+                    size: 20,
                   ),
                   onTap: () async {
-                    await LocaleProviderInherited.of(context)?.setLocale(Locale(localeCodes[i]));
+                    await LocaleProviderInherited.of(context)
+                        ?.setLocale(Locale(localeCodes[i]));
                     if (mounted) setState(() {});
                   },
                   dense: true,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
-                  ),
                 ),
               ],
             ],
@@ -813,7 +709,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ── Logout ─────────────────────────────────────────────────────
+  // ── Logout ──
 
   Widget _buildLogout(BuildContext context) {
     return SizedBox(
@@ -834,8 +730,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ── Helpers ────────────────────────────────────────────────────
-
   void _showSnackbar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -849,8 +743,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
-
-// ── Equipment Listing Card ───────────────────────────────────────
 
 class _EquipmentListingCard extends StatelessWidget {
   const _EquipmentListingCard({
@@ -977,8 +869,6 @@ class _EquipmentListingCard extends StatelessWidget {
   }
 }
 
-// ── Settings Tile Helper ─────────────────────────────────────────
-
 class _SettingsTile extends StatelessWidget {
   const _SettingsTile({
     required this.icon,
@@ -992,7 +882,7 @@ class _SettingsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tileColor = AppColors.primaryGreen;
+    const tileColor = AppColors.primaryGreen;
 
     return ListTile(
       leading: Container(

@@ -5,13 +5,13 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../models/equipment.dart';
 import '../services/auth_service.dart';
-import '../services/firestore_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../widgets/ag_button.dart';
 import '../widgets/ag_card.dart';
 import '../widgets/section_title.dart';
 import 'main_shell.dart';
+import 'upi_payment_screen.dart';
 
 /// Booking form screen for a selected piece of equipment.
 ///
@@ -74,57 +74,39 @@ class _BookingScreenState extends State<BookingScreen> {
   }
 
   // ── Confirm booking ──
-  void _confirmBooking() async {
-    try {
-      final bookingDateTime = DateTime(
-        _selectedDate.year,
-        _selectedDate.month,
-        _selectedDate.day,
-        _selectedTime.hour,
-        _selectedTime.minute,
-      );
+  void _confirmBooking() {
+    final bookingDateTime = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+      _selectedTime.hour,
+      _selectedTime.minute,
+    );
 
-      await FirestoreService.instance.createBooking({
-        'userId': AuthService.instance.currentUser?.uid ?? 'guest_user',
-        'equipmentId': widget.equipment.id,
-        'equipmentName': widget.equipment.name,
-        // Firestore timestamps.
-        'date': Timestamp.fromDate(bookingDateTime),
-        'bookingDate': Timestamp.fromDate(bookingDateTime),
-        'durationHours': _durationHours,
-        'totalCost': _totalCost,
-        'status': 'upcoming',
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+    final bookingData = <String, dynamic>{
+      'userId': AuthService.instance.currentUser?.uid ?? 'guest_user',
+      'equipmentId': widget.equipment.id,
+      'equipmentName': widget.equipment.name,
+      'date': Timestamp.fromDate(bookingDateTime),
+      'bookingDate': Timestamp.fromDate(bookingDateTime),
+      'durationHours': _durationHours,
+      'totalCost': _totalCost,
+      'depositAmount': _deposit,
+      'status': 'upcoming',
+      'createdAt': FieldValue.serverTimestamp(),
+    };
 
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Booking confirmed successfully.',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
-          ),
-          backgroundColor: AppColors.primaryGreen,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-          ),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => UpiPaymentScreen(
+          equipment: widget.equipment,
+          amount: _deposit,
+          paymentType: 'rental_deposit',
+          bookingData: bookingData,
         ),
-      );
-
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const MainShell()),
-        (route) => false,
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Booking failed: $e'),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
-    }
+      ),
+    );
   }
 
   @override

@@ -3,7 +3,10 @@ import 'package:latlong2/latlong.dart';
 
 import '../models/booking.dart';
 import '../models/equipment.dart';
+import '../models/equipment_request.dart';
+import '../models/equipment_request_response.dart';
 import '../models/farmer.dart';
+import '../models/payment.dart';
 
 /// Central Firestore CRUD service for AgroShare.
 class FirestoreService {
@@ -69,6 +72,9 @@ class FirestoreService {
   CollectionReference get _groups => _db.collection('community_groups');
   CollectionReference get _reviews => _db.collection('reviews');
   CollectionReference get _chats => _db.collection('chats');
+  CollectionReference get _requests => _db.collection('equipment_requests');
+  CollectionReference get _requestResponses => _db.collection('equipment_request_responses');
+  CollectionReference get _payments => _db.collection('payments');
 
   /// Write a small test document to confirm Firestore connectivity.
   Future<void> writeConnectionTest() async {
@@ -453,6 +459,178 @@ class FirestoreService {
     }
   }
 
+  /// Save Pre-Rental Condition Inspection record to booking.
+  Future<void> savePreConditionVerification(String docId, Map<String, dynamic> conditionData) async {
+    try {
+      final safeDocId = docId.replaceAll(' ', '_');
+      final payload = {
+        'preCondition': conditionData,
+        'isPreVerified': true,
+        'status': 'active', // Automatically move to active after pre-condition verification!
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+      await _bookings.doc(safeDocId).update(_sanitizeForFirestore(payload));
+    } catch (e) {
+      // ignore: avoid_print
+      print('Firestore savePreConditionVerification error: $e');
+      rethrow;
+    }
+  }
+
+  /// Save Post-Rental Condition Inspection record to booking.
+  Future<void> savePostConditionVerification(String docId, Map<String, dynamic> conditionData) async {
+    try {
+      final safeDocId = docId.replaceAll(' ', '_');
+      final payload = {
+        'postCondition': conditionData,
+        'isPostVerified': true,
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+      await _bookings.doc(safeDocId).update(_sanitizeForFirestore(payload));
+    } catch (e) {
+      // ignore: avoid_print
+      print('Firestore savePostConditionVerification error: $e');
+      rethrow;
+    }
+  }
+
+  /// Complete verified rental return, submit review, record remaining payment, and update trust score.
+  Future<void> completeVerifiedRental({
+    required String bookingId,
+    required String equipmentId,
+    required String userId,
+    required double rating,
+    required String reviewText,
+    String? remainingTxnId,
+  }) async {
+    try {
+      await submitEquipmentReview(
+        bookingId: bookingId,
+        equipmentId: equipmentId,
+        userId: userId,
+        rating: rating,
+        reviewText: reviewText,
+      );
+
+      final safeDocId = bookingId.replaceAll(' ', '_');
+      final updates = <String, dynamic>{
+        'paymentStatus': 'fully_paid',
+        'isPostVerified': true,
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+      if (remainingTxnId != null && remainingTxnId.isNotEmpty) {
+        updates['finalTxnId'] = remainingTxnId;
+      }
+      await _bookings.doc(safeDocId).update(_sanitizeForFirestore(updates));
+
+      // Recalculate & update farmer trust score upon verified return!
+      await recalculateTrustScore(userId);
+    } catch (e) {
+      // ignore: avoid_print
+      print('Firestore completeVerifiedRental error: $e');
+      rethrow;
+    }
+  }
+
+  /// Recalculate farmer Trust Score dynamically based on completed rentals, ratings & verified returns.
+  Future<void> recalculateTrustScore(String uid) async {
+    try {
+      final userDoc = await _users.doc(uid).get();
+      if (!userDoc.exists) return;
+
+      final data = userDoc.data() as Map<String, dynamic>? ?? {};
+      final currentCompleted = (data['completedRentals'] ?? 0).toInt() + 1;
+      final currentVerified = (data['verifiedReturns'] ?? 0).toInt() + 1;
+
+      // Query reviews for user
+      final reviewsSnap = await _reviews.where('revieweeId', isEqualTo: uid).get();
+      double avgRating = 4.8;
+      if (reviewsSnap.docs.isNotEmpty) {
+        double total = 0;
+        for (var doc in reviewsSnap.docs) {
+          total += ((doc.data() as Map<String, dynamic>)['rating'] ?? 5.0).toDouble();
+        }
+        avgRating = total / reviewsSnap.docs.length;
+      }
+
+      final newTrustScore = Farmer.calculateTrustScore(
+        avgRating: avgRating,
+        completedRentals: currentCompleted,
+        verifiedReturns: currentVerified,
+      );
+
+      await _users.doc(uid).update(_sanitizeForFirestore({
+        'completedRentals': currentCompleted,
+        'verifiedReturns': currentVerified,
+        'trustScore': newTrustScore,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }));
+    } catch (e) {
+      // ignore: avoid_print
+      print('Firestore recalculateTrustScore error: $e');
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // PAYMENTS (PROTOTYPE SIMULATION)
+  // ══════════════════════════════════════════════════════════════
+
+  /// Save payment transaction record to Firestore.
+  Future<DocumentReference> recordPayment(Map<String, dynamic> data) async {
+    try {
+      return await _payments.add(_sanitizeForFirestore(data));
+    } catch (e) {
+      // ignore: avoid_print
+      print('Firestore recordPayment error: $e');
+      rethrow;
+    }
+  }
+
+  /// Stream user payment transaction history.
+  Stream<QuerySnapshot> userPaymentsStream(String uid) {
+    return _payments
+        .where('userId', isEqualTo: uid)
+        .orderBy('timestamp', descending: true)
+        .snapshots();
+  }
+
+  /// Fallback demo payment transactions for offline testing.
+  List<Payment> getFallbackPayments(String uid) {
+    final now = DateTime.now();
+    return [
+      Payment(
+        id: 'pay_seed_1',
+        transactionId: 'TXN2026081910245892',
+        userId: uid,
+        equipmentId: 'seed_1',
+        equipmentName: 'Mahindra Tractor 575 DI',
+        equipmentImage: 'assets/images/tractor.webp',
+        amount: 200.0,
+        paymentType: 'rental_deposit',
+        paymentMethod: 'PhonePe UPI',
+        upiId: 'farmer@ybl',
+        status: 'successful',
+        date: now.subtract(const Duration(hours: 4)),
+        bookingId: 'bk_1',
+      ),
+      Payment(
+        id: 'pay_seed_2',
+        transactionId: 'TXN2026081514301290',
+        userId: uid,
+        equipmentId: 'seed_3',
+        equipmentName: 'Irrigation Pump Set',
+        equipmentImage: 'assets/images/pump.webp',
+        amount: 600.0,
+        paymentType: 'rental_remaining',
+        paymentMethod: 'Google Pay',
+        upiId: 'farmer@okicici',
+        status: 'successful',
+        date: now.subtract(const Duration(days: 5)),
+        bookingId: 'bk_3',
+      ),
+    ];
+  }
+
   // ══════════════════════════════════════════════════════════════
   // COMMUNITY GROUPS
   // ══════════════════════════════════════════════════════════════
@@ -671,6 +849,178 @@ class FirestoreService {
       print('Firestore submitEquipmentReview stackTrace: $stackTrace');
       rethrow;
     }
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // EQUIPMENT REQUESTS & RESPONSES
+  // ══════════════════════════════════════════════════════════════
+
+  /// Post a new equipment request.
+  Future<DocumentReference> createEquipmentRequest(Map<String, dynamic> data) async {
+    final sanitized = _sanitizeForFirestore(data);
+    try {
+      return await _requests.add(sanitized);
+    } catch (e) {
+      // ignore: avoid_print
+      print('Firestore createEquipmentRequest notice: $e');
+      rethrow;
+    }
+  }
+
+  /// Stream all equipment requests.
+  Stream<QuerySnapshot> equipmentRequestsStream() {
+    return _requests.orderBy('createdAt', descending: true).snapshots();
+  }
+
+  /// Stream open requests for owners to browse.
+  Stream<QuerySnapshot> openRequestsStream() {
+    return _requests
+        .where('status', isEqualTo: 'open')
+        .orderBy('createdAt', descending: true)
+        .snapshots();
+  }
+
+  /// Stream requests posted by a specific user.
+  Stream<QuerySnapshot> myEquipmentRequestsStream(String uid) {
+    return _requests
+        .where('requesterId', isEqualTo: uid)
+        .orderBy('createdAt', descending: true)
+        .snapshots();
+  }
+
+  /// Stream a single request doc by ID.
+  Stream<DocumentSnapshot> equipmentRequestStream(String id) {
+    return _requests.doc(id).snapshots();
+  }
+
+  /// Update request status.
+  Future<void> updateEquipmentRequestStatus(String requestId, String status) {
+    return _requests.doc(requestId).update({'status': status});
+  }
+
+  /// Submit an owner offer/response to a request.
+  Future<DocumentReference> submitRequestResponse(Map<String, dynamic> data) async {
+    final sanitized = _sanitizeForFirestore(data);
+    final ref = await _requestResponses.add(sanitized);
+    final requestId = data['requestId'] as String?;
+    if (requestId != null && requestId.isNotEmpty) {
+      try {
+        await _requests.doc(requestId).update({
+          'responseCount': FieldValue.increment(1),
+        });
+      } catch (_) {}
+    }
+    return ref;
+  }
+
+  /// Stream responses for a specific request.
+  Stream<QuerySnapshot> requestResponsesStream(String requestId) {
+    return _requestResponses
+        .where('requestId', isEqualTo: requestId)
+        .orderBy('createdAt', descending: true)
+        .snapshots();
+  }
+
+  /// Accept an owner offer.
+  Future<void> acceptRequestResponse({
+    required String requestId,
+    required String responseId,
+  }) async {
+    final batch = _db.batch();
+    batch.update(_requestResponses.doc(responseId), {'status': 'accepted'});
+    batch.update(_requests.doc(requestId), {'status': 'fulfilled'});
+    await batch.commit();
+  }
+
+  /// Fallback requests for demo/offline.
+  List<EquipmentRequest> getFallbackEquipmentRequests() {
+    final now = DateTime.now();
+    return [
+      EquipmentRequest(
+        id: 'req_1',
+        requesterId: 'demo_farmer_1',
+        requesterName: 'Ramesh Patel',
+        equipmentType: 'Mahindra Tractor 575 DI',
+        taskCrop: 'Wheat Plowing',
+        requiredDate: now.add(const Duration(days: 2)),
+        durationHours: 6,
+        locationName: 'Angondhalli',
+        latitude: 12.9650,
+        longitude: 77.6000,
+        maxBudgetPerHour: 550.0,
+        description: 'Urgently need 45+ HP tractor with rotavator attachment for 5 acres of wheat field plowing.',
+        status: 'open',
+        createdAt: now.subtract(const Duration(hours: 3)),
+        responseCount: 2,
+      ),
+      EquipmentRequest(
+        id: 'req_2',
+        requesterId: 'demo_farmer_2',
+        requesterName: 'Suresh Gowda',
+        equipmentType: 'Mini Harvester',
+        taskCrop: 'Paddy Harvesting',
+        requiredDate: now.add(const Duration(days: 4)),
+        durationHours: 8,
+        locationName: 'Ramapur',
+        latitude: 12.9800,
+        longitude: 77.5850,
+        maxBudgetPerHour: 850.0,
+        description: 'Need mini combine harvester for harvesting 3 acres of paddy crops before rain expected this weekend.',
+        status: 'open',
+        createdAt: now.subtract(const Duration(hours: 12)),
+        responseCount: 1,
+      ),
+      EquipmentRequest(
+        id: 'req_3',
+        requesterId: 'demo_farmer_3',
+        requesterName: 'Anita Sharma',
+        equipmentType: 'Irrigation Pump Set',
+        taskCrop: 'Vegetable Field Watering',
+        requiredDate: now.add(const Duration(days: 1)),
+        durationHours: 4,
+        locationName: 'Kengeri',
+        latitude: 12.9550,
+        longitude: 77.5700,
+        maxBudgetPerHour: 220.0,
+        description: 'Need 5 HP diesel pump with 100m pipe set for emergency watering of tomato crop field.',
+        status: 'open',
+        createdAt: now.subtract(const Duration(days: 1)),
+        responseCount: 3,
+      ),
+    ];
+  }
+
+  /// Fallback responses for demo/offline.
+  List<EquipmentRequestResponse> getFallbackRequestResponses(String requestId) {
+    final now = DateTime.now();
+    return [
+      EquipmentRequestResponse(
+        id: 'resp_1',
+        requestId: requestId,
+        ownerId: 'seed',
+        ownerName: 'Rajesh Kumar',
+        equipmentId: 'seed_1',
+        equipmentName: 'Mahindra Tractor 575 DI',
+        equipmentImage: 'assets/images/tractor.webp',
+        offeredPricePerHour: 500.0,
+        message: 'Tractor is fully serviced with rotavator attached. Ready for your wheat field plowing on requested date.',
+        status: 'pending',
+        createdAt: now.subtract(const Duration(minutes: 45)),
+      ),
+      EquipmentRequestResponse(
+        id: 'resp_2',
+        requestId: requestId,
+        ownerId: 'seed',
+        ownerName: 'Vikram Singh',
+        equipmentId: 'seed_4',
+        equipmentName: 'Rotavator Heavy Duty',
+        equipmentImage: 'assets/images/rotavator.webp',
+        offeredPricePerHour: 520.0,
+        message: 'Includes experienced driver and fuel. Can start early morning.',
+        status: 'pending',
+        createdAt: now.subtract(const Duration(hours: 2)),
+      ),
+    ];
   }
 
   // ══════════════════════════════════════════════════════════════

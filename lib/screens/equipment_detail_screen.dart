@@ -12,6 +12,7 @@ import '../widgets/section_title.dart';
 import 'booking_screen.dart';
 import 'chat_screen.dart';
 import 'main_shell.dart';
+import 'upi_payment_screen.dart';
 
 /// Detail screen for a selected piece of equipment.
 ///
@@ -755,7 +756,7 @@ class _BookingBar extends StatelessWidget {
             _infoRow('Location', '${equipment.distance} km away'),
             const SizedBox(height: AppSpacing.md),
             Text(
-              'Message the owner in-app to negotiate and finalize. Your contact details are not shared.',
+              'Pay via UPI to record purchase transaction or message owner to negotiate.',
               style: GoogleFonts.poppins(
                 fontSize: 12,
                 color: AppColors.textMuted,
@@ -765,11 +766,6 @@ class _BookingBar extends StatelessWidget {
           ],
         ),
         actions: [
-          IconButton(
-            onPressed: () => _showContactDialog(context),
-            icon: const Icon(Icons.phone, color: AppColors.primaryGreen),
-            tooltip: 'Call Owner',
-          ),
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
@@ -777,14 +773,14 @@ class _BookingBar extends StatelessWidget {
               style: GoogleFonts.poppins(color: AppColors.textMuted),
             ),
           ),
-          FilledButton.icon(
+          OutlinedButton.icon(
             onPressed: () {
               Navigator.pop(context);
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (_) => ChatScreen(
-                    chatId: '', // Will be created by ChatService
+                    chatId: '',
                     equipmentId: equipment.id,
                     equipmentName: equipment.name,
                     equipmentImage: equipment.imageUrl,
@@ -796,10 +792,34 @@ class _BookingBar extends StatelessWidget {
                 ),
               );
             },
-            icon: const Icon(Icons.chat_rounded),
+            icon: const Icon(Icons.chat_rounded, size: 16),
             label: Text(
-              'Message Owner',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+              'Message',
+              style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.primaryGreen,
+              side: const BorderSide(color: AppColors.primaryGreen),
+            ),
+          ),
+          FilledButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => UpiPaymentScreen(
+                    equipment: equipment,
+                    amount: equipment.purchasePrice > 0 ? equipment.purchasePrice : 250000.0,
+                    paymentType: 'equipment_purchase',
+                  ),
+                ),
+              );
+            },
+            icon: const Icon(Icons.payment_rounded, size: 16),
+            label: Text(
+              'Pay via UPI',
+              style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600),
             ),
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.primaryGreen,
@@ -841,139 +861,5 @@ class _BookingBar extends StatelessWidget {
       buf.write(priceStr[i]);
     }
     return buf.toString().split('').reversed.join('');
-  }
-
-  Future<void> _showContactDialog(BuildContext context) async {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(
-            'Contact Owner',
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.w600,
-              color: AppColors.textDark,
-            ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                equipment.ownerName,
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textDark,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Equipment: ${equipment.name}',
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: AppColors.textMuted,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryGreen.withAlpha(10),
-                  borderRadius: BorderRadius.circular(8),
-                  border:
-                      Border.all(color: AppColors.primaryGreen.withAlpha(30)),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.phone_rounded,
-                      color: AppColors.primaryGreen,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        equipment.contactNumber.isNotEmpty
-                            ? equipment.contactNumber
-                            : '+91 98765 43210', // Default number
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.primaryGreen,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        final phoneNumber = equipment.contactNumber.isNotEmpty
-                            ? equipment.contactNumber
-                            : '+91 98765 43210';
-                        Clipboard.setData(ClipboardData(text: phoneNumber));
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Phone number $phoneNumber copied!'),
-                            backgroundColor: AppColors.primaryGreen,
-                          ),
-                        );
-                      },
-                      icon: const Icon(
-                        Icons.copy_rounded,
-                        color: AppColors.primaryGreen,
-                        size: 18,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Call the owner to discuss rental details, availability, and pricing.',
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  color: AppColors.textMuted,
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                'Close',
-                style: GoogleFonts.poppins(
-                  color: AppColors.textMuted,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final phoneNumber = equipment.contactNumber.isNotEmpty
-                    ? equipment.contactNumber
-                    : '+91 98765 43210';
-                // TODO: Implement phone call functionality
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Calling $phoneNumber...'),
-                    backgroundColor: AppColors.primaryGreen,
-                  ),
-                );
-                Navigator.of(context).pop();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryGreen,
-              ),
-              child: Text(
-                'Call Now',
-                style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
   }
 }

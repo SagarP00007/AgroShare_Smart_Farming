@@ -4,14 +4,20 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/booking.dart';
+import '../models/equipment.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../widgets/ag_button.dart';
 import '../widgets/ag_card.dart';
+import '../models/condition_record.dart';
+import '../widgets/condition_comparison_dialog.dart';
+import 'condition_verification_screen.dart';
 import 'equipment_list_screen.dart';
 import 'main_shell.dart';
+import 'payment_history_screen.dart';
+import 'upi_payment_screen.dart';
 
 /// Displays bookings categorized by Upcoming, Active, and History.
 class MyBookingsScreen extends StatefulWidget {
@@ -58,6 +64,18 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
             );
           },
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.history_rounded),
+            tooltip: 'Payment History',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const PaymentHistoryScreen()),
+              );
+            },
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: Colors.white,
@@ -151,40 +169,116 @@ class _BookingCard extends StatelessWidget {
 
   final Booking booking;
 
-  void _startBooking(BuildContext context) async {
-    await FirestoreService.instance
-        .updateBookingStatus(booking.id, 'active');
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Rental started! Machine is now active.',
-            style: GoogleFonts.poppins()),
-        backgroundColor: AppColors.primaryGreen,
+  void _startBooking(BuildContext context) {
+    // Before rental starts: open Pre-Rental Condition Inspection Screen
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ConditionVerificationScreen(
+          booking: booking,
+          stage: 'pre',
+        ),
       ),
     );
   }
 
   void _returnEquipment(BuildContext context) {
+    // Before return completes: open Post-Rental Condition Inspection Screen
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ConditionVerificationScreen(
+          booking: booking,
+          stage: 'post',
+          onCompleted: () {
+            Navigator.pop(context); // close verification screen
+            _showConditionComparison(context);
+          },
+        ),
+      ),
+    );
+  }
+
+  void _showConditionComparison(BuildContext context) {
+    final postRec = booking.postCondition ??
+        ConditionRecord(
+          photos: [],
+          notes: 'Return inspection completed cleanly',
+          checklist: ConditionRecord.defaultChecklist(),
+          timestamp: DateTime.now(),
+          verifiedBy: booking.userId,
+          stage: 'post',
+        );
+
+    showDialog(
+      context: context,
+      builder: (ctx) => ConditionComparisonDialog(
+        booking: booking,
+        postRecord: postRec,
+        onConfirmReturn: () {
+          _showReviewAndPaymentDialog(context);
+        },
+      ),
+    );
+  }
+
+  void _showReviewAndPaymentDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (ctx) => _ReviewDialog(
         booking: booking,
         onSubmitted: (rating, review) async {
-          await FirestoreService.instance.submitEquipmentReview(
-            bookingId: booking.id,
-            equipmentId: booking.equipmentId,
-            userId: booking.userId,
-            rating: rating,
-            reviewText: review,
-          );
-          if (!context.mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Equipment returned successfully.',
-                  style: GoogleFonts.poppins()),
-              backgroundColor: AppColors.primaryGreen,
-            ),
-          );
+          final remaining = booking.remainingAmount;
+          if (remaining > 0) {
+            // Pay remaining balance via UPI
+            await FirestoreService.instance.completeVerifiedRental(
+              bookingId: booking.id,
+              equipmentId: booking.equipmentId,
+              userId: booking.userId,
+              rating: rating,
+              reviewText: review,
+            );
+
+            if (!context.mounted) return;
+            // Launch UPI Payment for remaining amount
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => UpiPaymentScreen(
+                  equipment: Equipment(
+                    id: booking.equipmentId,
+                    name: booking.equipmentName,
+                    pricePerHour: 0,
+                    distance: 0,
+                    rating: 5,
+                    reviewCount: 1,
+                    imageUrl: 'assets/images/tractor.webp',
+                    ownerName: 'Owner',
+                    description: '',
+                  ),
+                  amount: remaining,
+                  paymentType: 'rental_remaining',
+                  bookingId: booking.id,
+                ),
+              ),
+            );
+          } else {
+            await FirestoreService.instance.completeVerifiedRental(
+              bookingId: booking.id,
+              equipmentId: booking.equipmentId,
+              userId: booking.userId,
+              rating: rating,
+              reviewText: review,
+            );
+            if (!context.mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Verified rental return completed! Trust score updated.',
+                    style: GoogleFonts.poppins()),
+                backgroundColor: AppColors.primaryGreen,
+              ),
+            );
+          }
         },
       ),
     );

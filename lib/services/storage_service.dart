@@ -28,6 +28,18 @@ class StorageService {
     return _upload(file, folder: 'profile_images', publicId: '${userId}_$timestamp');
   }
 
+  /// Uploads pre/post rental equipment condition inspection photo to Cloudinary
+  /// under the `condition_images` folder and returns secure download URL.
+  Future<String> uploadConditionImage(File file, String bookingId, String stage) async {
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final safeBookingId = bookingId.replaceAll(' ', '_');
+    return _upload(
+      file,
+      folder: 'condition_images',
+      publicId: 'cond_${stage}_${safeBookingId}_$timestamp',
+    );
+  }
+
   /// Core unsigned-upload helper.
   Future<String> _upload(
     File file, {

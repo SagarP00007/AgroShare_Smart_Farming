@@ -13,6 +13,7 @@ import '../widgets/ag_card.dart';
 import '../widgets/section_title.dart';
 import 'community_screen.dart';
 import 'equipment_detail_screen.dart';
+import 'equipment_request_screen.dart';
 import 'list_equipment_screen.dart';
 
 /// Home dashboard screen for AgroShare.
@@ -311,6 +312,10 @@ class _QuickActionsSection extends StatelessWidget {
     _QuickAction(
         icon: Icons.people_rounded, labelKey: 'community', emoji: '🤝'),
     _QuickAction(
+        icon: Icons.mark_unread_chat_alt_rounded,
+        labelKey: 'equipment_requests',
+        emoji: '📩'),
+    _QuickAction(
         icon: Icons.add_circle_outline_rounded,
         labelKey: 'list_equipment',
         emoji: '➕'),
@@ -362,6 +367,13 @@ class _QuickActionsSection extends StatelessWidget {
             context,
             MaterialPageRoute(
               builder: (_) => const CommunityScreen(),
+            ),
+          );
+        } else if (action.labelKey == 'equipment_requests') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const EquipmentRequestScreen(),
             ),
           );
         } else if (action.labelKey == 'list_equipment') {

@@ -156,5 +156,15 @@
   "languages_urdu": "اردو",
   "find_nearby_equipment": "Find nearby tractors, harvesters, and farming equipment easily.",
   "season_recommendations": "Season Recommendations",
-  "smart_tips": "Smart Tips"
+  "smart_tips": "Smart Tips",
+  "smart_recommendations": "Smart Recommendations",
+  "voice_search": "Voice Search",
+  "listening_speak_now": "Listening... Speak now",
+  "land_size_acres": "Land Size (Acres)",
+  "max_budget_hr": "Max Budget (₹/hr)",
+  "get_smart_recommendations": "Get Smart Recommendations",
+  "match_score": "Match",
+  "smart_assist": "Smart Assist",
+  "clear_recommendations": "Clear Recommendations",
+  "equipment_requests": "Equipment Requests"
 }
