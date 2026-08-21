@@ -27,6 +27,5 @@ class UserReport {
   final DateTime timestamp;
 
   @override
-  String toString() =>
-      'Report($reportedUser, $reason, $timestamp)';
+  String toString() => 'Report($reportedUser, $reason, $timestamp)';
 }

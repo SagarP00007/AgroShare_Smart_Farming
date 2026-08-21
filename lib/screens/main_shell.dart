@@ -108,7 +108,10 @@ class _MainShellState extends State<MainShell> {
                 ),
                 BottomNavigationBarItem(
                   icon: const Icon(Icons.calendar_month_rounded),
-                  activeIcon: const Icon(Icons.calendar_month_rounded, size: 28),
+                  activeIcon: const Icon(
+                    Icons.calendar_month_rounded,
+                    size: 28,
+                  ),
                   label: L.tr(context, 'bookings'),
                 ),
                 BottomNavigationBarItem(

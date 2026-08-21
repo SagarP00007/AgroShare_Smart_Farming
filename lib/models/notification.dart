@@ -141,7 +141,8 @@ class AppNotification {
       id: '',
       userId: userId,
       title: 'Booking Confirmed!',
-      body: 'Your booking for $equipmentName on ${bookingDate.day}/${bookingDate.month}/${bookingDate.year} has been confirmed',
+      body:
+          'Your booking for $equipmentName on ${bookingDate.day}/${bookingDate.month}/${bookingDate.year} has been confirmed',
       type: NotificationType.bookingConfirmed,
       timestamp: DateTime.now(),
       isRead: false,

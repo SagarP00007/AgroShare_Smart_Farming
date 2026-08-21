@@ -62,9 +62,9 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
       lastDate: DateTime.now().add(const Duration(days: 90)),
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: Theme.of(context).colorScheme.copyWith(
-                primary: AppColors.primaryGreen,
-              ),
+          colorScheme: Theme.of(
+            context,
+          ).colorScheme.copyWith(primary: AppColors.primaryGreen),
         ),
         child: child!,
       ),
@@ -78,9 +78,9 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
       initialTime: _selectedTime,
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: Theme.of(context).colorScheme.copyWith(
-                primary: AppColors.primaryGreen,
-              ),
+          colorScheme: Theme.of(
+            context,
+          ).colorScheme.copyWith(primary: AppColors.primaryGreen),
         ),
         child: child!,
       ),
@@ -200,8 +200,18 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
   @override
   Widget build(BuildContext context) {
     final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     final dateStr =
         '${_selectedDate.day} ${months[_selectedDate.month - 1]} ${_selectedDate.year}';
@@ -290,19 +300,27 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
                       initialValue: _selectedEquipmentType,
                       decoration: InputDecoration(
                         labelText: 'Equipment Type Needed',
-                        labelStyle: GoogleFonts.poppins(color: AppColors.textMuted),
+                        labelStyle: GoogleFonts.poppins(
+                          color: AppColors.textMuted,
+                        ),
                         prefixIcon: const Icon(
                           Icons.category_rounded,
                           color: AppColors.primaryGreen,
                         ),
                       ),
                       items: _equipmentTypes
-                          .map((t) => DropdownMenuItem(
-                                value: t,
-                                child: Text(t, style: GoogleFonts.poppins(fontSize: 14)),
-                              ))
+                          .map(
+                            (t) => DropdownMenuItem(
+                              value: t,
+                              child: Text(
+                                t,
+                                style: GoogleFonts.poppins(fontSize: 14),
+                              ),
+                            ),
+                          )
                           .toList(),
-                      onChanged: (v) => setState(() => _selectedEquipmentType = v),
+                      onChanged: (v) =>
+                          setState(() => _selectedEquipmentType = v),
                     ),
 
                     const SizedBox(height: AppSpacing.md),
@@ -314,8 +332,12 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
                       decoration: InputDecoration(
                         labelText: 'Farming Task / Crop',
                         hintText: 'e.g. Wheat Plowing, Paddy Harvesting',
-                        hintStyle: GoogleFonts.poppins(color: AppColors.textMuted.withAlpha(120)),
-                        labelStyle: GoogleFonts.poppins(color: AppColors.textMuted),
+                        hintStyle: GoogleFonts.poppins(
+                          color: AppColors.textMuted.withAlpha(120),
+                        ),
+                        labelStyle: GoogleFonts.poppins(
+                          color: AppColors.textMuted,
+                        ),
                         prefixIcon: const Icon(
                           Icons.eco_rounded,
                           color: AppColors.primaryGreen,
@@ -333,8 +355,12 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
                       decoration: InputDecoration(
                         labelText: 'Max Budget Per Hour (₹)',
                         hintText: 'e.g. 500',
-                        hintStyle: GoogleFonts.poppins(color: AppColors.textMuted.withAlpha(120)),
-                        labelStyle: GoogleFonts.poppins(color: AppColors.textMuted),
+                        hintStyle: GoogleFonts.poppins(
+                          color: AppColors.textMuted.withAlpha(120),
+                        ),
+                        labelStyle: GoogleFonts.poppins(
+                          color: AppColors.textMuted,
+                        ),
                         prefixIcon: const Icon(
                           Icons.currency_rupee_rounded,
                           color: AppColors.primaryGreen,
@@ -351,8 +377,12 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
                       decoration: InputDecoration(
                         labelText: 'Location / Farm Address',
                         hintText: 'e.g. Angondhalli, Mandya',
-                        hintStyle: GoogleFonts.poppins(color: AppColors.textMuted.withAlpha(120)),
-                        labelStyle: GoogleFonts.poppins(color: AppColors.textMuted),
+                        hintStyle: GoogleFonts.poppins(
+                          color: AppColors.textMuted.withAlpha(120),
+                        ),
+                        labelStyle: GoogleFonts.poppins(
+                          color: AppColors.textMuted,
+                        ),
                         prefixIcon: const Icon(
                           Icons.location_on_outlined,
                           color: AppColors.primaryGreen,
@@ -382,24 +412,62 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
                             onTap: _pickDate,
                             child: Column(
                               children: [
-                                const Icon(Icons.calendar_today_rounded, size: 20, color: AppColors.primaryGreen),
+                                const Icon(
+                                  Icons.calendar_today_rounded,
+                                  size: 20,
+                                  color: AppColors.primaryGreen,
+                                ),
                                 const SizedBox(height: 4),
-                                Text('Required Date', style: GoogleFonts.poppins(fontSize: 11, color: AppColors.textMuted)),
-                                Text(dateStr, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textDark)),
+                                Text(
+                                  'Required Date',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 11,
+                                    color: AppColors.textMuted,
+                                  ),
+                                ),
+                                Text(
+                                  dateStr,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textDark,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
                         ),
-                        Container(width: 1, height: 44, color: AppColors.divider),
+                        Container(
+                          width: 1,
+                          height: 44,
+                          color: AppColors.divider,
+                        ),
                         Expanded(
                           child: InkWell(
                             onTap: _pickTime,
                             child: Column(
                               children: [
-                                const Icon(Icons.access_time_rounded, size: 20, color: AppColors.primaryGreen),
+                                const Icon(
+                                  Icons.access_time_rounded,
+                                  size: 20,
+                                  color: AppColors.primaryGreen,
+                                ),
                                 const SizedBox(height: 4),
-                                Text('Start Time', style: GoogleFonts.poppins(fontSize: 11, color: AppColors.textMuted)),
-                                Text(timeStr, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textDark)),
+                                Text(
+                                  'Start Time',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 11,
+                                    color: AppColors.textMuted,
+                                  ),
+                                ),
+                                Text(
+                                  timeStr,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textDark,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -413,7 +481,13 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Duration (Hours):', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500)),
+                        Text(
+                          'Duration (Hours):',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                         Row(
                           children: [
                             IconButton(
@@ -425,7 +499,11 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
                             ),
                             Text(
                               '$_durationHours hrs',
-                              style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.primaryGreen),
+                              style: GoogleFonts.poppins(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primaryGreen,
+                              ),
                             ),
                             IconButton(
                               onPressed: () => setState(() => _durationHours++),
@@ -455,8 +533,12 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
                   maxLines: 3,
                   style: GoogleFonts.poppins(fontSize: 14),
                   decoration: InputDecoration(
-                    hintText: 'e.g. Need 45+ HP tractor with rotavator attachment for 5 acres field.',
-                    hintStyle: GoogleFonts.poppins(fontSize: 13, color: AppColors.textMuted),
+                    hintText:
+                        'e.g. Need 45+ HP tractor with rotavator attachment for 5 acres field.',
+                    hintStyle: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: AppColors.textMuted,
+                    ),
                     border: InputBorder.none,
                   ),
                 ),
@@ -466,7 +548,11 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
 
               // Submit Button
               _isSubmitting
-                  ? const Center(child: CircularProgressIndicator(color: AppColors.primaryGreen))
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.primaryGreen,
+                      ),
+                    )
                   : AgButton(
                       label: 'Post Equipment Request',
                       icon: Icons.send_rounded,

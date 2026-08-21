@@ -93,9 +93,7 @@ class AppTheme {
         color: AppColors.cardBackground,
         elevation: 0,
         shadowColor: AppColors.shadow,
-        shape: RoundedRectangleBorder(
-          borderRadius: AppSpacing.cardRadius,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppSpacing.cardRadius),
         margin: const EdgeInsets.all(AppSpacing.sm),
       ),
 
@@ -110,9 +108,7 @@ class AppTheme {
             horizontal: AppSpacing.lg,
             vertical: AppSpacing.md,
           ),
-          shape: RoundedRectangleBorder(
-            borderRadius: AppSpacing.buttonRadius,
-          ),
+          shape: RoundedRectangleBorder(borderRadius: AppSpacing.buttonRadius),
           textStyle: GoogleFonts.poppins(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -131,9 +127,7 @@ class AppTheme {
             horizontal: AppSpacing.lg,
             vertical: AppSpacing.md - 2,
           ),
-          shape: RoundedRectangleBorder(
-            borderRadius: AppSpacing.buttonRadius,
-          ),
+          shape: RoundedRectangleBorder(borderRadius: AppSpacing.buttonRadius),
           textStyle: GoogleFonts.poppins(
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -161,10 +155,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: AppSpacing.buttonRadius,
-          borderSide: const BorderSide(
-            color: AppColors.primaryGreen,
-            width: 2,
-          ),
+          borderSide: const BorderSide(color: AppColors.primaryGreen, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: AppSpacing.buttonRadius,

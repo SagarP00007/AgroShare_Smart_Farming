@@ -40,7 +40,9 @@ class AppLocalizations {
 
   static Future<AppLocalizations> load(Locale locale) async {
     final langCode = locale.languageCode;
-    final fallback = langCode == 'en' ? null : await _loadJson(const Locale('en'));
+    final fallback = langCode == 'en'
+        ? null
+        : await _loadJson(const Locale('en'));
     Map<String, String> strings;
     try {
       strings = await _loadJson(locale);

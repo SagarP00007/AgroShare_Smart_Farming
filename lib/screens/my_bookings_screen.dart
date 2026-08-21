@@ -131,8 +131,10 @@ class _BookingsListState extends State<_BookingsList> {
       builder: (context, snapshot) {
         final allBookings = snapshot.data?.docs ?? [];
         var bookings = allBookings
-            .map((doc) =>
-                Booking.fromMap(doc.id, doc.data() as Map<String, dynamic>))
+            .map(
+              (doc) =>
+                  Booking.fromMap(doc.id, doc.data() as Map<String, dynamic>),
+            )
             .where((b) => b.status == widget.status)
             .toList();
 
@@ -170,14 +172,161 @@ class _BookingCard extends StatelessWidget {
   final Booking booking;
 
   void _startBooking(BuildContext context) {
+    if (booking.isCashPending) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(
+                Icons.payments_outlined,
+                color: Colors.amber.shade800,
+                size: 24,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Pay at Pickup',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+          content: Text(
+            'Please ensure the cash deposit of ₹${booking.depositAmount.toInt()} is handed to the owner at pickup. Once confirmed, the rental handoff proceeds.',
+            style: GoogleFonts.poppins(fontSize: 13, color: AppColors.textDark),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(
+                'Cancel',
+                style: GoogleFonts.poppins(color: AppColors.textMuted),
+              ),
+            ),
+            AgButton(
+              label: 'Proceed to Inspection',
+              icon: Icons.play_arrow_rounded,
+              onPressed: () {
+                Navigator.pop(ctx);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ConditionVerificationScreen(
+                      booking: booking,
+                      stage: 'pre',
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
     // Before rental starts: open Pre-Rental Condition Inspection Screen
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => ConditionVerificationScreen(
-          booking: booking,
-          stage: 'pre',
+        builder: (_) =>
+            ConditionVerificationScreen(booking: booking, stage: 'pre'),
+      ),
+    );
+  }
+
+  void _confirmCashReceived(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
         ),
+        title: Row(
+          children: [
+            const Icon(
+              Icons.payments_rounded,
+              color: AppColors.primaryGreen,
+              size: 26,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Confirm Cash Received',
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w600,
+                color: AppColors.textDark,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Confirm that you received ₹${booking.depositAmount.toInt()} in cash for "${booking.equipmentName}"?',
+              style: GoogleFonts.poppins(fontSize: 13, color: AppColors.textDark),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.primaryGreen.withAlpha(15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                'This will update payment status to Paid and allow the rental handoff to proceed.',
+                style: GoogleFonts.poppins(
+                  fontSize: 11,
+                  color: AppColors.primaryGreen,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.poppins(color: AppColors.textMuted),
+            ),
+          ),
+          AgButton(
+            label: 'Confirm Received',
+            icon: Icons.check_circle_rounded,
+            onPressed: () async {
+              Navigator.pop(ctx);
+              try {
+                await FirestoreService.instance.confirmCashPayment(
+                  bookingId: booking.id,
+                  depositTxnId: booking.depositTxnId,
+                );
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Cash payment of ₹${booking.depositAmount.toInt()} confirmed! Rental can now proceed.',
+                      style: GoogleFonts.poppins(),
+                    ),
+                    backgroundColor: AppColors.primaryGreen,
+                  ),
+                );
+              } catch (e) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error confirming cash payment: $e'),
+                    backgroundColor: Colors.redAccent,
+                  ),
+                );
+              }
+            },
+          ),
+        ],
       ),
     );
   }
@@ -200,7 +349,8 @@ class _BookingCard extends StatelessWidget {
   }
 
   void _showConditionComparison(BuildContext context) {
-    final postRec = booking.postCondition ??
+    final postRec =
+        booking.postCondition ??
         ConditionRecord(
           photos: [],
           notes: 'Return inspection completed cleanly',
@@ -273,8 +423,10 @@ class _BookingCard extends StatelessWidget {
             if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Verified rental return completed! Trust score updated.',
-                    style: GoogleFonts.poppins()),
+                content: Text(
+                  'Verified rental return completed! Trust score updated.',
+                  style: GoogleFonts.poppins(),
+                ),
                 backgroundColor: AppColors.primaryGreen,
               ),
             );
@@ -290,8 +442,18 @@ class _BookingCard extends StatelessWidget {
     final statusLabel = _getStatusLabel(context, booking.status);
 
     final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     final dateStr =
         '${booking.date.day} ${months[booking.date.month - 1]} ${booking.date.year}';
@@ -386,6 +548,91 @@ class _BookingCard extends StatelessWidget {
             ],
           ),
 
+          // Pay at Pickup (Cash) Notice & Owner Confirmation
+          if (booking.isPayAtPickup) ...[
+            const SizedBox(height: AppSpacing.md),
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.sm + 2),
+              decoration: BoxDecoration(
+                color: booking.isCashPending
+                    ? Colors.amber.withAlpha(20)
+                    : Colors.green.withAlpha(15),
+                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                border: Border.all(
+                  color: booking.isCashPending
+                      ? Colors.amber.shade400
+                      : Colors.green.shade300,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        booking.isCashPending
+                            ? Icons.payments_outlined
+                            : Icons.check_circle_rounded,
+                        size: 18,
+                        color: booking.isCashPending
+                            ? Colors.amber.shade900
+                            : Colors.green.shade700,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          booking.isCashPending
+                              ? 'Pay at Pickup (Cash: ₹${booking.depositAmount.toInt()} Due)'
+                              : 'Cash Payment Verified (₹${booking.depositAmount.toInt()})',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: booking.isCashPending
+                                ? Colors.amber.shade900
+                                : Colors.green.shade800,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (booking.isCashPending) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      'Pay cash directly to owner at pickup. Owner can confirm receipt below.',
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        color: Colors.amber.shade900,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () => _confirmCashReceived(context),
+                        icon: const Icon(Icons.verified_rounded, size: 16),
+                        label: Text(
+                          'Owner: Confirm Cash Received',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.green.shade800,
+                          side: BorderSide(color: Colors.green.shade700),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+
           // Action buttons or Review based on status
           if (booking.status == BookingStatus.upcoming) ...[
             const SizedBox(height: AppSpacing.md),
@@ -444,7 +691,7 @@ class _BookingCard extends StatelessWidget {
                   ),
                 ],
               ),
-            )
+            ),
           ],
         ],
       ),
@@ -495,10 +742,7 @@ class _DetailItem extends StatelessWidget {
         const SizedBox(height: AppSpacing.xs),
         Text(
           label,
-          style: GoogleFonts.poppins(
-            fontSize: 11,
-            color: AppColors.textMuted,
-          ),
+          style: GoogleFonts.poppins(fontSize: 11, color: AppColors.textMuted),
         ),
         const SizedBox(height: 2),
         Text(
@@ -603,7 +847,9 @@ class _ReviewDialogState extends State<_ReviewDialog> {
               children: List.generate(5, (index) {
                 return IconButton(
                   icon: Icon(
-                    index < _rating ? Icons.star_rounded : Icons.star_outline_rounded,
+                    index < _rating
+                        ? Icons.star_rounded
+                        : Icons.star_outline_rounded,
                     color: Colors.amber,
                     size: 32,
                   ),
@@ -671,14 +917,14 @@ class _EmptyState extends StatelessWidget {
     final title = status == BookingStatus.upcoming
         ? 'No upcoming bookings'
         : status == BookingStatus.active
-            ? 'No active rentals'
-            : 'No booking history';
+        ? 'No active rentals'
+        : 'No booking history';
 
     final subtitle = status == BookingStatus.upcoming
         ? 'Book equipment from the marketplace to get started.'
         : status == BookingStatus.active
-            ? 'Start an upcoming booking to see it here.'
-            : 'Completed rentals will appear here.';
+        ? 'Start an upcoming booking to see it here.'
+        : 'Completed rentals will appear here.';
 
     return Center(
       child: Padding(

@@ -46,9 +46,9 @@ class _BookingScreenState extends State<BookingScreen> {
       lastDate: DateTime.now().add(const Duration(days: 90)),
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: Theme.of(context).colorScheme.copyWith(
-                primary: AppColors.primaryGreen,
-              ),
+          colorScheme: Theme.of(
+            context,
+          ).colorScheme.copyWith(primary: AppColors.primaryGreen),
         ),
         child: child!,
       ),
@@ -63,9 +63,9 @@ class _BookingScreenState extends State<BookingScreen> {
       initialTime: _selectedTime,
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: Theme.of(context).colorScheme.copyWith(
-                primary: AppColors.primaryGreen,
-              ),
+          colorScheme: Theme.of(
+            context,
+          ).colorScheme.copyWith(primary: AppColors.primaryGreen),
         ),
         child: child!,
       ),
@@ -87,6 +87,8 @@ class _BookingScreenState extends State<BookingScreen> {
       'userId': AuthService.instance.currentUser?.uid ?? 'guest_user',
       'equipmentId': widget.equipment.id,
       'equipmentName': widget.equipment.name,
+      'ownerId': widget.equipment.ownerId,
+      'ownerName': widget.equipment.ownerName,
       'date': Timestamp.fromDate(bookingDateTime),
       'bookingDate': Timestamp.fromDate(bookingDateTime),
       'durationHours': _durationHours,
@@ -193,8 +195,7 @@ class _BookingScreenState extends State<BookingScreen> {
                 left: AppSpacing.lg,
                 right: AppSpacing.lg,
                 top: AppSpacing.md,
-                bottom:
-                    MediaQuery.of(context).padding.bottom + AppSpacing.md,
+                bottom: MediaQuery.of(context).padding.bottom + AppSpacing.md,
               ),
               decoration: BoxDecoration(
                 color: AppColors.cardBackground,
@@ -304,8 +305,18 @@ class _ScheduleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     final dateStr =
         '${selectedDate.day} ${months[selectedDate.month - 1]} ${selectedDate.year}';
@@ -394,10 +405,7 @@ class _PickerTile extends StatelessWidget {
 // ─────────────────────────────────────────────
 
 class _DurationSelector extends StatelessWidget {
-  const _DurationSelector({
-    required this.selected,
-    required this.onChanged,
-  });
+  const _DurationSelector({required this.selected, required this.onChanged});
 
   final int selected;
   final ValueChanged<int> onChanged;
@@ -454,7 +462,10 @@ class _DurationSelector extends StatelessWidget {
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               decoration: InputDecoration(
                 hintText: 'Custom hr',
-                hintStyle: GoogleFonts.poppins(fontSize: 13, color: AppColors.textMuted),
+                hintStyle: GoogleFonts.poppins(
+                  fontSize: 13,
+                  color: AppColors.textMuted,
+                ),
                 isDense: true,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.sm,
@@ -509,10 +520,7 @@ class _PaymentSummary extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Base calc
-          _CostRow(
-            label: 'Rental Price',
-            value: '₹${pricePerHour.toInt()}/hr',
-          ),
+          _CostRow(label: 'Rental Price', value: '₹${pricePerHour.toInt()}/hr'),
           const SizedBox(height: AppSpacing.sm),
           _CostRow(
             label: 'Duration',

@@ -26,8 +26,7 @@ class AgButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final buttonChild = icon != null
         ? Row(
-            mainAxisSize:
-                isExpanded ? MainAxisSize.max : MainAxisSize.min,
+            mainAxisSize: isExpanded ? MainAxisSize.max : MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(icon, size: 20),
@@ -48,9 +47,7 @@ class AgButton extends StatelessWidget {
           horizontal: AppSpacing.lg,
           vertical: AppSpacing.md,
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: AppSpacing.buttonRadius,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppSpacing.buttonRadius),
         textStyle: GoogleFonts.poppins(
           fontSize: 16,
           fontWeight: FontWeight.w600,

@@ -24,8 +24,18 @@ class ConditionComparisonDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final preRecord = booking.preCondition;
     final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
 
     String formatTime(DateTime? dt) {
@@ -34,7 +44,9 @@ class ConditionComparisonDialog extends StatelessWidget {
     }
 
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.radiusLg)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+      ),
       backgroundColor: AppColors.cardBackground,
       insetPadding: const EdgeInsets.all(AppSpacing.md),
       child: SingleChildScrollView(
@@ -52,7 +64,11 @@ class ConditionComparisonDialog extends StatelessWidget {
                     color: AppColors.primaryGreen.withAlpha(20),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.compare_rounded, color: AppColors.primaryGreen, size: 24),
+                  child: const Icon(
+                    Icons.compare_rounded,
+                    color: AppColors.primaryGreen,
+                    size: 24,
+                  ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
@@ -69,7 +85,10 @@ class ConditionComparisonDialog extends StatelessWidget {
                       ),
                       Text(
                         booking.equipmentName,
-                        style: GoogleFonts.poppins(fontSize: 12, color: AppColors.textMuted),
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: AppColors.textMuted,
+                        ),
                       ),
                     ],
                   ),
@@ -91,7 +110,11 @@ class ConditionComparisonDialog extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.verified_rounded, color: Colors.green, size: 22),
+                  const Icon(
+                    Icons.verified_rounded,
+                    color: Colors.green,
+                    size: 22,
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(
@@ -107,7 +130,10 @@ class ConditionComparisonDialog extends StatelessWidget {
                         ),
                         Text(
                           'Pre & Post rental condition records match cleanly. Safe to finalize return.',
-                          style: GoogleFonts.poppins(fontSize: 11, color: AppColors.textMuted),
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            color: AppColors.textMuted,
+                          ),
                         ),
                       ],
                     ),
@@ -139,7 +165,9 @@ class ConditionComparisonDialog extends StatelessWidget {
                     title: 'Post-Rental',
                     subtitle: formatTime(postRecord.timestamp),
                     photos: postRecord.photos,
-                    notes: postRecord.notes.isEmpty ? 'Inspected on return. Machine clean.' : postRecord.notes,
+                    notes: postRecord.notes.isEmpty
+                        ? 'Inspected on return. Machine clean.'
+                        : postRecord.notes,
                     badgeColor: AppColors.primaryGreen,
                   ),
                 ),
@@ -221,7 +249,10 @@ class _RecordColumn extends StatelessWidget {
           ),
           Text(
             subtitle,
-            style: GoogleFonts.poppins(fontSize: 10, color: AppColors.textMuted),
+            style: GoogleFonts.poppins(
+              fontSize: 10,
+              color: AppColors.textMuted,
+            ),
           ),
           const SizedBox(height: AppSpacing.sm),
 
@@ -237,7 +268,11 @@ class _RecordColumn extends StatelessWidget {
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => Container(
                     color: badgeColor.withAlpha(20),
-                    child: Icon(Icons.broken_image_rounded, color: badgeColor, size: 24),
+                    child: Icon(
+                      Icons.broken_image_rounded,
+                      color: badgeColor,
+                      size: 24,
+                    ),
                   ),
                 ),
               ),
@@ -253,7 +288,10 @@ class _RecordColumn extends StatelessWidget {
               child: Center(
                 child: Text(
                   'No Photo',
-                  style: GoogleFonts.poppins(fontSize: 11, color: AppColors.textMuted),
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    color: AppColors.textMuted,
+                  ),
                 ),
               ),
             ),
@@ -262,7 +300,11 @@ class _RecordColumn extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           Text(
             notes,
-            style: GoogleFonts.poppins(fontSize: 11, color: AppColors.textDark, height: 1.3),
+            style: GoogleFonts.poppins(
+              fontSize: 11,
+              color: AppColors.textDark,
+              height: 1.3,
+            ),
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
           ),

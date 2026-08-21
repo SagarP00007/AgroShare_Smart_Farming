@@ -24,10 +24,7 @@ class _MapEquipment {
 }
 
 class NearbyMapScreen extends StatefulWidget {
-  const NearbyMapScreen({
-    super.key,
-    required this.userLocation,
-  });
+  const NearbyMapScreen({super.key, required this.userLocation});
 
   final LatLng userLocation;
 
@@ -52,11 +49,41 @@ class _NearbyMapScreenState extends State<NearbyMapScreen> {
 
     // Hardcoded items as requested in prompt
     final mockData = [
-      {'name': 'Tractor', 'latOff': 0.008, 'lngOff': 0.005, 'dist': 1.5, 'price': 400.0},
-      {'name': 'Harvester', 'latOff': -0.006, 'lngOff': 0.009, 'dist': 2.0, 'price': 650.0},
-      {'name': 'Rotavator', 'latOff': 0.004, 'lngOff': -0.007, 'dist': 2.5, 'price': 300.0},
-      {'name': 'Seeder', 'latOff': -0.009, 'lngOff': -0.004, 'dist': 2.2, 'price': 350.0},
-      {'name': 'Sprayer', 'latOff': 0.006, 'lngOff': 0.008, 'dist': 1.8, 'price': 250.0},
+      {
+        'name': 'Tractor',
+        'latOff': 0.008,
+        'lngOff': 0.005,
+        'dist': 1.5,
+        'price': 400.0,
+      },
+      {
+        'name': 'Harvester',
+        'latOff': -0.006,
+        'lngOff': 0.009,
+        'dist': 2.0,
+        'price': 650.0,
+      },
+      {
+        'name': 'Rotavator',
+        'latOff': 0.004,
+        'lngOff': -0.007,
+        'dist': 2.5,
+        'price': 300.0,
+      },
+      {
+        'name': 'Seeder',
+        'latOff': -0.009,
+        'lngOff': -0.004,
+        'dist': 2.2,
+        'price': 350.0,
+      },
+      {
+        'name': 'Sprayer',
+        'latOff': 0.006,
+        'lngOff': 0.008,
+        'dist': 1.8,
+        'price': 250.0,
+      },
     ];
 
     for (int i = 0; i < mockData.length; i++) {
@@ -87,19 +114,22 @@ class _NearbyMapScreenState extends State<NearbyMapScreen> {
         reviewCount: 15,
         imageUrl: imageUrl,
         ownerName: 'Local Farmer',
-        description: 'Great condition ${data['name']} available for immediate pickup.',
+        description:
+            'Great condition ${data['name']} available for immediate pickup.',
         locationName: 'Local Farm',
         latitude: equipLoc.latitude,
         longitude: equipLoc.longitude,
         isAvailable: true,
-        purchasePrice: (data['price'] as double) * 1000, 
+        purchasePrice: (data['price'] as double) * 1000,
       );
 
-      _nearbyItems.add(_MapEquipment(
-        equipment: mappedEquip,
-        location: equipLoc,
-        distanceKm: data['dist'] as double,
-      ));
+      _nearbyItems.add(
+        _MapEquipment(
+          equipment: mappedEquip,
+          location: equipLoc,
+          distanceKm: data['dist'] as double,
+        ),
+      );
     }
   }
 
@@ -122,8 +152,7 @@ class _NearbyMapScreenState extends State<NearbyMapScreen> {
             ),
             children: [
               TileLayer(
-                urlTemplate:
-                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.agroshare.app',
               ),
               MarkerLayer(
@@ -146,10 +175,8 @@ class _NearbyMapScreenState extends State<NearbyMapScreen> {
                       alignment: Alignment.topCenter,
                       child: _EquipmentMarker(
                         item: item,
-                        onTap: () => showEquipmentActionSheet(
-                          context,
-                          item.equipment,
-                        ),
+                        onTap: () =>
+                            showEquipmentActionSheet(context, item.equipment),
                       ),
                     ),
                   ),
@@ -248,7 +275,7 @@ class _NearbyMapScreenState extends State<NearbyMapScreen> {
                     fontWeight: FontWeight.w700,
                     color: AppColors.textLight,
                     shadows: [
-                      const Shadow(color: Colors.black45, blurRadius: 4)
+                      const Shadow(color: Colors.black45, blurRadius: 4),
                     ],
                   ),
                 ),
@@ -258,7 +285,7 @@ class _NearbyMapScreenState extends State<NearbyMapScreen> {
                     fontSize: 12,
                     color: AppColors.textLight.withAlpha(230),
                     shadows: [
-                      const Shadow(color: Colors.black45, blurRadius: 2)
+                      const Shadow(color: Colors.black45, blurRadius: 2),
                     ],
                   ),
                 ),
@@ -284,10 +311,7 @@ class _UserMarker extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 8,
-            vertical: 4,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
             color: Colors.blue.shade600,
             borderRadius: BorderRadius.circular(8),
@@ -335,10 +359,7 @@ class _UserMarker extends StatelessWidget {
 // ─────────────────────────────────────────────
 
 class _EquipmentMarker extends StatelessWidget {
-  const _EquipmentMarker({
-    required this.item,
-    required this.onTap,
-  });
+  const _EquipmentMarker({required this.item, required this.onTap});
 
   final _MapEquipment item;
   final VoidCallback onTap;
@@ -376,44 +397,39 @@ class _EquipmentMarker extends StatelessWidget {
                     color: AppColors.secondaryGreen.withAlpha(35),
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: Icon(
-                    _icon,
-                    size: 14,
-                    color: AppColors.primaryGreen,
-                  ),
+                  child: Icon(_icon, size: 14, color: AppColors.primaryGreen),
                 ),
                 const SizedBox(width: 4),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      item.equipment.name.split(' ').take(2).join(' '),
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.poppins(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textDark,
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        item.equipment.name.split(' ').take(2).join(' '),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        style: GoogleFonts.poppins(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textDark,
+                        ),
                       ),
-                    ),
-                    Text(
-                      '${item.distanceKm} km away',
-                      style: GoogleFonts.poppins(
-                        fontSize: 9,
-                        color: AppColors.textMuted,
+                      Text(
+                        '${item.distanceKm} km away',
+                        style: GoogleFonts.poppins(
+                          fontSize: 9,
+                          color: AppColors.textMuted,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
           // Connector line/pin
-          Container(
-            width: 2,
-            height: 10,
-            color: AppColors.primaryGreen,
-          ),
+          Container(width: 2, height: 10, color: AppColors.primaryGreen),
           // Dot on exact location
           Container(
             width: 8,

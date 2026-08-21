@@ -91,8 +91,9 @@ class NotificationService {
   // Set up message handlers
   void _setupMessageHandlers() {
     // Handle foreground messages
-    _messageSubscription =
-        FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    _messageSubscription = FirebaseMessaging.onMessage.listen((
+      RemoteMessage message,
+    ) {
       if (kDebugMode) {
         print('Received foreground message: ${message.messageId}');
       }
@@ -105,8 +106,9 @@ class NotificationService {
     });
 
     // Handle messages when app is opened from notification
-    _onMessageOpenedSubscription =
-        FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+    _onMessageOpenedSubscription = FirebaseMessaging.onMessageOpenedApp.listen((
+      RemoteMessage message,
+    ) {
       if (kDebugMode) {
         print('App opened from notification: ${message.messageId}');
       }
@@ -115,9 +117,9 @@ class NotificationService {
     });
 
     // Check for initial message (app opened from terminated state)
-    FirebaseMessaging.instance
-        .getInitialMessage()
-        .then((RemoteMessage? message) {
+    FirebaseMessaging.instance.getInitialMessage().then((
+      RemoteMessage? message,
+    ) {
       if (message != null) {
         if (kDebugMode) {
           print('App opened from terminated state: ${message.messageId}');

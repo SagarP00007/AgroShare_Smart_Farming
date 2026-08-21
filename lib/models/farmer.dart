@@ -50,9 +50,10 @@ class Farmer {
     final ratingPart = (avgRating.clamp(1.0, 5.0)) * 0.70;
     final rentalBonus = (completedRentals * 0.2).clamp(0.0, 1.5) * 0.15;
     final verifiedBonus = (verifiedReturns * 0.25).clamp(0.0, 1.0) * 0.15;
-    
+
     // Scale total score out of 5.0
-    final rawScore = (ratingPart + rentalBonus + verifiedBonus) / 0.70 * 0.85 + 0.75;
+    final rawScore =
+        (ratingPart + rentalBonus + verifiedBonus) / 0.70 * 0.85 + 0.75;
     return double.parse(rawScore.clamp(1.0, 5.0).toStringAsFixed(1));
   }
 
@@ -68,7 +69,8 @@ class Farmer {
       trustScore: (data['trustScore'] ?? 4.0).toDouble(),
       completedRentals: (data['completedRentals'] ?? 0).toInt(),
       groupPurchases: (data['groupPurchases'] ?? 0).toInt(),
-      verifiedReturns: (data['verifiedReturns'] ?? (data['completedRentals'] ?? 0)).toInt(),
+      verifiedReturns:
+          (data['verifiedReturns'] ?? (data['completedRentals'] ?? 0)).toInt(),
       totalRatingPoints: (data['totalRatingPoints'] ?? 0.0).toDouble(),
       reviewCount: (data['reviewCount'] ?? 0).toInt(),
     );

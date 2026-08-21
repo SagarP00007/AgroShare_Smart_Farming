@@ -14,11 +14,14 @@ class LocaleProviderInherited extends InheritedWidget {
   final LocaleProvider provider;
 
   static LocaleProvider? of(BuildContext context) {
-    return context.dependOnInheritedWidgetOfExactType<LocaleProviderInherited>()?.provider;
+    return context
+        .dependOnInheritedWidgetOfExactType<LocaleProviderInherited>()
+        ?.provider;
   }
 
   @override
-  bool updateShouldNotify(LocaleProviderInherited old) => provider != old.provider;
+  bool updateShouldNotify(LocaleProviderInherited old) =>
+      provider != old.provider;
 }
 
 const String _localeKey = 'app_locale';

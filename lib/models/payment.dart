@@ -25,8 +25,10 @@ class Payment {
   final String equipmentName;
   final String equipmentImage;
   final double amount;
-  final String paymentType; // 'rental_deposit', 'rental_remaining', 'equipment_purchase'
-  final String paymentMethod; // 'Google Pay', 'PhonePe', 'Paytm', 'UPI ID', 'QR Code'
+  final String
+  paymentType; // 'rental_deposit', 'rental_remaining', 'equipment_purchase'
+  final String
+  paymentMethod; // 'Google Pay', 'PhonePe', 'Paytm', 'UPI ID', 'QR Code'
   final String upiId;
   final String status; // 'successful', 'failed', 'cancelled'
   final DateTime date;
@@ -58,7 +60,8 @@ class Payment {
       paymentMethod: data['paymentMethod'] ?? 'UPI',
       upiId: data['upiId'] ?? '',
       status: data['status'] ?? 'successful',
-      date: (data['date'] as Timestamp?)?.toDate() ??
+      date:
+          (data['date'] as Timestamp?)?.toDate() ??
           (data['timestamp'] as Timestamp?)?.toDate() ??
           DateTime.now(),
       bookingId: data['bookingId'] ?? '',

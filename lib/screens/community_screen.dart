@@ -130,9 +130,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
       isExpanded: true,
       onPressed: () {
         Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => const CreateGroupScreen(),
-          ),
+          MaterialPageRoute(builder: (context) => const CreateGroupScreen()),
         );
       },
     );
@@ -160,9 +158,11 @@ class _CommunityScreenState extends State<CommunityScreen> {
             List<Map<String, dynamic>> groupsList = [];
             if (activeDocs.isNotEmpty && !snapshot.hasError) {
               groupsList = activeDocs
-                  .map((d) => Map<String, dynamic>.from(
-                        d.data() as Map<String, dynamic>,
-                      )..['id'] = d.id)
+                  .map(
+                    (d) => Map<String, dynamic>.from(
+                      d.data() as Map<String, dynamic>,
+                    )..['id'] = d.id,
+                  )
                   .toList();
             } else {
               groupsList = FirestoreService.instance.getFallbackGroupMaps();
@@ -206,10 +206,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
           padding: EdgeInsets.zero,
         ),
         const SizedBox(height: AppSpacing.md),
-        _EquipmentGroupCard(
-          groupId: 'grp_1',
-          data: sampleGroup,
-        ),
+        _EquipmentGroupCard(groupId: 'grp_1', data: sampleGroup),
       ],
     );
   }
@@ -218,10 +215,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
 // ── Equipment Group Card Widget ──────────────────────────────────
 
 class _EquipmentGroupCard extends StatelessWidget {
-  const _EquipmentGroupCard({
-    required this.groupId,
-    required this.data,
-  });
+  const _EquipmentGroupCard({required this.groupId, required this.data});
 
   final String groupId;
   final Map<String, dynamic> data;
@@ -289,7 +283,11 @@ class _EquipmentGroupCard extends StatelessWidget {
           // Location
           Row(
             children: [
-              const Icon(Icons.location_on_outlined, size: 16, color: AppColors.textMuted),
+              const Icon(
+                Icons.location_on_outlined,
+                size: 16,
+                color: AppColors.textMuted,
+              ),
               const SizedBox(width: AppSpacing.xs),
               Text(
                 data['location'] ?? 'Unknown',
@@ -365,7 +363,9 @@ class _EquipmentGroupCard extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.primaryGreen,
                     side: const BorderSide(color: AppColors.primaryGreen),
-                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.sm,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: AppSpacing.buttonRadius,
                     ),
@@ -382,14 +382,18 @@ class _EquipmentGroupCard extends StatelessWidget {
                 child: AgButton(
                   label: hasJoined
                       ? L.tr(context, 'joined')
-                      : (isFull ? L.tr(context, 'full') : L.tr(context, 'join_group')),
+                      : (isFull
+                            ? L.tr(context, 'full')
+                            : L.tr(context, 'join_group')),
                   onPressed: hasJoined || isFull
                       ? () {}
                       : () async {
                           if (uid == null) return;
                           try {
-                            await FirestoreService.instance
-                                .joinGroup(groupId, uid);
+                            await FirestoreService.instance.joinGroup(
+                              groupId,
+                              uid,
+                            );
                           } catch (e) {
                             if (!context.mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(

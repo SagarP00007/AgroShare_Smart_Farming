@@ -72,7 +72,7 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
     'laser land leveler',
     'tractor trolley',
     'disc harrow',
-    'mould board plow'
+    'mould board plow',
   ];
 
   LatLng _userLocation = const LatLng(
@@ -86,7 +86,13 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
   static const double _mapZoom = 13.0;
 
   static const _crops = ['Rice', 'Wheat', 'Sugarcane', 'Vegetables', 'Cotton'];
-  static const _tasks = ['Plowing', 'Harvesting', 'Irrigation', 'Seeding', 'Spraying'];
+  static const _tasks = [
+    'Plowing',
+    'Harvesting',
+    'Irrigation',
+    'Seeding',
+    'Spraying',
+  ];
 
   @override
   void initState() {
@@ -152,8 +158,10 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
     }
 
     final suggestions = _equipmentSuggestions
-        .where((suggestion) =>
-            suggestion.toLowerCase().contains(query.toLowerCase()))
+        .where(
+          (suggestion) =>
+              suggestion.toLowerCase().contains(query.toLowerCase()),
+        )
         .take(5)
         .toList();
 
@@ -218,20 +226,24 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
                 builder: (context, snapshot) {
                   final docs = snapshot.data?.docs ?? [];
                   var equipment = docs
-                      .map((d) => Equipment.fromMap(
-                            d.id,
-                            d.data() as Map<String, dynamic>,
-                          ))
+                      .map(
+                        (d) => Equipment.fromMap(
+                          d.id,
+                          d.data() as Map<String, dynamic>,
+                        ),
+                      )
                       .where((e) => e.isAvailable)
                       .toList();
 
                   if (equipment.isEmpty || snapshot.hasError) {
-                    equipment = FirestoreService.instance.getFallbackEquipment();
+                    equipment = FirestoreService.instance
+                        .getFallbackEquipment();
                   }
 
                   // ── Apply Recommendations or Standard Filtering ──
                   List<RecommendedEquipment> recommendedList = [];
-                  bool isRecommendationActive = _recommendationCriteria != null &&
+                  bool isRecommendationActive =
+                      _recommendationCriteria != null &&
                       _recommendationCriteria!.isNotEmpty;
 
                   if (isRecommendationActive) {
@@ -239,7 +251,8 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
                       crop: _recommendationCriteria!.crop ?? _selectedCrop,
                       task: _recommendationCriteria!.task ?? _selectedTask,
                       landSizeAcres: _recommendationCriteria!.landSizeAcres,
-                      maxBudgetPerHour: _recommendationCriteria!.maxBudgetPerHour,
+                      maxBudgetPerHour:
+                          _recommendationCriteria!.maxBudgetPerHour,
                       userLocation: _userLocation,
                       searchQuery: _searchQuery.isNotEmpty
                           ? _searchQuery
@@ -251,13 +264,17 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
                       criteria: criteria,
                     );
 
-                    equipment = recommendedList.map((r) => r.equipment).toList();
+                    equipment = recommendedList
+                        .map((r) => r.equipment)
+                        .toList();
                   } else {
                     if (_searchQuery.isNotEmpty) {
                       equipment = equipment
-                          .where((e) => e.name
-                              .toLowerCase()
-                              .contains(_searchQuery.toLowerCase()))
+                          .where(
+                            (e) => e.name.toLowerCase().contains(
+                              _searchQuery.toLowerCase(),
+                            ),
+                          )
                           .toList();
                     }
                     if (_selectedTask != null) {
@@ -268,13 +285,16 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
                         'Seeding': ['Drill', 'Seed', 'Planter'],
                         'Spraying': ['Sprayer', 'Drone'],
                       };
-                      final keywords = taskMap[_selectedTask] ?? [_selectedTask!];
+                      final keywords =
+                          taskMap[_selectedTask] ?? [_selectedTask!];
                       equipment = equipment
-                          .where((e) => keywords.any(
-                                (k) => e.name
-                                    .toLowerCase()
-                                    .contains(k.toLowerCase()),
-                              ))
+                          .where(
+                            (e) => keywords.any(
+                              (k) => e.name.toLowerCase().contains(
+                                k.toLowerCase(),
+                              ),
+                            ),
+                          )
                           .toList();
                     }
                   }
@@ -282,19 +302,20 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
                   return ListView(
                     physics: const BouncingScrollPhysics(),
                     padding: const EdgeInsets.only(
-                        top: AppSpacing.sm, bottom: AppSpacing.xxl),
+                      top: AppSpacing.sm,
+                      bottom: AppSpacing.xxl,
+                    ),
                     children: [
-                      SizedBox(
-                        height: 280,
-                        child: _buildMap(equipment),
-                      ),
+                      SizedBox(height: 280, child: _buildMap(equipment)),
                       const SizedBox(height: AppSpacing.md),
 
                       // ── Smart Recommendation Active Banner ──
                       if (isRecommendationActive)
                         Padding(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.md, vertical: 4),
+                            horizontal: AppSpacing.md,
+                            vertical: 4,
+                          ),
                           child: Container(
                             padding: const EdgeInsets.all(AppSpacing.md),
                             decoration: BoxDecoration(
@@ -339,15 +360,23 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
                                       },
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(
-                                            horizontal: 8, vertical: 4),
+                                          horizontal: 8,
+                                          vertical: 4,
+                                        ),
                                         decoration: BoxDecoration(
                                           color: Colors.white,
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
                                           border: Border.all(
-                                              color: AppColors.divider),
+                                            color: AppColors.divider,
+                                          ),
                                         ),
                                         child: Text(
-                                          L.tr(context, 'clear_recommendations'),
+                                          L.tr(
+                                            context,
+                                            'clear_recommendations',
+                                          ),
                                           style: GoogleFonts.poppins(
                                             fontSize: 11,
                                             fontWeight: FontWeight.w500,
@@ -364,15 +393,31 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
                                   runSpacing: 4,
                                   children: [
                                     if (_recommendationCriteria?.task != null)
-                                      _criteriaTag('Task: ${_recommendationCriteria!.task}'),
+                                      _criteriaTag(
+                                        'Task: ${_recommendationCriteria!.task}',
+                                      ),
                                     if (_recommendationCriteria?.crop != null)
-                                      _criteriaTag('Crop: ${_recommendationCriteria!.crop}'),
-                                    if (_recommendationCriteria?.landSizeAcres != null &&
-                                        _recommendationCriteria!.landSizeAcres! > 0)
-                                      _criteriaTag('Land: ${_recommendationCriteria!.landSizeAcres!.toInt()} Acres'),
-                                    if (_recommendationCriteria?.maxBudgetPerHour != null &&
-                                        _recommendationCriteria!.maxBudgetPerHour! > 0)
-                                      _criteriaTag('Max: ₹${_recommendationCriteria!.maxBudgetPerHour!.toInt()}/hr'),
+                                      _criteriaTag(
+                                        'Crop: ${_recommendationCriteria!.crop}',
+                                      ),
+                                    if (_recommendationCriteria
+                                                ?.landSizeAcres !=
+                                            null &&
+                                        _recommendationCriteria!
+                                                .landSizeAcres! >
+                                            0)
+                                      _criteriaTag(
+                                        'Land: ${_recommendationCriteria!.landSizeAcres!.toInt()} Acres',
+                                      ),
+                                    if (_recommendationCriteria
+                                                ?.maxBudgetPerHour !=
+                                            null &&
+                                        _recommendationCriteria!
+                                                .maxBudgetPerHour! >
+                                            0)
+                                      _criteriaTag(
+                                        'Max: ₹${_recommendationCriteria!.maxBudgetPerHour!.toInt()}/hr',
+                                      ),
                                   ],
                                 ),
                               ],
@@ -382,7 +427,8 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
 
                       Padding(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.md),
+                          horizontal: AppSpacing.md,
+                        ),
                         child: SectionTitle(
                           title: isRecommendationActive
                               ? 'Recommended Machines for You'
@@ -400,8 +446,9 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
 
                       if (equipment.isEmpty)
                         Padding(
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.md,
+                          ),
                           child: ReactiveEmptyView(
                             title: L.tr(context, 'no_equipment_matches'),
                             subtitle: L.tr(context, 'try_changing_filters'),
@@ -411,14 +458,16 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
                       else
                         Padding(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.md),
+                            horizontal: AppSpacing.md,
+                          ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: equipment.map((item) {
                               RecommendedEquipment? rec;
                               if (isRecommendationActive) {
-                                final idx = recommendedList
-                                    .indexWhere((r) => r.equipment.id == item.id);
+                                final idx = recommendedList.indexWhere(
+                                  (r) => r.equipment.id == item.id,
+                                );
                                 if (idx != -1) rec = recommendedList[idx];
                               }
 
@@ -432,7 +481,8 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
                                     context,
                                     MaterialPageRoute(
                                       builder: (_) => EquipmentDetailScreen(
-                                          equipment: item),
+                                        equipment: item,
+                                      ),
                                     ),
                                   );
                                 },
@@ -504,11 +554,7 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
                 shape: BoxShape.circle,
               ),
             ),
-            const Icon(
-              Icons.person_rounded,
-              color: Colors.white,
-              size: 20,
-            ),
+            const Icon(Icons.person_rounded, color: Colors.white, size: 20),
           ],
         ),
       ),
@@ -599,9 +645,7 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.example.agroshare',
               ),
-              MarkerLayer(
-                markers: [userMarker, ...equipmentMarkers],
-              ),
+              MarkerLayer(markers: [userMarker, ...equipmentMarkers]),
             ],
           ),
 
@@ -669,8 +713,9 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  onTap:
-                      _isRefreshingLocation ? null : _refreshLocationAndCenter,
+                  onTap: _isRefreshingLocation
+                      ? null
+                      : _refreshLocationAndCenter,
                   borderRadius: BorderRadius.circular(16),
                   child: Container(
                     padding: const EdgeInsets.all(14),
@@ -705,10 +750,7 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
                 ),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [
-                      AppColors.primaryGreen,
-                      AppColors.secondaryGreen,
-                    ],
+                    colors: [AppColors.primaryGreen, AppColors.secondaryGreen],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -755,7 +797,9 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
         AgCard(
           margin: EdgeInsets.zero,
           padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md, vertical: 6),
+            horizontal: AppSpacing.md,
+            vertical: 6,
+          ),
           child: Row(
             children: [
               const Icon(
@@ -778,7 +822,10 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(vertical: 8),
                   ),
-                  style: GoogleFonts.poppins(fontSize: 14, color: AppColors.textDark),
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    color: AppColors.textDark,
+                  ),
                 ),
               ),
               if (_searchQuery.isNotEmpty)
@@ -871,7 +918,10 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
 
   // ── FILTERS & SMART RECOMMENDATION TRIGGER ──
   Widget _buildFilters() {
-    final hasActiveFilters = _selectedTask != null || _selectedCrop != null || _recommendationCriteria != null;
+    final hasActiveFilters =
+        _selectedTask != null ||
+        _selectedCrop != null ||
+        _recommendationCriteria != null;
 
     return Column(
       children: [
@@ -886,7 +936,10 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
                     setState(() => _isFilterExpanded = !_isFilterExpanded);
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(8),
@@ -944,7 +997,10 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
               GestureDetector(
                 onTap: () => _showSmartRecommendationModal(context),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
@@ -1024,14 +1080,20 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      _buildFilterChip(L.tr(context, 'all'), _selectedTask == null, () {
-                        setState(() => _selectedTask = null);
-                      }),
-                      ..._tasks.map((task) => _buildFilterChip(
-                            task,
-                            _selectedTask == task,
-                            () => setState(() => _selectedTask = task),
-                          )),
+                      _buildFilterChip(
+                        L.tr(context, 'all'),
+                        _selectedTask == null,
+                        () {
+                          setState(() => _selectedTask = null);
+                        },
+                      ),
+                      ..._tasks.map(
+                        (task) => _buildFilterChip(
+                          task,
+                          _selectedTask == task,
+                          () => setState(() => _selectedTask = task),
+                        ),
+                      ),
                     ],
                   ),
 
@@ -1050,14 +1112,20 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      _buildFilterChip(L.tr(context, 'all'), _selectedCrop == null, () {
-                        setState(() => _selectedCrop = null);
-                      }),
-                      ..._crops.map((crop) => _buildFilterChip(
-                            crop,
-                            _selectedCrop == crop,
-                            () => setState(() => _selectedCrop = crop),
-                          )),
+                      _buildFilterChip(
+                        L.tr(context, 'all'),
+                        _selectedCrop == null,
+                        () {
+                          setState(() => _selectedCrop = null);
+                        },
+                      ),
+                      ..._crops.map(
+                        (crop) => _buildFilterChip(
+                          crop,
+                          _selectedCrop == crop,
+                          () => setState(() => _selectedCrop = crop),
+                        ),
+                      ),
                     ],
                   ),
 
@@ -1075,7 +1143,9 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
                         },
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
                         ),
                         child: Text(
                           'Clear All Filters',
@@ -1139,8 +1209,10 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
 
   // ── MULTILINGUAL VOICE SEARCH MODAL ──
   void _showVoiceSearchModal(BuildContext context) {
-    final langCode = LocaleProviderInherited.of(context)?.locale.languageCode ?? 'en';
-    final voiceConfig = VoiceSearchService.regionalVoiceConfig[langCode] ??
+    final langCode =
+        LocaleProviderInherited.of(context)?.locale.languageCode ?? 'en';
+    final voiceConfig =
+        VoiceSearchService.regionalVoiceConfig[langCode] ??
         VoiceSearchService.regionalVoiceConfig['en']!;
 
     showModalBottomSheet(
@@ -1174,7 +1246,11 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.language_rounded, size: 18, color: AppColors.primaryGreen),
+                      const Icon(
+                        Icons.language_rounded,
+                        size: 18,
+                        color: AppColors.primaryGreen,
+                      ),
                       const SizedBox(width: 6),
                       Text(
                         'Voice Search (${voiceConfig.name})',
@@ -1259,15 +1335,24 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
                         child: Container(
                           width: double.infinity,
                           margin: const EdgeInsets.only(bottom: 8),
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.primaryGreen.withAlpha(10),
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: AppColors.primaryGreen.withAlpha(30)),
+                            border: Border.all(
+                              color: AppColors.primaryGreen.withAlpha(30),
+                            ),
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.record_voice_over_rounded, size: 16, color: AppColors.primaryGreen),
+                              const Icon(
+                                Icons.record_voice_over_rounded,
+                                size: 16,
+                                color: AppColors.primaryGreen,
+                              ),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
@@ -1279,7 +1364,11 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
                                   ),
                                 ),
                               ),
-                              const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: AppColors.primaryGreen),
+                              const Icon(
+                                Icons.arrow_forward_ios_rounded,
+                                size: 12,
+                                color: AppColors.primaryGreen,
+                              ),
                             ],
                           ),
                         ),
@@ -1296,7 +1385,10 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
   }
 
   void _processVoiceQuery(String transcript, String languageCode) {
-    final result = VoiceSearchService.instance.parseVoiceInput(transcript, languageCode);
+    final result = VoiceSearchService.instance.parseVoiceInput(
+      transcript,
+      languageCode,
+    );
     setState(() {
       _searchCtrl.text = result.extractedQuery;
       _searchQuery = result.extractedQuery;
@@ -1372,7 +1464,11 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
                             color: AppColors.primaryGreen.withAlpha(20),
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: const Icon(Icons.auto_awesome_rounded, color: AppColors.primaryGreen, size: 22),
+                          child: const Icon(
+                            Icons.auto_awesome_rounded,
+                            color: AppColors.primaryGreen,
+                            size: 22,
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Text(
@@ -1411,10 +1507,15 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
                       children: _crops.map((c) {
                         final isSel = tempCrop == c;
                         return ChoiceChip(
-                          label: Text(c, style: GoogleFonts.poppins(fontSize: 12)),
+                          label: Text(
+                            c,
+                            style: GoogleFonts.poppins(fontSize: 12),
+                          ),
                           selected: isSel,
                           selectedColor: AppColors.primaryGreen,
-                          labelStyle: TextStyle(color: isSel ? Colors.white : AppColors.textDark),
+                          labelStyle: TextStyle(
+                            color: isSel ? Colors.white : AppColors.textDark,
+                          ),
                           onSelected: (_) => setModalState(() => tempCrop = c),
                         );
                       }).toList(),
@@ -1436,10 +1537,15 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
                       children: _tasks.map((t) {
                         final isSel = tempTask == t;
                         return ChoiceChip(
-                          label: Text(t, style: GoogleFonts.poppins(fontSize: 12)),
+                          label: Text(
+                            t,
+                            style: GoogleFonts.poppins(fontSize: 12),
+                          ),
                           selected: isSel,
                           selectedColor: AppColors.primaryGreen,
-                          labelStyle: TextStyle(color: isSel ? Colors.white : AppColors.textDark),
+                          labelStyle: TextStyle(
+                            color: isSel ? Colors.white : AppColors.textDark,
+                          ),
                           onSelected: (_) => setModalState(() => tempTask = t),
                         );
                       }).toList(),
@@ -1474,7 +1580,8 @@ class _FindEquipmentScreenState extends State<FindEquipmentScreen> {
                       max: 20.0,
                       divisions: 19,
                       activeColor: AppColors.primaryGreen,
-                      onChanged: (val) => setModalState(() => tempLandAcres = val),
+                      onChanged: (val) =>
+                          setModalState(() => tempLandAcres = val),
                     ),
                     const SizedBox(height: AppSpacing.sm),
 
@@ -1583,9 +1690,9 @@ class _FirestoreEquipmentCard extends StatelessWidget {
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to start chat: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to start chat: $e')));
       }
     }
   }
@@ -1631,16 +1738,19 @@ class _FirestoreEquipmentCard extends StatelessWidget {
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
                                 color: AppColors.primaryGreen,
-                                value: loadingProgress.expectedTotalBytes != null
+                                value:
+                                    loadingProgress.expectedTotalBytes != null
                                     ? loadingProgress.cumulativeBytesLoaded /
-                                        (loadingProgress.expectedTotalBytes ?? 1)
+                                          (loadingProgress.expectedTotalBytes ??
+                                              1)
                                     : null,
                               ),
                             ),
                           ),
                         );
                       },
-                      errorBuilder: (context, error, stackTrace) => _placeholder(),
+                      errorBuilder: (context, error, stackTrace) =>
+                          _placeholder(),
                     ),
                   ),
                 )
@@ -1658,7 +1768,10 @@ class _FirestoreEquipmentCard extends StatelessWidget {
                   top: 12,
                   left: 12,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [

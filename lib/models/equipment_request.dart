@@ -46,7 +46,8 @@ class EquipmentRequest {
       requesterName: data['requesterName'] ?? 'Farmer',
       equipmentType: data['equipmentType'] ?? '',
       taskCrop: data['taskCrop'] ?? '',
-      requiredDate: (data['requiredDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      requiredDate:
+          (data['requiredDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
       durationHours: (data['durationHours'] ?? 1).toInt(),
       locationName: data['locationName'] ?? 'Unknown',
       latitude: (data['latitude'] ?? 0.0).toDouble(),

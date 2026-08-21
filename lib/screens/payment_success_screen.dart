@@ -45,12 +45,24 @@ class PaymentSuccessScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isCash = paymentMethod.toLowerCase().contains('cash');
     final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     final now = DateTime.now();
-    final dateStr = '${now.day} ${months[now.month - 1]} ${now.year}, ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+    final dateStr =
+        '${now.day} ${months[now.month - 1]} ${now.year}, ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
 
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
@@ -73,25 +85,26 @@ class PaymentSuccessScreen extends StatelessWidget {
             children: [
               const SizedBox(height: AppSpacing.md),
 
-              // Animated Success Hero Badge
+              // Animated Success / Confirmed Hero Badge
               Container(
                 width: 90,
                 height: 90,
                 decoration: BoxDecoration(
-                  color: AppColors.primaryGreen.withAlpha(25),
+                  color: (isCash ? Colors.amber : AppColors.primaryGreen)
+                      .withAlpha(25),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
                   child: Container(
                     width: 70,
                     height: 70,
-                    decoration: const BoxDecoration(
-                      color: AppColors.primaryGreen,
+                    decoration: BoxDecoration(
+                      color: isCash ? Colors.amber.shade800 : AppColors.primaryGreen,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
-                      Icons.check_rounded,
-                      size: 42,
+                    child: Icon(
+                      isCash ? Icons.handshake_rounded : Icons.check_rounded,
+                      size: 40,
                       color: AppColors.textLight,
                     ),
                   ),
@@ -101,7 +114,7 @@ class PaymentSuccessScreen extends StatelessWidget {
               const SizedBox(height: AppSpacing.lg),
 
               Text(
-                'Payment Successful!',
+                isCash ? 'Booking Confirmed!' : 'Payment Successful!',
                 style: GoogleFonts.poppins(
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
@@ -110,11 +123,13 @@ class PaymentSuccessScreen extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                '₹${amount.toInt()} paid via $paymentMethod',
+                isCash
+                    ? '₹${amount.toInt()} to be paid in cash at pickup'
+                    : '₹${amount.toInt()} paid via $paymentMethod',
                 style: GoogleFonts.poppins(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.primaryGreen,
+                  color: isCash ? Colors.amber.shade900 : AppColors.primaryGreen,
                 ),
               ),
 
@@ -139,17 +154,29 @@ class PaymentSuccessScreen extends StatelessWidget {
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
-                            color: Colors.green.withAlpha(20),
+                            color: (isCash ? Colors.amber : Colors.green)
+                                .withAlpha(20),
                             borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: (isCash
+                                      ? Colors.amber.shade600
+                                      : Colors.green.shade600)
+                                  .withAlpha(50),
+                            ),
                           ),
                           child: Text(
-                            'SUCCESSFUL',
+                            isCash ? 'PAY AT PICKUP (PENDING)' : 'SUCCESSFUL',
                             style: GoogleFonts.poppins(
-                              fontSize: 11,
+                              fontSize: 10,
                               fontWeight: FontWeight.w700,
-                              color: Colors.green.shade700,
+                              color: isCash
+                                  ? Colors.amber.shade900
+                                  : Colors.green.shade700,
                             ),
                           ),
                         ),
@@ -163,7 +190,14 @@ class PaymentSuccessScreen extends StatelessWidget {
                     const SizedBox(height: AppSpacing.sm),
                     _receiptRow('Payment Type', _paymentTypeLabel),
                     const SizedBox(height: AppSpacing.sm),
-                    _receiptRow('Amount Paid', '₹${amount.toInt()}', valueColor: AppColors.primaryGreen, isBold: true),
+                    _receiptRow(
+                      isCash ? 'Deposit Amount Due' : 'Amount Paid',
+                      '₹${amount.toInt()}',
+                      valueColor: isCash
+                          ? Colors.amber.shade900
+                          : AppColors.primaryGreen,
+                      isBold: true,
+                    ),
                     const SizedBox(height: AppSpacing.sm),
                     _receiptRow('Date & Time', dateStr),
                     const SizedBox(height: AppSpacing.sm),
@@ -174,8 +208,11 @@ class PaymentSuccessScreen extends StatelessWidget {
 
                     // Transaction ID with copy button
                     Text(
-                      'Transaction ID',
-                      style: GoogleFonts.poppins(fontSize: 12, color: AppColors.textMuted),
+                      'Transaction / Booking Ref ID',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: AppColors.textMuted,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Row(
@@ -192,16 +229,25 @@ class PaymentSuccessScreen extends StatelessWidget {
                         ),
                         IconButton(
                           onPressed: () {
-                            Clipboard.setData(ClipboardData(text: transactionId));
+                            Clipboard.setData(
+                              ClipboardData(text: transactionId),
+                            );
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('Transaction ID copied!', style: GoogleFonts.poppins()),
+                                content: Text(
+                                  'Reference ID copied!',
+                                  style: GoogleFonts.poppins(),
+                                ),
                                 backgroundColor: AppColors.primaryGreen,
                                 duration: const Duration(seconds: 2),
                               ),
                             );
                           },
-                          icon: const Icon(Icons.copy_rounded, size: 18, color: AppColors.primaryGreen),
+                          icon: const Icon(
+                            Icons.copy_rounded,
+                            size: 18,
+                            color: AppColors.primaryGreen,
+                          ),
                           tooltip: 'Copy ID',
                         ),
                       ],
@@ -216,19 +262,32 @@ class PaymentSuccessScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
-                  color: AppColors.secondaryGreen.withAlpha(20),
+                  color: (isCash ? Colors.amber : AppColors.secondaryGreen)
+                      .withAlpha(20),
                   borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.verified_user_rounded, color: AppColors.primaryGreen, size: 20),
+                    Icon(
+                      isCash
+                          ? Icons.info_outline_rounded
+                          : Icons.verified_user_rounded,
+                      color: isCash
+                          ? Colors.amber.shade900
+                          : AppColors.primaryGreen,
+                      size: 20,
+                    ),
                     const SizedBox(width: AppSpacing.sm),
                     Expanded(
                       child: Text(
-                        'Simulated Prototype Transaction saved to Firestore. Your equipment booking has been recorded.',
+                        isCash
+                            ? 'Please pay ₹${amount.toInt()} in cash directly to the equipment owner upon pickup. The owner will confirm payment receipt in the app.'
+                            : 'Simulated Prototype Transaction saved to Firestore. Your equipment booking has been recorded.',
                         style: GoogleFonts.poppins(
                           fontSize: 11,
-                          color: AppColors.primaryGreen,
+                          color: isCash
+                              ? Colors.amber.shade900
+                              : AppColors.primaryGreen,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -258,10 +317,16 @@ class PaymentSuccessScreen extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const PaymentHistoryScreen()),
+                    MaterialPageRoute(
+                      builder: (_) => const PaymentHistoryScreen(),
+                    ),
                   );
                 },
-                icon: const Icon(Icons.history_rounded, size: 18, color: AppColors.primaryGreen),
+                icon: const Icon(
+                  Icons.history_rounded,
+                  size: 18,
+                  color: AppColors.primaryGreen,
+                ),
                 label: Text(
                   'Payment History',
                   style: GoogleFonts.poppins(

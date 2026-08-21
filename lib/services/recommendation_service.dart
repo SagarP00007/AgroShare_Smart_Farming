@@ -114,7 +114,11 @@ class RecommendationService {
       // 5. Land Size Capacity Scoring (Weight: 10 pts)
       final land = criteria.landSizeAcres;
       if (land != null && land > 0) {
-        final (landScore, landTag) = _scoreLandCapacity(nameLower, descLower, land);
+        final (landScore, landTag) = _scoreLandCapacity(
+          nameLower,
+          descLower,
+          land,
+        );
         score += landScore;
         if (landTag.isNotEmpty) highlights.add(landTag);
       }
@@ -142,12 +146,14 @@ class RecommendationService {
             ? highlights.take(2).join(' • ')
             : 'Available nearby in ${item.locationName}';
 
-        scored.add(RecommendedEquipment(
-          equipment: item,
-          matchScore: finalScore,
-          matchReason: reason,
-          highlights: highlights,
-        ));
+        scored.add(
+          RecommendedEquipment(
+            equipment: item,
+            matchScore: finalScore,
+            matchReason: reason,
+            highlights: highlights,
+          ),
+        );
       }
     }
 
@@ -229,12 +235,17 @@ class RecommendationService {
 
   (int, String) _scoreLandCapacity(String name, String desc, double acres) {
     if (acres <= 3.0) {
-      if (name.contains('mini') || name.contains('tiller') || name.contains('pump') || name.contains('seed drill')) {
+      if (name.contains('mini') ||
+          name.contains('tiller') ||
+          name.contains('pump') ||
+          name.contains('seed drill')) {
         return (10, 'Optimal for small farms (<3 acres)');
       }
       return (5, 'Suitable for 3 acres');
     } else if (acres <= 10.0) {
-      if (name.contains('tractor') || name.contains('rotavator') || name.contains('harvester')) {
+      if (name.contains('tractor') ||
+          name.contains('rotavator') ||
+          name.contains('harvester')) {
         return (10, 'Great capacity for $acres acres');
       }
       return (5, 'Covers $acres acres');

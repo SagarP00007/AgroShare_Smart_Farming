@@ -91,11 +91,12 @@ class LocationService {
         if (place.locality != null && place.locality!.isNotEmpty) {
           parts.add(place.locality!);
         }
-        if (place.administrativeArea != null && place.administrativeArea!.isNotEmpty) {
+        if (place.administrativeArea != null &&
+            place.administrativeArea!.isNotEmpty) {
           parts.add(place.administrativeArea!);
         }
         if (parts.isNotEmpty) return parts.join(', ');
-        
+
         // Fallback
         return '${place.name ?? ''}, ${place.country ?? ''}';
       }

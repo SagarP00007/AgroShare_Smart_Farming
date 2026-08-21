@@ -30,10 +30,12 @@ class ConditionVerificationScreen extends StatefulWidget {
   final VoidCallback? onCompleted;
 
   @override
-  State<ConditionVerificationScreen> createState() => _ConditionVerificationScreenState();
+  State<ConditionVerificationScreen> createState() =>
+      _ConditionVerificationScreenState();
 }
 
-class _ConditionVerificationScreenState extends State<ConditionVerificationScreen> {
+class _ConditionVerificationScreenState
+    extends State<ConditionVerificationScreen> {
   final List<File> _localPhotos = [];
   final List<String> _uploadedUrls = [];
   final _notesCtrl = TextEditingController();
@@ -76,7 +78,10 @@ class _ConditionVerificationScreenState extends State<ConditionVerificationScree
     if (_localPhotos.isEmpty && _uploadedUrls.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Please capture at least 1 equipment condition photo.', style: GoogleFonts.poppins()),
+          content: Text(
+            'Please capture at least 1 equipment condition photo.',
+            style: GoogleFonts.poppins(),
+          ),
           backgroundColor: Colors.orange.shade800,
         ),
       );
@@ -146,7 +151,10 @@ class _ConditionVerificationScreenState extends State<ConditionVerificationScree
       setState(() => _isUploading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Verification save failed: $e', style: GoogleFonts.poppins()),
+          content: Text(
+            'Verification save failed: $e',
+            style: GoogleFonts.poppins(),
+          ),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -155,7 +163,9 @@ class _ConditionVerificationScreenState extends State<ConditionVerificationScree
 
   @override
   Widget build(BuildContext context) {
-    final titleLabel = widget.stage == 'pre' ? 'Pre-Rental Inspection' : 'Post-Rental Inspection';
+    final titleLabel = widget.stage == 'pre'
+        ? 'Pre-Rental Inspection'
+        : 'Post-Rental Inspection';
 
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
@@ -264,21 +274,32 @@ class _ConditionVerificationScreenState extends State<ConditionVerificationScree
                           // Add Photo Button Box
                           InkWell(
                             onTap: _pickPhoto,
-                            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                            borderRadius: BorderRadius.circular(
+                              AppSpacing.radiusMd,
+                            ),
                             child: Container(
                               width: 100,
                               height: 100,
-                              margin: const EdgeInsets.only(right: AppSpacing.sm),
+                              margin: const EdgeInsets.only(
+                                right: AppSpacing.sm,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppColors.secondaryGreen.withAlpha(25),
-                                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                                border: Border.all(color: AppColors.primaryGreen.withAlpha(80)),
+                                borderRadius: BorderRadius.circular(
+                                  AppSpacing.radiusMd,
+                                ),
+                                border: Border.all(
+                                  color: AppColors.primaryGreen.withAlpha(80),
+                                ),
                               ),
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Icon(Icons.camera_alt_rounded,
-                                      color: AppColors.primaryGreen, size: 28),
+                                  const Icon(
+                                    Icons.camera_alt_rounded,
+                                    color: AppColors.primaryGreen,
+                                    size: 28,
+                                  ),
                                   const SizedBox(height: 4),
                                   Text(
                                     'Take Photo',
@@ -298,9 +319,13 @@ class _ConditionVerificationScreenState extends State<ConditionVerificationScree
                             (file) => Container(
                               width: 100,
                               height: 100,
-                              margin: const EdgeInsets.only(right: AppSpacing.sm),
+                              margin: const EdgeInsets.only(
+                                right: AppSpacing.sm,
+                              ),
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                                borderRadius: BorderRadius.circular(
+                                  AppSpacing.radiusMd,
+                                ),
                                 image: DecorationImage(
                                   image: FileImage(file),
                                   fit: BoxFit.cover,
@@ -314,9 +339,13 @@ class _ConditionVerificationScreenState extends State<ConditionVerificationScree
                             (url) => Container(
                               width: 100,
                               height: 100,
-                              margin: const EdgeInsets.only(right: AppSpacing.sm),
+                              margin: const EdgeInsets.only(
+                                right: AppSpacing.sm,
+                              ),
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                                borderRadius: BorderRadius.circular(
+                                  AppSpacing.radiusMd,
+                                ),
                                 image: DecorationImage(
                                   image: NetworkImage(url),
                                   fit: BoxFit.cover,
@@ -389,11 +418,16 @@ class _ConditionVerificationScreenState extends State<ConditionVerificationScree
                         hintText: widget.stage == 'pre'
                             ? 'Note any pre-existing scratches, fuel status, or operational remarks...'
                             : 'Note return condition, fuel level, or work completed...',
-                        hintStyle: GoogleFonts.poppins(fontSize: 13, color: AppColors.textMuted),
+                        hintStyle: GoogleFonts.poppins(
+                          fontSize: 13,
+                          color: AppColors.textMuted,
+                        ),
                         filled: true,
                         fillColor: AppColors.cardBackground,
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                          borderRadius: BorderRadius.circular(
+                            AppSpacing.radiusMd,
+                          ),
                           borderSide: BorderSide.none,
                         ),
                         contentPadding: const EdgeInsets.all(AppSpacing.md),
@@ -428,8 +462,8 @@ class _ConditionVerificationScreenState extends State<ConditionVerificationScree
                 label: _isUploading
                     ? 'Uploading Photos...'
                     : (widget.stage == 'pre'
-                        ? 'Confirm Pre-Rental Inspection'
-                        : 'Submit Post-Rental Inspection'),
+                          ? 'Confirm Pre-Rental Inspection'
+                          : 'Submit Post-Rental Inspection'),
                 icon: Icons.check_circle_rounded,
                 isExpanded: true,
                 onPressed: _isUploading ? null : _saveVerification,

@@ -56,8 +56,10 @@ class _EquipmentListScreenState extends State<EquipmentListScreen> {
 
           final docs = snapshot.data?.docs ?? [];
           final equipment = docs
-              .map((d) =>
-                  Equipment.fromMap(d.id, d.data() as Map<String, dynamic>))
+              .map(
+                (d) =>
+                    Equipment.fromMap(d.id, d.data() as Map<String, dynamic>),
+              )
               .where((e) => e.isAvailable)
               .toList();
 
@@ -86,8 +88,7 @@ class _EquipmentListScreenState extends State<EquipmentListScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) =>
-                            EquipmentDetailScreen(equipment: item),
+                        builder: (_) => EquipmentDetailScreen(equipment: item),
                       ),
                     );
                   },

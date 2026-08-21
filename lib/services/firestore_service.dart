@@ -16,7 +16,9 @@ class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   /// Sanitize a map for Firestore: valid field names, no nulls, valid types only.
-  static Map<String, dynamic> _sanitizeForFirestore(Map<String, dynamic>? data) {
+  static Map<String, dynamic> _sanitizeForFirestore(
+    Map<String, dynamic>? data,
+  ) {
     if (data == null) return {};
     final out = <String, dynamic>{};
     for (final entry in data.entries) {
@@ -44,17 +46,19 @@ class FirestoreService {
       } else if (v is List) {
         out[key] = v.map((e) {
           if (e == null) return '';
-          if (e is Map) return _sanitizeForFirestore(Map<String, dynamic>.from(e));
+          if (e is Map) {
+            return _sanitizeForFirestore(Map<String, dynamic>.from(e));
+          }
           if (e is DateTime) return Timestamp.fromDate(e);
           if (e is num && (e.isNaN || !e.isFinite)) return 0;
           return e;
         }).toList();
       } else if (v is LatLng) {
-        out[key] = <String, double>{
-          'lat': v.latitude,
-          'lng': v.longitude,
-        };
-      } else if (v is String || v is bool || v is Timestamp || v is FieldValue) {
+        out[key] = <String, double>{'lat': v.latitude, 'lng': v.longitude};
+      } else if (v is String ||
+          v is bool ||
+          v is Timestamp ||
+          v is FieldValue) {
         out[key] = v;
       }
       // skip other types (e.g. custom objects)
@@ -73,16 +77,19 @@ class FirestoreService {
   CollectionReference get _reviews => _db.collection('reviews');
   CollectionReference get _chats => _db.collection('chats');
   CollectionReference get _requests => _db.collection('equipment_requests');
-  CollectionReference get _requestResponses => _db.collection('equipment_request_responses');
+  CollectionReference get _requestResponses =>
+      _db.collection('equipment_request_responses');
   CollectionReference get _payments => _db.collection('payments');
 
   /// Write a small test document to confirm Firestore connectivity.
   Future<void> writeConnectionTest() async {
     try {
-      await _test.add(_sanitizeForFirestore({
-        'message': 'Firebase connected',
-        'timestamp': FieldValue.serverTimestamp(),
-      }));
+      await _test.add(
+        _sanitizeForFirestore({
+          'message': 'Firebase connected',
+          'timestamp': FieldValue.serverTimestamp(),
+        }),
+      );
     } catch (e) {
       // Best-effort connectivity check; avoid crashing the app on failure.
       // ignore: avoid_print
@@ -98,7 +105,8 @@ class FirestoreService {
   Future<DocumentSnapshot> getUser(String uid) => _users.doc(uid).get();
 
   /// Stream a user profile.
-  Stream<DocumentSnapshot> userStream(String uid) => _users.doc(uid).snapshots();
+  Stream<DocumentSnapshot> userStream(String uid) =>
+      _users.doc(uid).snapshots();
 
   /// Update user profile fields.
   Future<void> updateProfile(String uid, Map<String, dynamic> data) {
@@ -131,7 +139,8 @@ class FirestoreService {
         imageUrl: 'assets/images/tractor.webp',
         ownerName: 'Rajesh Kumar',
         ownerId: 'seed',
-        description: 'Powerful 45 HP tractor ideal for ploughing, tilling, and hauling. Well-maintained with AC cabin.',
+        description:
+            'Powerful 45 HP tractor ideal for ploughing, tilling, and hauling. Well-maintained with AC cabin.',
         locationName: 'Angondhalli',
         latitude: 12.9650,
         longitude: 77.6000,
@@ -150,7 +159,8 @@ class FirestoreService {
         imageUrl: 'assets/images/harvester.webp',
         ownerName: 'Sunil Patil',
         ownerId: 'seed',
-        description: 'Compact combine harvester suitable for wheat and rice. High efficiency with low grain loss.',
+        description:
+            'Compact combine harvester suitable for wheat and rice. High efficiency with low grain loss.',
         locationName: 'Ramapur',
         latitude: 12.9800,
         longitude: 77.5850,
@@ -169,7 +179,8 @@ class FirestoreService {
         imageUrl: 'assets/images/pump.webp',
         ownerName: 'Anita Sharma',
         ownerId: 'seed',
-        description: '5 HP diesel pump with 100m pipe set. Perfect for field irrigation during dry spells.',
+        description:
+            '5 HP diesel pump with 100m pipe set. Perfect for field irrigation during dry spells.',
         locationName: 'Kengeri',
         latitude: 12.9550,
         longitude: 77.5700,
@@ -188,7 +199,8 @@ class FirestoreService {
         imageUrl: 'assets/images/rotavator.webp',
         ownerName: 'Vikram Singh',
         ownerId: 'seed',
-        description: 'Heavy-duty rotavator for soil preparation. 48 blades, 6-foot working width.',
+        description:
+            'Heavy-duty rotavator for soil preparation. 48 blades, 6-foot working width.',
         locationName: 'Yelahanka',
         latitude: 12.9900,
         longitude: 77.6100,
@@ -207,7 +219,8 @@ class FirestoreService {
         imageUrl: 'assets/images/seed_drill.webp',
         ownerName: 'Priya Desai',
         ownerId: 'seed',
-        description: 'Precision seed drill with 9-row capacity. Ensures even seed spacing and depth.',
+        description:
+            'Precision seed drill with 9-row capacity. Ensures even seed spacing and depth.',
         locationName: 'Whitefield',
         latitude: 12.9750,
         longitude: 77.6200,
@@ -226,7 +239,8 @@ class FirestoreService {
         imageUrl: 'assets/images/sprayer.webp',
         ownerName: 'Mohan Reddy',
         ownerId: 'seed',
-        description: 'Boom sprayer with 200L tank capacity. Ideal for pesticide and fertilizer application.',
+        description:
+            'Boom sprayer with 200L tank capacity. Ideal for pesticide and fertilizer application.',
         locationName: 'Hebbal',
         latitude: 12.9600,
         longitude: 77.5800,
@@ -255,6 +269,10 @@ class FirestoreService {
         durationHours: 5,
         totalCost: 2500.0,
         status: BookingStatus.upcoming,
+        paymentStatus: 'pending',
+        paymentMethod: 'Cash on Pickup',
+        depositTxnId: 'CASH20260821090000',
+        ownerName: 'Ramesh Patel',
       ),
       Booking(
         id: 'bk_2',
@@ -265,6 +283,10 @@ class FirestoreService {
         durationHours: 8,
         totalCost: 6400.0,
         status: BookingStatus.active,
+        paymentStatus: 'paid',
+        paymentMethod: 'PhonePe UPI',
+        depositTxnId: 'TXN20260821080000',
+        ownerName: 'Suresh Kumar',
       ),
       Booking(
         id: 'bk_3',
@@ -275,8 +297,11 @@ class FirestoreService {
         durationHours: 4,
         totalCost: 800.0,
         status: BookingStatus.completed,
+        paymentStatus: 'fully_paid',
+        paymentMethod: 'Google Pay',
         rating: 5.0,
         reviewText: 'Excellent pump, started in one crank!',
+        ownerName: 'Gurpreet Singh',
       ),
     ];
   }
@@ -417,17 +442,15 @@ class FirestoreService {
     }
   }
 
-  Future<void> completeBooking(
-    String docId,
-    double rating,
-    String reviewText,
-  ) {
+  Future<void> completeBooking(String docId, double rating, String reviewText) {
     try {
       // 1. Ensure document IDs do not contain spaces.
       final safeDocId = docId.replaceAll(' ', '_');
 
       // 2. Ensure rating is stored as a double.
-      final double ratingValue = rating.isNaN || !rating.isFinite ? 0.0 : rating.clamp(0.0, 5.0);
+      final double ratingValue = rating.isNaN || !rating.isFinite
+          ? 0.0
+          : rating.clamp(0.0, 5.0);
       final String safeReviewText = reviewText.isEmpty ? '' : reviewText;
 
       // 3, 4, 5. Replace DateTime.now() with FieldValue.serverTimestamp(), no nulls.
@@ -460,13 +483,17 @@ class FirestoreService {
   }
 
   /// Save Pre-Rental Condition Inspection record to booking.
-  Future<void> savePreConditionVerification(String docId, Map<String, dynamic> conditionData) async {
+  Future<void> savePreConditionVerification(
+    String docId,
+    Map<String, dynamic> conditionData,
+  ) async {
     try {
       final safeDocId = docId.replaceAll(' ', '_');
       final payload = {
         'preCondition': conditionData,
         'isPreVerified': true,
-        'status': 'active', // Automatically move to active after pre-condition verification!
+        'status':
+            'active', // Automatically move to active after pre-condition verification!
         'updatedAt': FieldValue.serverTimestamp(),
       };
       await _bookings.doc(safeDocId).update(_sanitizeForFirestore(payload));
@@ -478,7 +505,10 @@ class FirestoreService {
   }
 
   /// Save Post-Rental Condition Inspection record to booking.
-  Future<void> savePostConditionVerification(String docId, Map<String, dynamic> conditionData) async {
+  Future<void> savePostConditionVerification(
+    String docId,
+    Map<String, dynamic> conditionData,
+  ) async {
     try {
       final safeDocId = docId.replaceAll(' ', '_');
       final payload = {
@@ -543,12 +573,15 @@ class FirestoreService {
       final currentVerified = (data['verifiedReturns'] ?? 0).toInt() + 1;
 
       // Query reviews for user
-      final reviewsSnap = await _reviews.where('revieweeId', isEqualTo: uid).get();
+      final reviewsSnap = await _reviews
+          .where('revieweeId', isEqualTo: uid)
+          .get();
       double avgRating = 4.8;
       if (reviewsSnap.docs.isNotEmpty) {
         double total = 0;
         for (var doc in reviewsSnap.docs) {
-          total += ((doc.data() as Map<String, dynamic>)['rating'] ?? 5.0).toDouble();
+          total += ((doc.data() as Map<String, dynamic>)['rating'] ?? 5.0)
+              .toDouble();
         }
         avgRating = total / reviewsSnap.docs.length;
       }
@@ -559,12 +592,16 @@ class FirestoreService {
         verifiedReturns: currentVerified,
       );
 
-      await _users.doc(uid).update(_sanitizeForFirestore({
-        'completedRentals': currentCompleted,
-        'verifiedReturns': currentVerified,
-        'trustScore': newTrustScore,
-        'updatedAt': FieldValue.serverTimestamp(),
-      }));
+      await _users
+          .doc(uid)
+          .update(
+            _sanitizeForFirestore({
+              'completedRentals': currentCompleted,
+              'verifiedReturns': currentVerified,
+              'trustScore': newTrustScore,
+              'updatedAt': FieldValue.serverTimestamp(),
+            }),
+          );
     } catch (e) {
       // ignore: avoid_print
       print('Firestore recalculateTrustScore error: $e');
@@ -594,6 +631,63 @@ class FirestoreService {
         .snapshots();
   }
 
+  /// Confirm that offline/cash payment was received by the owner.
+  /// Updates booking paymentStatus to 'paid' and payment record to 'paid'.
+  /// Prevents duplicate confirmation.
+  Future<void> confirmCashPayment({
+    required String bookingId,
+    String? depositTxnId,
+  }) async {
+    try {
+      final safeBookingId = bookingId.replaceAll(' ', '_');
+      final bookingDoc = await _bookings.doc(safeBookingId).get();
+
+      if (bookingDoc.exists) {
+        final data = bookingDoc.data() as Map<String, dynamic>? ?? {};
+        final currentStatus = data['paymentStatus'] ?? '';
+        // If already verified or paid, prevent duplicate execution
+        if (currentStatus == 'paid' || currentStatus == 'deposit_paid') {
+          return;
+        }
+
+        await _bookings.doc(safeBookingId).update(_sanitizeForFirestore({
+          'paymentStatus': 'paid',
+          'cashConfirmedAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }));
+      }
+
+      // Update corresponding payment records in payments collection
+      if (depositTxnId != null && depositTxnId.isNotEmpty) {
+        final paySnap = await _payments
+            .where('transactionId', isEqualTo: depositTxnId)
+            .limit(1)
+            .get();
+        for (var doc in paySnap.docs) {
+          await doc.reference.update(_sanitizeForFirestore({
+            'status': 'paid',
+            'confirmedAt': FieldValue.serverTimestamp(),
+          }));
+        }
+      } else if (safeBookingId.isNotEmpty) {
+        final paySnap = await _payments
+            .where('bookingId', isEqualTo: safeBookingId)
+            .limit(1)
+            .get();
+        for (var doc in paySnap.docs) {
+          await doc.reference.update(_sanitizeForFirestore({
+            'status': 'paid',
+            'confirmedAt': FieldValue.serverTimestamp(),
+          }));
+        }
+      }
+    } catch (e) {
+      // ignore: avoid_print
+      print('Firestore confirmCashPayment error: $e');
+      rethrow;
+    }
+  }
+
   /// Fallback demo payment transactions for offline testing.
   List<Payment> getFallbackPayments(String uid) {
     final now = DateTime.now();
@@ -615,6 +709,21 @@ class FirestoreService {
       ),
       Payment(
         id: 'pay_seed_2',
+        transactionId: 'CASH20260820113000',
+        userId: uid,
+        equipmentId: 'seed_2',
+        equipmentName: 'Mini Harvester',
+        equipmentImage: 'assets/images/harvester.webp',
+        amount: 200.0,
+        paymentType: 'rental_deposit',
+        paymentMethod: 'Cash on Pickup',
+        upiId: 'N/A (Cash on Pickup)',
+        status: 'pending',
+        date: now.subtract(const Duration(hours: 1)),
+        bookingId: 'bk_2',
+      ),
+      Payment(
+        id: 'pay_seed_3',
         transactionId: 'TXN2026081514301290',
         userId: uid,
         equipmentId: 'seed_3',
@@ -707,12 +816,14 @@ class FirestoreService {
     final ref = _chats.doc(roomId);
     final snap = await ref.get();
     if (snap.exists) return roomId;
-    await ref.set(_sanitizeForFirestore({
-      'participantIds': [uid1, uid2],
-      'lastMessage': '',
-      'lastMessageAt': FieldValue.serverTimestamp(),
-      'createdAt': FieldValue.serverTimestamp(),
-    }));
+    await ref.set(
+      _sanitizeForFirestore({
+        'participantIds': [uid1, uid2],
+        'lastMessage': '',
+        'lastMessageAt': FieldValue.serverTimestamp(),
+        'createdAt': FieldValue.serverTimestamp(),
+      }),
+    );
     return roomId;
   }
 
@@ -728,10 +839,14 @@ class FirestoreService {
       'createdAt': FieldValue.serverTimestamp(),
     });
     await _chats.doc(roomId).collection('messages').add(sanitized);
-    await _chats.doc(roomId).update(_sanitizeForFirestore({
-      'lastMessage': text.isEmpty ? '' : text,
-      'lastMessageAt': FieldValue.serverTimestamp(),
-    }));
+    await _chats
+        .doc(roomId)
+        .update(
+          _sanitizeForFirestore({
+            'lastMessage': text.isEmpty ? '' : text,
+            'lastMessageAt': FieldValue.serverTimestamp(),
+          }),
+        );
   }
 
   /// Real-time stream of messages in a room.
@@ -760,7 +875,9 @@ class FirestoreService {
       final safeUserId = userId.replaceAll(' ', '_');
 
       // 2. Normalize inputs: ensure rating is a valid double, reviewText is non-null string.
-      double ratingValue = rating.isNaN || !rating.isFinite ? 0.0 : rating.clamp(0.0, 5.0);
+      double ratingValue = rating.isNaN || !rating.isFinite
+          ? 0.0
+          : rating.clamp(0.0, 5.0);
       String reviewTextValue = reviewText.isEmpty ? '' : reviewText;
 
       // 3 & 4. Build review document with valid field names and types only (no nulls). Replace DateTime.now() with FieldValue.serverTimestamp().
@@ -777,7 +894,9 @@ class FirestoreService {
       final reviewData = _sanitizeForFirestore(reviewPayload);
       if (reviewData.isEmpty) {
         // ignore: avoid_print
-        print('submitEquipmentReview: sanitized review data is empty, aborting');
+        print(
+          'submitEquipmentReview: sanitized review data is empty, aborting',
+        );
         return;
       }
 
@@ -792,10 +911,12 @@ class FirestoreService {
         // ignore: avoid_print
         print('--- DEBUG INFO FOR submitEquipmentReview ---');
         // ignore: avoid_print
-        print('Review Doc Setup: equipmentId: $safeEquipmentId, userId: $safeUserId, bookingId: $safeBookingId');
+        print(
+          'Review Doc Setup: equipmentId: $safeEquipmentId, userId: $safeUserId, bookingId: $safeBookingId',
+        );
         // ignore: avoid_print
         print('Review Data to Write: $reviewData');
-        
+
         txn.set(reviewRef, reviewData);
 
         final bookingUpdate = _sanitizeForFirestore(<String, dynamic>{
@@ -804,7 +925,7 @@ class FirestoreService {
           'reviewText': reviewTextValue,
           'updatedAt': FieldValue.serverTimestamp(),
         });
-        
+
         if (bookingUpdate.isNotEmpty) {
           // ignore: avoid_print
           print('Booking Update Request for $safeBookingId: $bookingUpdate');
@@ -813,7 +934,9 @@ class FirestoreService {
 
         // Only update equipment if it still exists
         if (equipmentSnap.exists) {
-          final data = equipmentSnap.data() as Map<String, dynamic>? ?? <String, dynamic>{};
+          final data =
+              equipmentSnap.data() as Map<String, dynamic>? ??
+              <String, dynamic>{};
 
           final currentRating = (data['rating'] ?? 0).toDouble();
           final currentCount = (data['reviewCount'] ?? 0).toInt();
@@ -821,7 +944,9 @@ class FirestoreService {
           final int newCount = (currentCount + 1).toInt();
           final double sumRating = (currentRating * currentCount) + ratingValue;
           final double newRating = newCount > 0 ? sumRating / newCount : 0.0;
-          final double newRatingSafe = newRating.isNaN || !newRating.isFinite ? 0.0 : newRating;
+          final double newRatingSafe = newRating.isNaN || !newRating.isFinite
+              ? 0.0
+              : newRating;
 
           final equipmentUpdate = _sanitizeForFirestore(<String, dynamic>{
             'rating': newRatingSafe.toDouble(),
@@ -829,15 +954,19 @@ class FirestoreService {
             'isAvailable': true,
             'updatedAt': FieldValue.serverTimestamp(),
           });
-          
+
           if (equipmentUpdate.isNotEmpty) {
             // ignore: avoid_print
-            print('Equipment Update Request for $safeEquipmentId: $equipmentUpdate');
+            print(
+              'Equipment Update Request for $safeEquipmentId: $equipmentUpdate',
+            );
             txn.update(equipmentRef, equipmentUpdate);
           }
         } else {
           // ignore: avoid_print
-          print('Warning: equipment $safeEquipmentId not found, skipping equipment update.');
+          print(
+            'Warning: equipment $safeEquipmentId not found, skipping equipment update.',
+          );
         }
         // ignore: avoid_print
         print('--- END DEBUG INFO ---');
@@ -856,7 +985,9 @@ class FirestoreService {
   // ══════════════════════════════════════════════════════════════
 
   /// Post a new equipment request.
-  Future<DocumentReference> createEquipmentRequest(Map<String, dynamic> data) async {
+  Future<DocumentReference> createEquipmentRequest(
+    Map<String, dynamic> data,
+  ) async {
     final sanitized = _sanitizeForFirestore(data);
     try {
       return await _requests.add(sanitized);
@@ -899,7 +1030,9 @@ class FirestoreService {
   }
 
   /// Submit an owner offer/response to a request.
-  Future<DocumentReference> submitRequestResponse(Map<String, dynamic> data) async {
+  Future<DocumentReference> submitRequestResponse(
+    Map<String, dynamic> data,
+  ) async {
     final sanitized = _sanitizeForFirestore(data);
     final ref = await _requestResponses.add(sanitized);
     final requestId = data['requestId'] as String?;
@@ -948,7 +1081,8 @@ class FirestoreService {
         latitude: 12.9650,
         longitude: 77.6000,
         maxBudgetPerHour: 550.0,
-        description: 'Urgently need 45+ HP tractor with rotavator attachment for 5 acres of wheat field plowing.',
+        description:
+            'Urgently need 45+ HP tractor with rotavator attachment for 5 acres of wheat field plowing.',
         status: 'open',
         createdAt: now.subtract(const Duration(hours: 3)),
         responseCount: 2,
@@ -965,7 +1099,8 @@ class FirestoreService {
         latitude: 12.9800,
         longitude: 77.5850,
         maxBudgetPerHour: 850.0,
-        description: 'Need mini combine harvester for harvesting 3 acres of paddy crops before rain expected this weekend.',
+        description:
+            'Need mini combine harvester for harvesting 3 acres of paddy crops before rain expected this weekend.',
         status: 'open',
         createdAt: now.subtract(const Duration(hours: 12)),
         responseCount: 1,
@@ -982,7 +1117,8 @@ class FirestoreService {
         latitude: 12.9550,
         longitude: 77.5700,
         maxBudgetPerHour: 220.0,
-        description: 'Need 5 HP diesel pump with 100m pipe set for emergency watering of tomato crop field.',
+        description:
+            'Need 5 HP diesel pump with 100m pipe set for emergency watering of tomato crop field.',
         status: 'open',
         createdAt: now.subtract(const Duration(days: 1)),
         responseCount: 3,
@@ -1003,7 +1139,8 @@ class FirestoreService {
         equipmentName: 'Mahindra Tractor 575 DI',
         equipmentImage: 'assets/images/tractor.webp',
         offeredPricePerHour: 500.0,
-        message: 'Tractor is fully serviced with rotavator attached. Ready for your wheat field plowing on requested date.',
+        message:
+            'Tractor is fully serviced with rotavator attached. Ready for your wheat field plowing on requested date.',
         status: 'pending',
         createdAt: now.subtract(const Duration(minutes: 45)),
       ),
@@ -1016,7 +1153,8 @@ class FirestoreService {
         equipmentName: 'Rotavator Heavy Duty',
         equipmentImage: 'assets/images/rotavator.webp',
         offeredPricePerHour: 520.0,
-        message: 'Includes experienced driver and fuel. Can start early morning.',
+        message:
+            'Includes experienced driver and fuel. Can start early morning.',
         status: 'pending',
         createdAt: now.subtract(const Duration(hours: 2)),
       ),
@@ -1033,128 +1171,131 @@ class FirestoreService {
       final snapshot = await _equipment.limit(1).get();
       if (snapshot.docs.isNotEmpty) return; // already seeded
 
-    final dummyItems = [
-      {
-        'name': 'Mahindra Tractor 575 DI',
-        'pricePerHour': 500.0,
-        'distance': 2.0,
-        'rating': 4.7,
-        'reviewCount': 24,
-        'imageUrl': 'assets/images/tractor.webp',
-        'ownerName': 'Rajesh Kumar',
-        'ownerId': 'seed',
-        'description':
-            'Powerful 45 HP tractor ideal for ploughing, tilling, and hauling. Well-maintained with AC cabin.',
-        'locationName': 'Angondhalli',
-        'latitude': 12.9650,
-        'longitude': 77.6000,
-        'isAvailable': true,
-        'purchasePrice': 250000.0,
-        'listingType': 'rent',
-        'createdAt': FieldValue.serverTimestamp(),
-      },
-      {
-        'name': 'Mini Harvester',
-        'pricePerHour': 800.0,
-        'distance': 3.0,
-        'rating': 4.5,
-        'reviewCount': 12,
-        'imageUrl': 'assets/images/harvester.webp',
-        'ownerName': 'Sunil Patil',
-        'ownerId': 'seed',
-        'description':
-            'Compact combine harvester suitable for wheat and rice. High efficiency with low grain loss.',
-        'locationName': 'Ramapur',
-        'latitude': 12.9800,
-        'longitude': 77.5850,
-        'isAvailable': true,
-        'purchasePrice': 350000.0,
-        'listingType': 'sell',
-        'createdAt': FieldValue.serverTimestamp(),
-      },
-      {
-        'name': 'Irrigation Pump Set',
-        'pricePerHour': 200.0,
-        'distance': 1.5,
-        'rating': 4.2,
-        'reviewCount': 8,
-        'imageUrl': 'assets/images/pump.webp',
-        'ownerName': 'Anita Sharma',
-        'ownerId': 'seed',
-        'description':
-            '5 HP diesel pump with 100m pipe set. Perfect for field irrigation during dry spells.',
-        'locationName': 'Kengeri',
-        'latitude': 12.9550,
-        'longitude': 77.5700,
-        'isAvailable': true,
-        'purchasePrice': 45000.0,
-        'listingType': 'rent',
-        'createdAt': FieldValue.serverTimestamp(),
-      },
-      {
-        'name': 'Rotavator',
-        'pricePerHour': 600.0,
-        'distance': 4.0,
-        'rating': 4.8,
-        'reviewCount': 36,
-        'imageUrl': 'assets/images/rotavator.webp',
-        'ownerName': 'Vikram Singh',
-        'ownerId': 'seed',
-        'description':
-            'Heavy-duty rotavator for soil preparation. 48 blades, 6-foot working width.',
-        'locationName': 'Yelahanka',
-        'latitude': 12.9900,
-        'longitude': 77.6100,
-        'isAvailable': true,
-        'purchasePrice': 180000.0,
-        'listingType': 'sell',
-        'createdAt': FieldValue.serverTimestamp(),
-      },
-      {
-        'name': 'Seed Drill Machine',
-        'pricePerHour': 350.0,
-        'distance': 2.5,
-        'rating': 4.4,
-        'reviewCount': 15,
-        'imageUrl': 'assets/images/seed_drill.webp',
-        'ownerName': 'Priya Desai',
-        'ownerId': 'seed',
-        'description':
-            'Precision seed drill with 9-row capacity. Ensures even seed spacing and depth.',
-        'locationName': 'Whitefield',
-        'latitude': 12.9750,
-        'longitude': 77.6200,
-        'isAvailable': true,
-        'purchasePrice': 120000.0,
-        'listingType': 'rent',
-        'createdAt': FieldValue.serverTimestamp(),
-      },
-      {
-        'name': 'Crop Sprayer',
-        'pricePerHour': 250.0,
-        'distance': 1.8,
-        'rating': 4.3,
-        'reviewCount': 19,
-        'imageUrl': 'assets/images/sprayer.webp',
-        'ownerName': 'Mohan Reddy',
-        'ownerId': 'seed',
-        'description':
-            'Boom sprayer with 200L tank capacity. Ideal for pesticide and fertilizer application.',
-        'locationName': 'Hebbal',
-        'latitude': 12.9600,
-        'longitude': 77.5800,
-        'isAvailable': true,
-        'purchasePrice': 75000.0,
-        'listingType': 'sell',
-        'createdAt': FieldValue.serverTimestamp(),
-      },
-    ];
+      final dummyItems = [
+        {
+          'name': 'Mahindra Tractor 575 DI',
+          'pricePerHour': 500.0,
+          'distance': 2.0,
+          'rating': 4.7,
+          'reviewCount': 24,
+          'imageUrl': 'assets/images/tractor.webp',
+          'ownerName': 'Rajesh Kumar',
+          'ownerId': 'seed',
+          'description':
+              'Powerful 45 HP tractor ideal for ploughing, tilling, and hauling. Well-maintained with AC cabin.',
+          'locationName': 'Angondhalli',
+          'latitude': 12.9650,
+          'longitude': 77.6000,
+          'isAvailable': true,
+          'purchasePrice': 250000.0,
+          'listingType': 'rent',
+          'createdAt': FieldValue.serverTimestamp(),
+        },
+        {
+          'name': 'Mini Harvester',
+          'pricePerHour': 800.0,
+          'distance': 3.0,
+          'rating': 4.5,
+          'reviewCount': 12,
+          'imageUrl': 'assets/images/harvester.webp',
+          'ownerName': 'Sunil Patil',
+          'ownerId': 'seed',
+          'description':
+              'Compact combine harvester suitable for wheat and rice. High efficiency with low grain loss.',
+          'locationName': 'Ramapur',
+          'latitude': 12.9800,
+          'longitude': 77.5850,
+          'isAvailable': true,
+          'purchasePrice': 350000.0,
+          'listingType': 'sell',
+          'createdAt': FieldValue.serverTimestamp(),
+        },
+        {
+          'name': 'Irrigation Pump Set',
+          'pricePerHour': 200.0,
+          'distance': 1.5,
+          'rating': 4.2,
+          'reviewCount': 8,
+          'imageUrl': 'assets/images/pump.webp',
+          'ownerName': 'Anita Sharma',
+          'ownerId': 'seed',
+          'description':
+              '5 HP diesel pump with 100m pipe set. Perfect for field irrigation during dry spells.',
+          'locationName': 'Kengeri',
+          'latitude': 12.9550,
+          'longitude': 77.5700,
+          'isAvailable': true,
+          'purchasePrice': 45000.0,
+          'listingType': 'rent',
+          'createdAt': FieldValue.serverTimestamp(),
+        },
+        {
+          'name': 'Rotavator',
+          'pricePerHour': 600.0,
+          'distance': 4.0,
+          'rating': 4.8,
+          'reviewCount': 36,
+          'imageUrl': 'assets/images/rotavator.webp',
+          'ownerName': 'Vikram Singh',
+          'ownerId': 'seed',
+          'description':
+              'Heavy-duty rotavator for soil preparation. 48 blades, 6-foot working width.',
+          'locationName': 'Yelahanka',
+          'latitude': 12.9900,
+          'longitude': 77.6100,
+          'isAvailable': true,
+          'purchasePrice': 180000.0,
+          'listingType': 'sell',
+          'createdAt': FieldValue.serverTimestamp(),
+        },
+        {
+          'name': 'Seed Drill Machine',
+          'pricePerHour': 350.0,
+          'distance': 2.5,
+          'rating': 4.4,
+          'reviewCount': 15,
+          'imageUrl': 'assets/images/seed_drill.webp',
+          'ownerName': 'Priya Desai',
+          'ownerId': 'seed',
+          'description':
+              'Precision seed drill with 9-row capacity. Ensures even seed spacing and depth.',
+          'locationName': 'Whitefield',
+          'latitude': 12.9750,
+          'longitude': 77.6200,
+          'isAvailable': true,
+          'purchasePrice': 120000.0,
+          'listingType': 'rent',
+          'createdAt': FieldValue.serverTimestamp(),
+        },
+        {
+          'name': 'Crop Sprayer',
+          'pricePerHour': 250.0,
+          'distance': 1.8,
+          'rating': 4.3,
+          'reviewCount': 19,
+          'imageUrl': 'assets/images/sprayer.webp',
+          'ownerName': 'Mohan Reddy',
+          'ownerId': 'seed',
+          'description':
+              'Boom sprayer with 200L tank capacity. Ideal for pesticide and fertilizer application.',
+          'locationName': 'Hebbal',
+          'latitude': 12.9600,
+          'longitude': 77.5800,
+          'isAvailable': true,
+          'purchasePrice': 75000.0,
+          'listingType': 'sell',
+          'createdAt': FieldValue.serverTimestamp(),
+        },
+      ];
 
-    final batch = _db.batch();
-    for (final item in dummyItems) {
-      batch.set(_equipment.doc(), _sanitizeForFirestore(Map<String, dynamic>.from(item)));
-    }
-    await batch.commit();
+      final batch = _db.batch();
+      for (final item in dummyItems) {
+        batch.set(
+          _equipment.doc(),
+          _sanitizeForFirestore(Map<String, dynamic>.from(item)),
+        );
+      }
+      await batch.commit();
     } catch (e) {
       // ignore: avoid_print
       print('Firestore seedDummyEquipment error: $e');

@@ -31,7 +31,10 @@ class EquipmentRequestResponse {
   bool get isPending => status == 'pending';
   bool get isAccepted => status == 'accepted';
 
-  factory EquipmentRequestResponse.fromMap(String id, Map<String, dynamic> data) {
+  factory EquipmentRequestResponse.fromMap(
+    String id,
+    Map<String, dynamic> data,
+  ) {
     return EquipmentRequestResponse(
       id: id,
       requestId: data['requestId'] ?? '',

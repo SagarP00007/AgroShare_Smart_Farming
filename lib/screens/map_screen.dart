@@ -54,11 +54,8 @@ class MapScreen extends StatelessWidget {
             ...List.generate(dummyEquipment.length, (i) {
               final pos = _markerPositions[i];
               return Positioned(
-                left: pos.dx *
-                    (MediaQuery.of(context).size.width - 130),
-                top: 140 +
-                    pos.dy *
-                        (MediaQuery.of(context).size.height - 300),
+                left: pos.dx * (MediaQuery.of(context).size.width - 130),
+                top: 140 + pos.dy * (MediaQuery.of(context).size.height - 300),
                 child: _EquipmentMarker(
                   equipment: dummyEquipment[i],
                   icon: _markerIcons[i],
@@ -66,9 +63,8 @@ class MapScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => EquipmentDetailScreen(
-                          equipment: dummyEquipment[i],
-                        ),
+                        builder: (_) =>
+                            EquipmentDetailScreen(equipment: dummyEquipment[i]),
                       ),
                     );
                   },
@@ -175,9 +171,7 @@ class _MapBackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFFE8F0E4),
-      ),
+      decoration: const BoxDecoration(color: Color(0xFFE8F0E4)),
       child: CustomPaint(
         painter: _MapPatternPainter(),
         child: const SizedBox.expand(),
@@ -229,7 +223,10 @@ class _MapPatternPainter extends CustomPainter {
       (Rect.fromLTWH(20, 60, 100, 80), const Color(0xFFD5E8C8)),
       (Rect.fromLTWH(size.width * 0.5, 100, 120, 70), const Color(0xFFCDE4BE)),
       (Rect.fromLTWH(40, size.height * 0.55, 90, 60), const Color(0xFFDBEDD0)),
-      (Rect.fromLTWH(size.width * 0.6, size.height * 0.6, 110, 90), const Color(0xFFD0E6C0)),
+      (
+        Rect.fromLTWH(size.width * 0.6, size.height * 0.6, 110, 90),
+        const Color(0xFFD0E6C0),
+      ),
     ];
     for (final (rect, color) in patches) {
       patchPaint.color = color;
@@ -283,11 +280,7 @@ class _EquipmentMarker extends StatelessWidget {
                     color: AppColors.secondaryGreen.withAlpha(35),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(
-                    icon,
-                    size: 18,
-                    color: AppColors.primaryGreen,
-                  ),
+                  child: Icon(icon, size: 18, color: AppColors.primaryGreen),
                 ),
                 const SizedBox(width: 6),
                 Column(
@@ -315,10 +308,7 @@ class _EquipmentMarker extends StatelessWidget {
             ),
           ),
           // Pin
-          CustomPaint(
-            size: const Size(14, 8),
-            painter: _PinPainter(),
-          ),
+          CustomPaint(size: const Size(14, 8), painter: _PinPainter()),
           // Dot
           Container(
             width: 8,

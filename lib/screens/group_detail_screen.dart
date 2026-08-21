@@ -13,11 +13,7 @@ import 'chat_screen.dart';
 /// Displays full details for an equipment group including members and status.
 /// Contact is via in-app chat only; no phone/email shared.
 class GroupDetailScreen extends StatefulWidget {
-  const GroupDetailScreen({
-    super.key,
-    required this.groupName,
-    this.groupId,
-  });
+  const GroupDetailScreen({super.key, required this.groupName, this.groupId});
 
   final String groupName;
   final String? groupId;
@@ -166,9 +162,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
           decoration: BoxDecoration(
             color: AppColors.primaryGreen.withAlpha(15),
             borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            border: Border.all(
-              color: AppColors.primaryGreen.withAlpha(40),
-            ),
+            border: Border.all(color: AppColors.primaryGreen.withAlpha(40)),
           ),
           child: Row(
             children: [
@@ -201,10 +195,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionTitle(
-          title: 'Escrow Payment',
-          padding: EdgeInsets.zero,
-        ),
+        const SectionTitle(title: 'Escrow Payment', padding: EdgeInsets.zero),
         const SizedBox(height: AppSpacing.md),
         AgCard(
           margin: EdgeInsets.zero,
@@ -259,8 +250,9 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                       ),
                       decoration: BoxDecoration(
                         color: AppColors.primaryGreen,
-                        borderRadius:
-                            BorderRadius.circular(AppSpacing.radiusSm),
+                        borderRadius: BorderRadius.circular(
+                          AppSpacing.radiusSm,
+                        ),
                       ),
                       child: Text(
                         'PURCHASE READY',
@@ -380,9 +372,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
       context: context,
       backgroundColor: AppColors.cardBackground,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(20),
-        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) {
         return SafeArea(
@@ -430,10 +420,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                   Padding(
                     padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                     child: ListTile(
-                      leading: Icon(
-                        icons[i],
-                        color: Colors.redAccent,
-                      ),
+                      leading: Icon(icons[i], color: Colors.redAccent),
                       title: Text(
                         reasons[i],
                         style: GoogleFonts.poppins(
@@ -572,8 +559,9 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: 17,
                     fontWeight: FontWeight.w600,
-                    color:
-                        _isFull ? AppColors.primaryGreen : Colors.orange[800],
+                    color: _isFull
+                        ? AppColors.primaryGreen
+                        : Colors.orange[800],
                   ),
                 ),
               ],
@@ -609,17 +597,11 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
   Widget _buildMemberList() {
     final members = _memberIds.isEmpty
         ? ['Member 1', 'Member 2']
-        : List.generate(
-            _memberIds.length,
-            (i) => 'Member ${i + 1}',
-          );
+        : List.generate(_memberIds.length, (i) => 'Member ${i + 1}');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionTitle(
-          title: 'Members',
-          padding: EdgeInsets.zero,
-        ),
+        const SectionTitle(title: 'Members', padding: EdgeInsets.zero),
         const SizedBox(height: AppSpacing.md),
         AgCard(
           margin: EdgeInsets.zero,
@@ -682,10 +664,7 @@ class _InfoRow extends StatelessWidget {
         const SizedBox(width: AppSpacing.sm),
         Text(
           label,
-          style: GoogleFonts.poppins(
-            fontSize: 13,
-            color: AppColors.textMuted,
-          ),
+          style: GoogleFonts.poppins(fontSize: 13, color: AppColors.textMuted),
         ),
         const Spacer(),
         Text(
@@ -774,8 +753,10 @@ class _MemberTile extends StatelessWidget {
                     if (onMessage != null && memberId != null)
                       TextButton.icon(
                         onPressed: onMessage,
-                        icon: const Icon(Icons.chat_bubble_outline_rounded,
-                            size: 16),
+                        icon: const Icon(
+                          Icons.chat_bubble_outline_rounded,
+                          size: 16,
+                        ),
                         label: Text(
                           'Message',
                           style: GoogleFonts.poppins(

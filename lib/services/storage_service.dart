@@ -25,12 +25,20 @@ class StorageService {
   /// `profile_images` folder and returns the secure download URL.
   Future<String> uploadProfileImage(File file, String userId) async {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
-    return _upload(file, folder: 'profile_images', publicId: '${userId}_$timestamp');
+    return _upload(
+      file,
+      folder: 'profile_images',
+      publicId: '${userId}_$timestamp',
+    );
   }
 
   /// Uploads pre/post rental equipment condition inspection photo to Cloudinary
   /// under the `condition_images` folder and returns secure download URL.
-  Future<String> uploadConditionImage(File file, String bookingId, String stage) async {
+  Future<String> uploadConditionImage(
+    File file,
+    String bookingId,
+    String stage,
+  ) async {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final safeBookingId = bookingId.replaceAll(' ', '_');
     return _upload(
@@ -60,8 +68,10 @@ class StorageService {
     final response = await http.Response.fromStream(streamed);
 
     if (response.statusCode != 200) {
-      throw Exception('Cloudinary upload failed (${response.statusCode}): '
-          '${response.body}');
+      throw Exception(
+        'Cloudinary upload failed (${response.statusCode}): '
+        '${response.body}',
+      );
     }
 
     final data = json.decode(response.body) as Map<String, dynamic>;

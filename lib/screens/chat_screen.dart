@@ -97,9 +97,9 @@ class _ChatScreenState extends State<ChatScreen> {
       _scrollToBottom();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to send message: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to send message: $e')));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -119,9 +119,9 @@ class _ChatScreenState extends State<ChatScreen> {
       _scrollToBottom();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to send image: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to send image: $e')));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -199,9 +199,7 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       body: _actualChatId == null
           ? const Center(
-              child: CircularProgressIndicator(
-                color: AppColors.primaryGreen,
-              ),
+              child: CircularProgressIndicator(color: AppColors.primaryGreen),
             )
           : Column(
               children: [
@@ -252,8 +250,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
                       if (snapshot.hasError) {
                         return Center(
-                          child:
-                              Text('Error loading messages: ${snapshot.error}'),
+                          child: Text(
+                            'Error loading messages: ${snapshot.error}',
+                          ),
                         );
                       }
 
@@ -262,10 +261,12 @@ class _ChatScreenState extends State<ChatScreen> {
 
                       if (rawMessages.isNotEmpty && !snapshot.hasError) {
                         for (final doc in rawMessages) {
-                          messageObjects.add(ChatMessage.fromMap(
-                            doc.id,
-                            doc.data() as Map<String, dynamic>,
-                          ));
+                          messageObjects.add(
+                            ChatMessage.fromMap(
+                              doc.id,
+                              doc.data() as Map<String, dynamic>,
+                            ),
+                          );
                         }
                       } else {
                         // Dummy conversation fallback
@@ -278,8 +279,11 @@ class _ChatScreenState extends State<ChatScreen> {
                             senderName: widget.ownerName,
                             senderAvatar: '',
                             receiverId: currentUid,
-                            message: 'Great! Machine is ready and fueled. See you tomorrow!',
-                            timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
+                            message:
+                                'Great! Machine is ready and fueled. See you tomorrow!',
+                            timestamp: DateTime.now().subtract(
+                              const Duration(minutes: 5),
+                            ),
                             type: MessageType.text,
                             isRead: true,
                           ),
@@ -290,8 +294,11 @@ class _ChatScreenState extends State<ChatScreen> {
                             senderName: 'You',
                             senderAvatar: '',
                             receiverId: widget.ownerId,
-                            message: 'Sounds good! I need it for 5 hours starting at 8:00 AM.',
-                            timestamp: DateTime.now().subtract(const Duration(minutes: 15)),
+                            message:
+                                'Sounds good! I need it for 5 hours starting at 8:00 AM.',
+                            timestamp: DateTime.now().subtract(
+                              const Duration(minutes: 15),
+                            ),
                             type: MessageType.text,
                             isRead: true,
                           ),
@@ -302,8 +309,11 @@ class _ChatScreenState extends State<ChatScreen> {
                             senderName: widget.ownerName,
                             senderAvatar: '',
                             receiverId: currentUid,
-                            message: 'Hello! Yes, the ${widget.equipmentName} is available for rent.',
-                            timestamp: DateTime.now().subtract(const Duration(hours: 1)),
+                            message:
+                                'Hello! Yes, the ${widget.equipmentName} is available for rent.',
+                            timestamp: DateTime.now().subtract(
+                              const Duration(hours: 1),
+                            ),
                             type: MessageType.text,
                             isRead: true,
                           ),
@@ -368,8 +378,9 @@ class _ChatScreenState extends State<ChatScreen> {
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(24),
-                              borderSide:
-                                  BorderSide(color: AppColors.primaryGreen),
+                              borderSide: BorderSide(
+                                color: AppColors.primaryGreen,
+                              ),
                             ),
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 16,
@@ -409,8 +420,9 @@ class _ChatScreenState extends State<ChatScreen> {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
-        mainAxisAlignment:
-            isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: isMe
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         children: [
           if (!isMe) ...[
             CircleAvatar(

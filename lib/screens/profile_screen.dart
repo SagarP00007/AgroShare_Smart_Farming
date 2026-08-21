@@ -133,12 +133,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  Widget _buildProfileHeader(
-    BuildContext context,
-    Farmer farmer,
-    String uid,
-  ) {
-    final hasProfileImage = farmer.profileImage.isNotEmpty &&
+  Widget _buildProfileHeader(BuildContext context, Farmer farmer, String uid) {
+    final hasProfileImage =
+        farmer.profileImage.isNotEmpty &&
         farmer.profileImage.startsWith('http');
 
     return AgCard(
@@ -243,11 +240,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         color: AppColors.textMuted,
                       ),
                       const SizedBox(width: AppSpacing.xs),
-                      Text(
-                        farmer.location,
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: AppColors.textMuted,
+                      Expanded(
+                        child: Text(
+                          farmer.location,
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: AppColors.textMuted,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -420,12 +421,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _activityCard(
-    IconData icon,
-    String value,
-    String label,
-    Color color,
-  ) {
+  Widget _activityCard(IconData icon, String value, String label, Color color) {
     return AgCard(
       margin: EdgeInsets.zero,
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -506,7 +502,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     name: data['name'] ?? 'Equipment',
                     pricePerHour: '₹${data['pricePerHour'] ?? 0}/hr',
                     isAvailable: data['isAvailable'] ?? true,
-                    onEdit: () => _showSnackbar(context, 'Edit functionality coming soon.'),
+                    onEdit: () => _showSnackbar(
+                      context,
+                      'Edit functionality coming soon.',
+                    ),
                     onRemove: () async {
                       await FirestoreService.instance.deleteEquipment(doc.id);
                       if (context.mounted) {
@@ -525,11 +524,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // ── Section 5: Settings ──
 
-  Widget _buildSettings(
-    BuildContext context,
-    Farmer farmer,
-    String uid,
-  ) {
+  Widget _buildSettings(BuildContext context, Farmer farmer, String uid) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -546,7 +541,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const PaymentHistoryScreen()),
+                    MaterialPageRoute(
+                      builder: (_) => const PaymentHistoryScreen(),
+                    ),
                   );
                 },
               ),
@@ -563,11 +560,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _showEditProfileDialog(
-    BuildContext context,
-    Farmer farmer,
-    String uid,
-  ) {
+  void _showEditProfileDialog(BuildContext context, Farmer farmer, String uid) {
     final nameCtrl = TextEditingController(text: farmer.name);
     final locationCtrl = TextEditingController(text: farmer.location);
     final phoneCtrl = TextEditingController(text: farmer.phone);
@@ -639,7 +632,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ── Section 6: Language Preferences ──
 
   Widget _buildLanguagePreferences() {
-    final currentCode = LocaleProviderInherited.of(context)?.locale.languageCode ?? 'en';
+    final currentCode =
+        LocaleProviderInherited.of(context)?.locale.languageCode ?? 'en';
     final localeCodes = _localeToNames.keys.toList();
 
     return Column(
@@ -678,7 +672,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 if (i > 0) const Divider(height: 1, color: AppColors.divider),
                 ListTile(
                   title: Text(
-                    _localeToNames[localeCodes[i]] ?? localeCodes[i].toUpperCase(),
+                    _localeToNames[localeCodes[i]] ??
+                        localeCodes[i].toUpperCase(),
                     style: GoogleFonts.poppins(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
@@ -695,8 +690,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     size: 20,
                   ),
                   onTap: () async {
-                    await LocaleProviderInherited.of(context)
-                        ?.setLocale(Locale(localeCodes[i]));
+                    await LocaleProviderInherited.of(
+                      context,
+                    )?.setLocale(Locale(localeCodes[i]));
                     if (mounted) setState(() {});
                   },
                   dense: true,
@@ -830,7 +826,9 @@ class _EquipmentListingCard extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.primaryGreen,
                     side: const BorderSide(color: AppColors.primaryGreen),
-                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.sm,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: AppSpacing.buttonRadius,
                     ),
@@ -850,7 +848,9 @@ class _EquipmentListingCard extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.redAccent,
                     side: const BorderSide(color: Colors.redAccent),
-                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.sm,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: AppSpacing.buttonRadius,
                     ),

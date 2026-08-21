@@ -42,7 +42,10 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
         builder: (context, snapshot) {
           final docs = snapshot.data?.docs ?? [];
           var payments = docs
-              .map((doc) => Payment.fromMap(doc.id, doc.data() as Map<String, dynamic>))
+              .map(
+                (doc) =>
+                    Payment.fromMap(doc.id, doc.data() as Map<String, dynamic>),
+              )
               .toList();
 
           if (payments.isEmpty || snapshot.hasError) {
@@ -125,10 +128,21 @@ class _PaymentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
-    final dateStr = '${payment.date.day} ${months[payment.date.month - 1]} ${payment.date.year}, ${payment.date.hour.toString().padLeft(2, '0')}:${payment.date.minute.toString().padLeft(2, '0')}';
+    final dateStr =
+        '${payment.date.day} ${months[payment.date.month - 1]} ${payment.date.year}, ${payment.date.hour.toString().padLeft(2, '0')}:${payment.date.minute.toString().padLeft(2, '0')}';
 
     return AgCard(
       margin: const EdgeInsets.only(bottom: AppSpacing.md),
@@ -167,12 +181,18 @@ class _PaymentCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    Text(
-                      payment.formattedType,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: AppColors.textMuted,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          payment.formattedType,
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        _buildStatusBadge(payment),
+                      ],
                     ),
                   ],
                 ),
@@ -199,17 +219,38 @@ class _PaymentCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.payment_rounded, size: 14, color: AppColors.textMuted),
+                  Icon(
+                    payment.paymentMethod.toLowerCase().contains('cash')
+                        ? Icons.payments_outlined
+                        : Icons.payment_rounded,
+                    size: 14,
+                    color: payment.paymentMethod.toLowerCase().contains('cash')
+                        ? Colors.amber.shade900
+                        : AppColors.textMuted,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     payment.paymentMethod,
-                    style: GoogleFonts.poppins(fontSize: 12, color: AppColors.textMuted),
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      fontWeight:
+                          payment.paymentMethod.toLowerCase().contains('cash')
+                              ? FontWeight.w600
+                              : FontWeight.w400,
+                      color:
+                          payment.paymentMethod.toLowerCase().contains('cash')
+                              ? Colors.amber.shade900
+                              : AppColors.textMuted,
+                    ),
                   ),
                 ],
               ),
               Text(
                 dateStr,
-                style: GoogleFonts.poppins(fontSize: 11, color: AppColors.textMuted),
+                style: GoogleFonts.poppins(
+                  fontSize: 11,
+                  color: AppColors.textMuted,
+                ),
               ),
             ],
           ),
@@ -236,7 +277,10 @@ class _PaymentCard extends StatelessWidget {
                   Clipboard.setData(ClipboardData(text: payment.transactionId));
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Transaction ID copied!', style: GoogleFonts.poppins()),
+                      content: Text(
+                        'Transaction ID copied!',
+                        style: GoogleFonts.poppins(),
+                      ),
                       backgroundColor: AppColors.primaryGreen,
                       duration: const Duration(seconds: 2),
                     ),
@@ -244,12 +288,57 @@ class _PaymentCard extends StatelessWidget {
                 },
                 child: const Padding(
                   padding: EdgeInsets.all(4),
-                  child: Icon(Icons.copy_rounded, size: 14, color: AppColors.primaryGreen),
+                  child: Icon(
+                    Icons.copy_rounded,
+                    size: 14,
+                    color: AppColors.primaryGreen,
+                  ),
                 ),
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(Payment payment) {
+    final isPending = payment.status == 'pending' ||
+        (payment.paymentMethod.toLowerCase().contains('cash') &&
+            payment.status != 'paid' &&
+            payment.status != 'successful');
+
+    final color = isPending
+        ? Colors.amber.shade900
+        : (payment.status == 'failed'
+            ? Colors.redAccent
+            : Colors.green.shade700);
+
+    final bg = isPending
+        ? Colors.amber.withAlpha(25)
+        : (payment.status == 'failed'
+            ? Colors.redAccent.withAlpha(20)
+            : Colors.green.withAlpha(20));
+
+    final label = isPending
+        ? 'PAY AT PICKUP'
+        : (payment.status == 'failed' ? 'FAILED' : 'PAID');
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: color.withAlpha(40)),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.poppins(
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
+          color: color,
+          letterSpacing: 0.2,
+        ),
       ),
     );
   }

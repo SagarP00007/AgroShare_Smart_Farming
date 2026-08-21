@@ -42,8 +42,8 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Fetches real-time GPS for the home banner (no cache).
   Future<void> _determinePosition() async {
     LocationService.instance.invalidateCache();
-    final location =
-        await LocationService.instance.getCurrentLocationRealtime();
+    final location = await LocationService.instance
+        .getCurrentLocationRealtime();
     final address = await LocationService.instance.getAddressFromCoordinates(
       location.latitude,
       location.longitude,
@@ -304,21 +304,30 @@ class _QuickActionsSection extends StatelessWidget {
 
   static const _actions = [
     _QuickAction(
-        icon: Icons.search_rounded, labelKey: 'find_equipment', emoji: '🔍'),
+      icon: Icons.search_rounded,
+      labelKey: 'find_equipment',
+      emoji: '🔍',
+    ),
     _QuickAction(
-        icon: Icons.calendar_month_rounded,
-        labelKey: 'my_bookings',
-        emoji: '📅'),
+      icon: Icons.calendar_month_rounded,
+      labelKey: 'my_bookings',
+      emoji: '📅',
+    ),
     _QuickAction(
-        icon: Icons.people_rounded, labelKey: 'community', emoji: '🤝'),
+      icon: Icons.people_rounded,
+      labelKey: 'community',
+      emoji: '🤝',
+    ),
     _QuickAction(
-        icon: Icons.mark_unread_chat_alt_rounded,
-        labelKey: 'equipment_requests',
-        emoji: '📩'),
+      icon: Icons.mark_unread_chat_alt_rounded,
+      labelKey: 'equipment_requests',
+      emoji: '📩',
+    ),
     _QuickAction(
-        icon: Icons.add_circle_outline_rounded,
-        labelKey: 'list_equipment',
-        emoji: '➕'),
+      icon: Icons.add_circle_outline_rounded,
+      labelKey: 'list_equipment',
+      emoji: '➕',
+    ),
   ];
 
   @override
@@ -365,23 +374,17 @@ class _QuickActionsSection extends StatelessWidget {
         } else if (action.labelKey == 'community') {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (_) => const CommunityScreen(),
-            ),
+            MaterialPageRoute(builder: (_) => const CommunityScreen()),
           );
         } else if (action.labelKey == 'equipment_requests') {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (_) => const EquipmentRequestScreen(),
-            ),
+            MaterialPageRoute(builder: (_) => const EquipmentRequestScreen()),
           );
         } else if (action.labelKey == 'list_equipment') {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (_) => const ListEquipmentScreen(),
-            ),
+            MaterialPageRoute(builder: (_) => const ListEquipmentScreen()),
           );
         }
       },
@@ -481,10 +484,12 @@ class _FeaturedEquipmentSection extends StatelessWidget {
               }
               final docs = snapshot.data?.docs ?? [];
               final equipment = docs
-                  .map((d) => Equipment.fromMap(
-                        d.id,
-                        d.data() as Map<String, dynamic>,
-                      ))
+                  .map(
+                    (d) => Equipment.fromMap(
+                      d.id,
+                      d.data() as Map<String, dynamic>,
+                    ),
+                  )
                   .where((e) => e.isAvailable)
                   .take(_maxItems)
                   .toList();
@@ -524,10 +529,7 @@ class _FeaturedEquipmentSection extends StatelessWidget {
 }
 
 class _FeaturedEquipmentChip extends StatelessWidget {
-  const _FeaturedEquipmentChip({
-    required this.equipment,
-    required this.onTap,
-  });
+  const _FeaturedEquipmentChip({required this.equipment, required this.onTap});
 
   final Equipment equipment;
   final VoidCallback onTap;
@@ -618,12 +620,12 @@ class _SeasonalSmartSection extends StatelessWidget {
           {
             'name': 'Mini Harvester',
             'emoji': '🌾',
-            'desc': 'Best suited for rice harvesting during peak season.'
+            'desc': 'Best suited for rice harvesting during peak season.',
           },
           {
             'name': 'Paddy Thresher',
             'emoji': '🚜',
-            'desc': 'Efficient threshing of paddy crops after harvest.'
+            'desc': 'Efficient threshing of paddy crops after harvest.',
           },
         ];
       case 'planting':
@@ -631,12 +633,12 @@ class _SeasonalSmartSection extends StatelessWidget {
           {
             'name': 'Seed Drill',
             'emoji': '🌱',
-            'desc': 'Ensures uniform depth and spacing for planting seeds.'
+            'desc': 'Ensures uniform depth and spacing for planting seeds.',
           },
           {
             'name': 'Rotavator',
             'emoji': '🚜',
-            'desc': 'Perfect for secondary tillage and seedbed preparation.'
+            'desc': 'Perfect for secondary tillage and seedbed preparation.',
           },
         ];
       default:
@@ -644,12 +646,12 @@ class _SeasonalSmartSection extends StatelessWidget {
           {
             'name': 'Plough',
             'emoji': '🚜',
-            'desc': 'Essential for primary tillage and soil preparation.'
+            'desc': 'Essential for primary tillage and soil preparation.',
           },
           {
             'name': 'Land Leveler',
             'emoji': '📐',
-            'desc': 'Creates even field surface for better water management.'
+            'desc': 'Creates even field surface for better water management.',
           },
         ];
     }
@@ -743,8 +745,8 @@ class _SeasonalSmartSection extends StatelessWidget {
             final item = entry.value;
             return Padding(
               padding: EdgeInsets.only(
-                  bottom:
-                      index < recommendations.length - 1 ? AppSpacing.md : 0),
+                bottom: index < recommendations.length - 1 ? AppSpacing.md : 0,
+              ),
               child: AgCard(
                 padding: const EdgeInsets.all(AppSpacing.lg),
                 child: Row(
@@ -754,8 +756,9 @@ class _SeasonalSmartSection extends StatelessWidget {
                       height: 48,
                       decoration: BoxDecoration(
                         color: AppColors.primaryGreen.withAlpha(15),
-                        borderRadius:
-                            BorderRadius.circular(AppSpacing.radiusSm),
+                        borderRadius: BorderRadius.circular(
+                          AppSpacing.radiusSm,
+                        ),
                       ),
                       child: Text(
                         item['emoji']!,
@@ -892,12 +895,12 @@ class _SeasonalRecommendationsSection extends StatelessWidget {
           {
             'name': 'Mini Harvester',
             'emoji': '🌾',
-            'desc': 'Best suited for rice harvesting during peak season.'
+            'desc': 'Best suited for rice harvesting during peak season.',
           },
           {
             'name': 'Paddy Thresher',
             'emoji': '🚜',
-            'desc': 'Efficient threshing of paddy crops after harvest.'
+            'desc': 'Efficient threshing of paddy crops after harvest.',
           },
         ];
       case 'planting':
@@ -905,12 +908,12 @@ class _SeasonalRecommendationsSection extends StatelessWidget {
           {
             'name': 'Seed Drill',
             'emoji': '🌱',
-            'desc': 'Ensures uniform depth and spacing for planting seeds.'
+            'desc': 'Ensures uniform depth and spacing for planting seeds.',
           },
           {
             'name': 'Rotavator',
             'emoji': '🚜',
-            'desc': 'Perfect for secondary tillage and seedbed preparation.'
+            'desc': 'Perfect for secondary tillage and seedbed preparation.',
           },
         ];
       default:
@@ -918,12 +921,12 @@ class _SeasonalRecommendationsSection extends StatelessWidget {
           {
             'name': 'Mahindra Tractor',
             'emoji': '🚜',
-            'desc': 'Reliable power for heavy-duty land preparation.'
+            'desc': 'Reliable power for heavy-duty land preparation.',
           },
           {
             'name': 'Irrigation Pump Set',
             'emoji': '💧',
-            'desc': 'Essential water supply management before planting.'
+            'desc': 'Essential water supply management before planting.',
           },
         ];
     }

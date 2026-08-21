@@ -90,11 +90,7 @@ class ChatMessage {
   }
 }
 
-enum MessageType {
-  text,
-  image,
-  system,
-}
+enum MessageType { text, image, system }
 
 class Chat {
   final String id;
@@ -130,9 +126,9 @@ class Chat {
       equipmentImage: map['equipmentImage'] ?? '',
       lastMessage: map['lastMessage'] ?? '',
       lastMessageTime: (map['lastMessageTime'] as Timestamp).toDate(),
-      lastReadTime: Map<String, dynamic>.from(map['lastReadTime'] ?? {}).map(
-        (key, value) => MapEntry(key, (value as Timestamp).toDate()),
-      ),
+      lastReadTime: Map<String, dynamic>.from(
+        map['lastReadTime'] ?? {},
+      ).map((key, value) => MapEntry(key, (value as Timestamp).toDate())),
       lastMessageSenderId: map['lastMessageSenderId'],
       isArchived: map['isArchived'] ?? false,
     );
@@ -146,14 +142,20 @@ class Chat {
       'equipmentImage': equipmentImage,
       'lastMessage': lastMessage,
       'lastMessageTime': Timestamp.fromDate(lastMessageTime),
-      'lastReadTime': lastReadTime.map((key, value) => MapEntry(key, Timestamp.fromDate(value))),
-      if (lastMessageSenderId != null) 'lastMessageSenderId': lastMessageSenderId,
+      'lastReadTime': lastReadTime.map(
+        (key, value) => MapEntry(key, Timestamp.fromDate(value)),
+      ),
+      if (lastMessageSenderId != null)
+        'lastMessageSenderId': lastMessageSenderId,
       'isArchived': isArchived,
     };
   }
 
   String getOtherUserId(String currentUserId) {
-    return participants.firstWhere((id) => id != currentUserId, orElse: () => '');
+    return participants.firstWhere(
+      (id) => id != currentUserId,
+      orElse: () => '',
+    );
   }
 
   bool hasUnreadMessages(String userId) {

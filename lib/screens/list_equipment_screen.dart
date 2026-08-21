@@ -68,12 +68,7 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
     'Irrigation Pump',
   ];
 
-  static const _conditions = [
-    'Excellent',
-    'Good',
-    'Average',
-    'Needs Service',
-  ];
+  static const _conditions = ['Excellent', 'Good', 'Average', 'Needs Service'];
 
   void _addEquipment() async {
     // Validate
@@ -98,7 +93,7 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
       final user = AuthService.instance.currentUser;
       final uid = user?.uid ?? 'farmer_demo';
       String ownerName = 'Farmer';
-      
+
       if (user != null) {
         try {
           final userDoc = await FirestoreService.instance.getUser(uid);
@@ -230,7 +225,8 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
       if (!mounted) return;
       setState(() => _isUploadingImage = false);
       final errorStr = e.toString().toLowerCase();
-      if (errorStr.contains('permission') || errorStr.contains('unauthorized')) {
+      if (errorStr.contains('permission') ||
+          errorStr.contains('unauthorized')) {
         _showError('Photo selected locally (Cloud storage requires log in).');
       } else {
         _showError('Upload failed: $e');
@@ -373,6 +369,7 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
       ),
     );
   }
+
   // ── LISTING TYPE ──
   Widget _buildListingType() {
     return Column(
@@ -494,9 +491,7 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
                       : AppColors.textMuted,
                   width: 2,
                 ),
-                color: isSelected
-                    ? AppColors.primaryGreen
-                    : Colors.transparent,
+                color: isSelected ? AppColors.primaryGreen : Colors.transparent,
               ),
               child: isSelected
                   ? const Icon(Icons.check, size: 16, color: Colors.white)
@@ -534,10 +529,12 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
                   ),
                 ),
                 items: _equipmentTypes
-                    .map((t) => DropdownMenuItem(
-                          value: t,
-                          child: Text(t, style: GoogleFonts.poppins()),
-                        ))
+                    .map(
+                      (t) => DropdownMenuItem(
+                        value: t,
+                        child: Text(t, style: GoogleFonts.poppins()),
+                      ),
+                    )
                     .toList(),
                 onChanged: (v) => setState(() => _selectedEquipment = v),
               ),
@@ -589,7 +586,9 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
                 decoration: InputDecoration(
                   labelText: 'Location',
                   hintText: 'e.g. Angondhalli',
-                  hintStyle: GoogleFonts.poppins(color: AppColors.textMuted.withAlpha(100)),
+                  hintStyle: GoogleFonts.poppins(
+                    color: AppColors.textMuted.withAlpha(100),
+                  ),
                   labelStyle: GoogleFonts.poppins(color: AppColors.textMuted),
                   prefixIcon: const Icon(
                     Icons.location_on_outlined,
@@ -607,7 +606,9 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
                 decoration: InputDecoration(
                   labelText: 'Service Area',
                   hintText: 'e.g. Within 5 km',
-                  hintStyle: GoogleFonts.poppins(color: AppColors.textMuted.withAlpha(100)),
+                  hintStyle: GoogleFonts.poppins(
+                    color: AppColors.textMuted.withAlpha(100),
+                  ),
                   labelStyle: GoogleFonts.poppins(color: AppColors.textMuted),
                   prefixIcon: const Icon(
                     Icons.radar_rounded,
@@ -691,10 +692,12 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
               ),
             ),
             items: _conditions
-                .map((c) => DropdownMenuItem(
-                      value: c,
-                      child: Text(c, style: GoogleFonts.poppins()),
-                    ))
+                .map(
+                  (c) => DropdownMenuItem(
+                    value: c,
+                    child: Text(c, style: GoogleFonts.poppins()),
+                  ),
+                )
                 .toList(),
             onChanged: (v) => setState(() => _selectedCondition = v),
           ),
@@ -707,7 +710,7 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
   Widget _buildImageUpload() {
     final hasImage =
         (_uploadedImageUrl != null && _uploadedImageUrl!.isNotEmpty) ||
-            _selectedImageFile != null;
+        _selectedImageFile != null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -724,12 +727,12 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
               ? Column(
                   children: [
                     ClipRRect(
-                      borderRadius:
-                          BorderRadius.circular(AppSpacing.radiusMd),
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
                       child: SizedBox(
                         height: 140,
                         width: double.infinity,
-                        child: _uploadedImageUrl != null &&
+                        child:
+                            _uploadedImageUrl != null &&
                                 _uploadedImageUrl!.isNotEmpty
                             ? Image.network(
                                 _uploadedImageUrl!,
@@ -738,35 +741,34 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
                                     _placeholder(),
                               )
                             : _selectedImageFile != null
-                                ? Stack(
-                                    fit: StackFit.expand,
-                                    children: [
-                                      Image.file(
-                                        _selectedImageFile!,
-                                        fit: BoxFit.cover,
-                                      ),
-                                      if (_isUploadingImage)
-                                        Container(
-                                          color: Colors.black26,
-                                          child: const Center(
-                                            child: CircularProgressIndicator(
-                                              color: AppColors.primaryGreen,
-                                            ),
-                                          ),
+                            ? Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  Image.file(
+                                    _selectedImageFile!,
+                                    fit: BoxFit.cover,
+                                  ),
+                                  if (_isUploadingImage)
+                                    Container(
+                                      color: Colors.black26,
+                                      child: const Center(
+                                        child: CircularProgressIndicator(
+                                          color: AppColors.primaryGreen,
                                         ),
-                                    ],
-                                  )
-                                : _placeholder(),
+                                      ),
+                                    ),
+                                ],
+                              )
+                            : _placeholder(),
                       ),
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     Text(
-                      _uploadedImageUrl != null &&
-                              _uploadedImageUrl!.isNotEmpty
+                      _uploadedImageUrl != null && _uploadedImageUrl!.isNotEmpty
                           ? 'Photo uploaded ✓'
                           : _isUploadingImage
-                              ? 'Uploading…'
-                              : 'Photo uploaded ✓',
+                          ? 'Uploading…'
+                          : 'Photo uploaded ✓',
                       style: GoogleFonts.poppins(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
@@ -924,7 +926,9 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
               return const Center(
                 child: Padding(
                   padding: EdgeInsets.all(AppSpacing.lg),
-                  child: CircularProgressIndicator(color: AppColors.primaryGreen),
+                  child: CircularProgressIndicator(
+                    color: AppColors.primaryGreen,
+                  ),
                 ),
               );
             }
@@ -957,7 +961,9 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
                         height: 50,
                         decoration: BoxDecoration(
                           color: AppColors.secondaryGreen.withAlpha(35),
-                          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                          borderRadius: BorderRadius.circular(
+                            AppSpacing.radiusMd,
+                          ),
                         ),
                         child: const Icon(
                           Icons.agriculture_rounded,
@@ -996,10 +1002,14 @@ class _ListEquipmentScreenState extends State<ListEquipmentScreen> {
                         ),
                         decoration: BoxDecoration(
                           color: AppColors.secondaryGreen.withAlpha(20),
-                          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                          borderRadius: BorderRadius.circular(
+                            AppSpacing.radiusSm,
+                          ),
                         ),
                         child: Text(
-                          (data['isAvailable'] ?? true) ? 'Available' : 'Rented',
+                          (data['isAvailable'] ?? true)
+                              ? 'Available'
+                              : 'Rented',
                           style: GoogleFonts.poppins(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,

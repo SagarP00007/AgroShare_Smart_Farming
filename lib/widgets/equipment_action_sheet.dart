@@ -74,7 +74,10 @@ class _EquipmentActionSheet extends StatelessWidget {
 
               // Listing type badge
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: equipment.isRent
                       ? AppColors.primaryGreen.withAlpha(20)
@@ -131,8 +134,11 @@ class _EquipmentActionSheet extends StatelessWidget {
                     ? Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.access_time_rounded,
-                              size: 18, color: AppColors.primaryGreen),
+                          const Icon(
+                            Icons.access_time_rounded,
+                            size: 18,
+                            color: AppColors.primaryGreen,
+                          ),
                           const SizedBox(width: AppSpacing.xs),
                           Text(
                             '₹${equipment.pricePerHour.toInt()}/hr',
@@ -155,8 +161,11 @@ class _EquipmentActionSheet extends StatelessWidget {
                     : Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.sell_rounded,
-                              size: 18, color: Colors.orange),
+                          const Icon(
+                            Icons.sell_rounded,
+                            size: 18,
+                            color: Colors.orange,
+                          ),
                           const SizedBox(width: AppSpacing.xs),
                           Text(
                             '₹$numberFormat',
@@ -191,8 +200,7 @@ class _EquipmentActionSheet extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) =>
-                            BookingScreen(equipment: equipment),
+                        builder: (_) => BookingScreen(equipment: equipment),
                       ),
                     );
                   },
@@ -232,7 +240,10 @@ class _EquipmentActionSheet extends StatelessWidget {
 }
 
 void _showBuyDialog(
-    BuildContext context, Equipment equipment, String priceStr) {
+  BuildContext context,
+  Equipment equipment,
+  String priceStr,
+) {
   showDialog(
     context: context,
     builder: (_) => AlertDialog(
@@ -287,8 +298,7 @@ void _showBuyDialog(
                 backgroundColor: AppColors.primaryGreen,
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.circular(AppSpacing.radiusSm),
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                 ),
               ),
             );
@@ -313,10 +323,7 @@ Widget _infoRow(String label, String value) {
     children: [
       Text(
         label,
-        style: GoogleFonts.poppins(
-          fontSize: 13,
-          color: AppColors.textMuted,
-        ),
+        style: GoogleFonts.poppins(fontSize: 13, color: AppColors.textMuted),
       ),
       Text(
         value,
@@ -329,4 +336,3 @@ Widget _infoRow(String label, String value) {
     ],
   );
 }
-

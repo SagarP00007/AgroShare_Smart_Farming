@@ -57,12 +57,9 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
       final userDoc = await FirestoreService.instance.getUser(uid);
       final userData = userDoc.data() as Map<String, dynamic>? ?? {};
 
-      final totalPrice =
-          double.tryParse(_priceController.text.trim()) ?? 0.0;
-      final membersNeeded =
-          int.tryParse(_membersController.text.trim()) ?? 5;
-      final priceShare =
-          membersNeeded > 0 ? totalPrice / membersNeeded : 0.0;
+      final totalPrice = double.tryParse(_priceController.text.trim()) ?? 0.0;
+      final membersNeeded = int.tryParse(_membersController.text.trim()) ?? 5;
+      final priceShare = membersNeeded > 0 ? totalPrice / membersNeeded : 0.0;
 
       await FirestoreService.instance.createGroup({
         // New canonical fields as per spec.
@@ -168,10 +165,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                         decoration: _inputDecoration('Select equipment'),
                         items: _equipmentOptions
                             .map(
-                              (e) => DropdownMenuItem(
-                                value: e,
-                                child: Text(e),
-                              ),
+                              (e) => DropdownMenuItem(value: e, child: Text(e)),
                             )
                             .toList(),
                         onChanged: (value) =>
@@ -304,8 +298,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        borderSide:
-            const BorderSide(color: AppColors.primaryGreen, width: 1.5),
+        borderSide: const BorderSide(color: AppColors.primaryGreen, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
@@ -319,9 +312,6 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   }
 
   TextStyle _fieldTextStyle() {
-    return GoogleFonts.poppins(
-      fontSize: 14,
-      color: AppColors.textDark,
-    );
+    return GoogleFonts.poppins(fontSize: 14, color: AppColors.textDark);
   }
 }

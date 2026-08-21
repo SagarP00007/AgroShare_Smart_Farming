@@ -31,8 +31,10 @@ class ChatService {
     }
 
     // Get equipment details
-    final equipmentDoc =
-        await _firestore.collection('equipment').doc(equipmentId).get();
+    final equipmentDoc = await _firestore
+        .collection('equipment')
+        .doc(equipmentId)
+        .get();
     if (!equipmentDoc.exists) {
       throw Exception('Equipment not found');
     }
@@ -45,8 +47,10 @@ class ChatService {
     }
 
     // Get current user details
-    final currentUserDoc =
-        await _firestore.collection('users').doc(currentUserId).get();
+    final currentUserDoc = await _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .get();
     if (!currentUserDoc.exists) {
       throw Exception('User not found');
     }
@@ -73,29 +77,34 @@ class ChatService {
         .doc(chatDoc.id)
         .collection('messages')
         .add({
-      'chatId': chatDoc.id,
-      'senderId': 'system',
-      'senderName': 'System',
-      'senderAvatar': '',
-      'receiverId': currentUserId,
-      'message': 'Chat started for ${equipment.name}',
-      'type': 'system',
-      'timestamp': Timestamp.now(),
-      'isRead': true,
-    });
+          'chatId': chatDoc.id,
+          'senderId': 'system',
+          'senderName': 'System',
+          'senderAvatar': '',
+          'receiverId': currentUserId,
+          'message': 'Chat started for ${equipment.name}',
+          'type': 'system',
+          'timestamp': Timestamp.now(),
+          'isRead': true,
+        });
 
     return chatDoc.id;
   }
 
   // Send a message
-  Future<void> sendMessage(String chatId, String message,
-      {String? imageUrl}) async {
+  Future<void> sendMessage(
+    String chatId,
+    String message, {
+    String? imageUrl,
+  }) async {
     final currentUserId = AuthService.instance.currentUser?.uid;
     if (currentUserId == null) return;
 
     // Get current user details
-    final currentUserDoc =
-        await _firestore.collection('users').doc(currentUserId).get();
+    final currentUserDoc = await _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .get();
     if (!currentUserDoc.exists) return;
     final currentUserData = currentUserDoc.data()!;
 
@@ -138,7 +147,11 @@ class ChatService {
 
     // Create notification for receiver
     await _createMessageNotification(
-        receiverId, chatId, message, currentUserData['displayName'] ?? 'User');
+      receiverId,
+      chatId,
+      message,
+      currentUserData['displayName'] ?? 'User',
+    );
   }
 
   // Get messages stream for a chat
@@ -218,8 +231,12 @@ class ChatService {
   }
 
   // Create notification for new message
-  Future<void> _createMessageNotification(String receiverId, String chatId,
-      String message, String senderName) async {
+  Future<void> _createMessageNotification(
+    String receiverId,
+    String chatId,
+    String message,
+    String senderName,
+  ) async {
     final chatDoc = await _firestore.collection('chats').doc(chatId).get();
     if (!chatDoc.exists) return;
     final chat = Chat.fromMap(chatId, chatDoc.data()!);

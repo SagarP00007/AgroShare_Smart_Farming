@@ -45,10 +45,17 @@ class Equipment {
 
   /// Calculates dynamic geodesic distance (in km) from user's current GPS position
   double calculateDistanceKm(double? userLat, double? userLng) {
-    if (userLat == null || userLng == null || (latitude == 0.0 && longitude == 0.0)) {
+    if (userLat == null ||
+        userLng == null ||
+        (latitude == 0.0 && longitude == 0.0)) {
       return distance;
     }
-    final meters = Geolocator.distanceBetween(userLat, userLng, latitude, longitude);
+    final meters = Geolocator.distanceBetween(
+      userLat,
+      userLng,
+      latitude,
+      longitude,
+    );
     final km = meters / 1000.0;
     return double.parse(km.toStringAsFixed(1));
   }

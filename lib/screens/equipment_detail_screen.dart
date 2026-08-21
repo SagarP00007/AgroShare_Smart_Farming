@@ -102,10 +102,7 @@ class _ImageBanner extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    Colors.black.withAlpha(130),
-                  ],
+                  colors: [Colors.transparent, Colors.black.withAlpha(130)],
                 ),
               ),
             ),
@@ -255,25 +252,29 @@ class _EquipmentInfoCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      equipment.ownerName,
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textDark,
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        equipment.ownerName,
+                        style: GoogleFonts.poppins(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textDark,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                    Text(
-                      'Equipment Owner',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: AppColors.textMuted,
+                      Text(
+                        'Equipment Owner',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: AppColors.textMuted,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 const Spacer(),
                 TextButton.icon(
@@ -350,11 +351,7 @@ class _EquipmentInfoCard extends StatelessWidget {
   }
 
   Widget _statDivider() {
-    return Container(
-      width: 1,
-      height: 32,
-      color: AppColors.divider,
-    );
+    return Container(width: 1, height: 32, color: AppColors.divider);
   }
 
   Future<void> _showContactDialog(BuildContext context) async {
@@ -395,8 +392,9 @@ class _EquipmentInfoCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppColors.primaryGreen.withAlpha(10),
                   borderRadius: BorderRadius.circular(8),
-                  border:
-                      Border.all(color: AppColors.primaryGreen.withAlpha(30)),
+                  border: Border.all(
+                    color: AppColors.primaryGreen.withAlpha(30),
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -455,9 +453,7 @@ class _EquipmentInfoCard extends StatelessWidget {
               onPressed: () => Navigator.of(context).pop(),
               child: Text(
                 'Close',
-                style: GoogleFonts.poppins(
-                  color: AppColors.textMuted,
-                ),
+                style: GoogleFonts.poppins(color: AppColors.textMuted),
               ),
             ),
             ElevatedButton(
@@ -795,7 +791,10 @@ class _BookingBar extends StatelessWidget {
             icon: const Icon(Icons.chat_rounded, size: 16),
             label: Text(
               'Message',
-              style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600),
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.primaryGreen,
@@ -810,7 +809,9 @@ class _BookingBar extends StatelessWidget {
                 MaterialPageRoute(
                   builder: (_) => UpiPaymentScreen(
                     equipment: equipment,
-                    amount: equipment.purchasePrice > 0 ? equipment.purchasePrice : 250000.0,
+                    amount: equipment.purchasePrice > 0
+                        ? equipment.purchasePrice
+                        : 250000.0,
                     paymentType: 'equipment_purchase',
                   ),
                 ),
@@ -819,7 +820,10 @@ class _BookingBar extends StatelessWidget {
             icon: const Icon(Icons.payment_rounded, size: 16),
             label: Text(
               'Pay via UPI',
-              style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600),
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.primaryGreen,
@@ -836,10 +840,7 @@ class _BookingBar extends StatelessWidget {
       children: [
         Text(
           label,
-          style: GoogleFonts.poppins(
-            fontSize: 13,
-            color: AppColors.textMuted,
-          ),
+          style: GoogleFonts.poppins(fontSize: 13, color: AppColors.textMuted),
         ),
         Text(
           value,

@@ -66,10 +66,18 @@ class _UpiPaymentScreenState extends State<UpiPaymentScreen> {
   void _initiatePayment() {
     if (_isProcessing) return;
 
+    if (_selectedMethod == 'Cash on Pickup') {
+      _showCashConfirmationDialog();
+      return;
+    }
+
     if (_selectedMethod == 'UPI ID' && _upiIdCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Please enter a valid UPI ID', style: GoogleFonts.poppins()),
+          content: Text(
+            'Please enter a valid UPI ID',
+            style: GoogleFonts.poppins(),
+          ),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -79,6 +87,94 @@ class _UpiPaymentScreenState extends State<UpiPaymentScreen> {
     _showMpinDialog();
   }
 
+  void _showCashConfirmationDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+            const Icon(
+              Icons.payments_rounded,
+              color: AppColors.primaryGreen,
+              size: 26,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Pay at Pickup',
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w600,
+                color: AppColors.textDark,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'You will pay ₹${widget.amount.toInt()} in cash directly to ${widget.equipment.ownerName.isNotEmpty ? widget.equipment.ownerName : "the owner"} when you pick up the equipment.',
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                color: AppColors.textDark,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.amber.withAlpha(25),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.amber.shade400),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.info_outline_rounded,
+                    size: 18,
+                    color: Colors.amber.shade900,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Booking will be created with status "Pay at Pickup" (Pending). The owner will confirm cash receipt at pickup.',
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        color: Colors.amber.shade900,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.poppins(color: AppColors.textMuted),
+            ),
+          ),
+          AgButton(
+            label: 'Confirm Pay at Pickup',
+            icon: Icons.check_circle_outline_rounded,
+            onPressed: () {
+              Navigator.pop(ctx);
+              _processSimulatedPayment();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showMpinDialog() {
     final mpinCtrl = TextEditingController();
     showModalBottomSheet(
@@ -86,7 +182,9 @@ class _UpiPaymentScreenState extends State<UpiPaymentScreen> {
       isScrollControlled: true,
       backgroundColor: AppColors.cardBackground,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppSpacing.radiusLg)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppSpacing.radiusLg),
+        ),
       ),
       builder: (ctx) {
         return Padding(
@@ -120,7 +218,10 @@ class _UpiPaymentScreenState extends State<UpiPaymentScreen> {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.primaryGreen.withAlpha(20),
                       borderRadius: BorderRadius.circular(6),
@@ -139,7 +240,10 @@ class _UpiPaymentScreenState extends State<UpiPaymentScreen> {
               const SizedBox(height: AppSpacing.xs),
               Text(
                 'Paying ₹${widget.amount.toInt()} via $_selectedMethod',
-                style: GoogleFonts.poppins(fontSize: 13, color: AppColors.textMuted),
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  color: AppColors.textMuted,
+                ),
               ),
               const SizedBox(height: AppSpacing.lg),
               TextField(
@@ -192,7 +296,9 @@ class _UpiPaymentScreenState extends State<UpiPaymentScreen> {
                       onPressed: () {
                         if (mpinCtrl.text.length < 4) {
                           ScaffoldMessenger.of(ctx).showSnackBar(
-                            const SnackBar(content: Text('Please enter 4-6 digit UPI PIN')),
+                            const SnackBar(
+                              content: Text('Please enter 4-6 digit UPI PIN'),
+                            ),
                           );
                           return;
                         }
@@ -213,6 +319,8 @@ class _UpiPaymentScreenState extends State<UpiPaymentScreen> {
   Future<void> _processSimulatedPayment() async {
     setState(() => _isProcessing = true);
 
+    final isCash = _selectedMethod == 'Cash on Pickup';
+
     // Show processing modal
     showDialog(
       context: context,
@@ -220,7 +328,9 @@ class _UpiPaymentScreenState extends State<UpiPaymentScreen> {
       builder: (ctx) => PopScope(
         canPop: false,
         child: Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
@@ -236,7 +346,9 @@ class _UpiPaymentScreenState extends State<UpiPaymentScreen> {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'Processing UPI Payment...',
+                  isCash
+                      ? 'Confirming Pay at Pickup...'
+                      : 'Processing UPI Payment...',
                   style: GoogleFonts.poppins(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -245,8 +357,13 @@ class _UpiPaymentScreenState extends State<UpiPaymentScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Communicating securely with bank server',
-                  style: GoogleFonts.poppins(fontSize: 12, color: AppColors.textMuted),
+                  isCash
+                      ? 'Securing booking & saving cash receipt details'
+                      : 'Communicating securely with bank server',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    color: AppColors.textMuted,
+                  ),
                 ),
               ],
             ),
@@ -255,12 +372,12 @@ class _UpiPaymentScreenState extends State<UpiPaymentScreen> {
       ),
     );
 
-    await Future.delayed(const Duration(milliseconds: 2200));
+    await Future.delayed(Duration(milliseconds: isCash ? 1200 : 2200));
 
     if (!mounted) return;
     Navigator.of(context, rootNavigator: true).pop(); // Dismiss loading dialog
 
-    if (_simulateFailure) {
+    if (_simulateFailure && !isCash) {
       setState(() => _isProcessing = false);
       _showFailureDialog();
       return;
@@ -269,9 +386,13 @@ class _UpiPaymentScreenState extends State<UpiPaymentScreen> {
     try {
       final uid = AuthService.instance.currentUser?.uid ?? 'demo_farmer';
       final now = DateTime.now();
-      final txnId = 'TXN${now.millisecondsSinceEpoch}';
+      final txnId = isCash
+          ? 'CASH${now.millisecondsSinceEpoch}'
+          : 'TXN${now.millisecondsSinceEpoch}';
+      final paymentStatus = isCash ? 'pending' : 'successful';
+      final bookingPaymentStatus = isCash ? 'pending' : 'deposit_paid';
 
-      // 1. Record payment in Firestore
+      // 1. Record payment in Firestore payments collection
       final paymentData = Payment(
         id: '',
         transactionId: txnId,
@@ -282,8 +403,12 @@ class _UpiPaymentScreenState extends State<UpiPaymentScreen> {
         amount: widget.amount,
         paymentType: widget.paymentType,
         paymentMethod: _selectedMethod,
-        upiId: _selectedMethod == 'UPI ID' ? _upiIdCtrl.text.trim() : 'farmer@$_selectedMethod',
-        status: 'successful',
+        upiId: isCash
+            ? 'N/A (Cash on Pickup)'
+            : (_selectedMethod == 'UPI ID'
+                ? _upiIdCtrl.text.trim()
+                : 'farmer@$_selectedMethod'),
+        status: paymentStatus,
         date: now,
         bookingId: widget.bookingId ?? '',
       ).toMap();
@@ -293,22 +418,29 @@ class _UpiPaymentScreenState extends State<UpiPaymentScreen> {
       String createdBookingId = widget.bookingId ?? '';
 
       // 2. If creating booking on deposit payment:
-      if (widget.paymentType == 'rental_deposit' && widget.bookingData != null) {
+      if (widget.paymentType == 'rental_deposit' &&
+          widget.bookingData != null) {
         final bData = Map<String, dynamic>.from(widget.bookingData!);
         bData['depositAmount'] = widget.amount;
         bData['depositTxnId'] = txnId;
-        bData['paymentStatus'] = 'deposit_paid';
+        bData['paymentStatus'] = bookingPaymentStatus;
+        bData['paymentMethod'] = _selectedMethod;
+        bData['ownerId'] = widget.equipment.ownerId;
+        bData['ownerName'] = widget.equipment.ownerName;
         final docRef = await FirestoreService.instance.createBooking(bData);
         createdBookingId = docRef.id;
       } else if (widget.bookingId != null && widget.bookingId!.isNotEmpty) {
         // If paying remaining balance:
-        await FirestoreService.instance.updateBookingStatus(widget.bookingId!, 'completed');
+        await FirestoreService.instance.updateBookingStatus(
+          widget.bookingId!,
+          'completed',
+        );
       }
 
       if (!mounted) return;
       setState(() => _isProcessing = false);
 
-      // 3. Navigate to Payment Success screen
+      // 3. Navigate to Payment Success / Confirmation screen
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => PaymentSuccessScreen(
@@ -327,7 +459,10 @@ class _UpiPaymentScreenState extends State<UpiPaymentScreen> {
       setState(() => _isProcessing = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Payment process error: $e', style: GoogleFonts.poppins()),
+          content: Text(
+            'Payment process error: $e',
+            style: GoogleFonts.poppins(),
+          ),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -341,11 +476,18 @@ class _UpiPaymentScreenState extends State<UpiPaymentScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 28),
+            const Icon(
+              Icons.error_outline_rounded,
+              color: Colors.redAccent,
+              size: 28,
+            ),
             const SizedBox(width: 8),
             Text(
               'Payment Failed',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: AppColors.textDark),
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w600,
+                color: AppColors.textDark,
+              ),
             ),
           ],
         ),
@@ -356,7 +498,10 @@ class _UpiPaymentScreenState extends State<UpiPaymentScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Retry Payment', style: GoogleFonts.poppins(color: AppColors.primaryGreen)),
+            child: Text(
+              'Retry Payment',
+              style: GoogleFonts.poppins(color: AppColors.primaryGreen),
+            ),
           ),
         ],
       ),
@@ -386,7 +531,11 @@ class _UpiPaymentScreenState extends State<UpiPaymentScreen> {
               color: Colors.amber.withAlpha(40),
               child: Row(
                 children: [
-                  const Icon(Icons.info_outline_rounded, color: Colors.amber, size: 20),
+                  const Icon(
+                    Icons.info_outline_rounded,
+                    color: Colors.amber,
+                    size: 20,
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -428,7 +577,10 @@ class _UpiPaymentScreenState extends State<UpiPaymentScreen> {
                                 ),
                               ),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   color: AppColors.primaryGreen.withAlpha(20),
                                   borderRadius: BorderRadius.circular(6),
@@ -458,8 +610,11 @@ class _UpiPaymentScreenState extends State<UpiPaymentScreen> {
                           const SizedBox(height: AppSpacing.sm),
                           Row(
                             children: [
-                              const Icon(Icons.agriculture_rounded,
-                                  size: 18, color: AppColors.textMuted),
+                              const Icon(
+                                Icons.agriculture_rounded,
+                                size: 18,
+                                color: AppColors.textMuted,
+                              ),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
@@ -493,37 +648,58 @@ class _UpiPaymentScreenState extends State<UpiPaymentScreen> {
                     AgCard(
                       margin: EdgeInsets.zero,
                       padding: EdgeInsets.zero,
-                      child: Column(
-                        children: [
-                          _buildOptionTile(
-                            title: 'Google Pay',
-                            subtitle: 'Fast UPI payment via GPay',
-                            iconWidget: _brandBadge('GPay', Colors.blue),
-                            value: 'Google Pay',
-                          ),
-                          const Divider(height: 1, color: AppColors.divider),
-                          _buildOptionTile(
-                            title: 'PhonePe',
-                            subtitle: 'Direct bank transfer via PhonePe',
-                            iconWidget: _brandBadge('Pe', Colors.purple),
-                            value: 'PhonePe',
-                          ),
-                          const Divider(height: 1, color: AppColors.divider),
-                          _buildOptionTile(
-                            title: 'Paytm / BHIM UPI',
-                            subtitle: 'Paytm UPI ID or BHIM App',
-                            iconWidget: _brandBadge('UPI', const Color(0xFF002E6D)),
-                            value: 'Paytm / BHIM',
-                          ),
-                          const Divider(height: 1, color: AppColors.divider),
-                          _buildOptionTile(
-                            title: 'Custom UPI ID',
-                            subtitle: 'Enter VPA e.g. name@upi',
-                            iconWidget: const Icon(Icons.alternate_email_rounded,
-                                color: AppColors.primaryGreen),
-                            value: 'UPI ID',
-                          ),
-                        ],
+                      child: RadioGroup<String>(
+                        groupValue: _selectedMethod,
+                        onChanged: (val) {
+                          if (val != null) setState(() => _selectedMethod = val);
+                        },
+                        child: Column(
+                          children: [
+                            _buildOptionTile(
+                              title: 'Google Pay',
+                              subtitle: 'Fast UPI payment via GPay',
+                              iconWidget: _brandBadge('GPay', Colors.blue),
+                              value: 'Google Pay',
+                            ),
+                            const Divider(height: 1, color: AppColors.divider),
+                            _buildOptionTile(
+                              title: 'PhonePe',
+                              subtitle: 'Direct bank transfer via PhonePe',
+                              iconWidget: _brandBadge('Pe', Colors.purple),
+                              value: 'PhonePe',
+                            ),
+                            const Divider(height: 1, color: AppColors.divider),
+                            _buildOptionTile(
+                              title: 'Paytm / BHIM UPI',
+                              subtitle: 'Paytm UPI ID or BHIM App',
+                              iconWidget: _brandBadge(
+                                'UPI',
+                                const Color(0xFF002E6D),
+                              ),
+                              value: 'Paytm / BHIM',
+                            ),
+                            const Divider(height: 1, color: AppColors.divider),
+                            _buildOptionTile(
+                              title: 'Custom UPI ID',
+                              subtitle: 'Enter VPA e.g. name@upi',
+                              iconWidget: const Icon(
+                                Icons.alternate_email_rounded,
+                                color: AppColors.primaryGreen,
+                              ),
+                              value: 'UPI ID',
+                            ),
+                            const Divider(height: 1, color: AppColors.divider),
+                            _buildOptionTile(
+                              title: 'Pay at Pickup (Cash)',
+                              subtitle: 'Pay ₹${widget.amount.toInt()} in cash directly to owner',
+                              iconWidget: _brandBadge(
+                                'CASH',
+                                Colors.green.shade800,
+                              ),
+                              value: 'Cash on Pickup',
+                            ),
+                          ],
+                        ),
                       ),
                     ),
 
@@ -534,11 +710,16 @@ class _UpiPaymentScreenState extends State<UpiPaymentScreen> {
                         decoration: InputDecoration(
                           labelText: 'Enter VPA / UPI ID',
                           hintText: 'username@bank',
-                          prefixIcon: const Icon(Icons.payment_rounded, color: AppColors.primaryGreen),
+                          prefixIcon: const Icon(
+                            Icons.payment_rounded,
+                            color: AppColors.primaryGreen,
+                          ),
                           filled: true,
                           fillColor: AppColors.cardBackground,
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                            borderRadius: BorderRadius.circular(
+                              AppSpacing.radiusMd,
+                            ),
                           ),
                         ),
                       ),
@@ -551,22 +732,31 @@ class _UpiPaymentScreenState extends State<UpiPaymentScreen> {
                       padding: const EdgeInsets.all(AppSpacing.sm),
                       decoration: BoxDecoration(
                         color: Colors.grey.withAlpha(15),
-                        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                        borderRadius: BorderRadius.circular(
+                          AppSpacing.radiusSm,
+                        ),
                         border: Border.all(color: AppColors.divider),
                       ),
                       child: CheckboxListTile(
                         dense: true,
                         title: Text(
                           'Test Failure State (Simulate Failed Transaction)',
-                          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500),
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                         subtitle: Text(
                           'Enable to test handling when payment fails or drops',
-                          style: GoogleFonts.poppins(fontSize: 10, color: AppColors.textMuted),
+                          style: GoogleFonts.poppins(
+                            fontSize: 10,
+                            color: AppColors.textMuted,
+                          ),
                         ),
                         value: _simulateFailure,
                         activeColor: Colors.redAccent,
-                        onChanged: (val) => setState(() => _simulateFailure = val ?? false),
+                        onChanged: (val) =>
+                            setState(() => _simulateFailure = val ?? false),
                       ),
                     ),
                   ],
@@ -593,8 +783,14 @@ class _UpiPaymentScreenState extends State<UpiPaymentScreen> {
                 ],
               ),
               child: AgButton(
-                label: _isProcessing ? 'Processing...' : 'Pay ₹${widget.amount.toInt()} Now',
-                icon: Icons.shield_rounded,
+                label: _isProcessing
+                    ? 'Processing...'
+                    : (_selectedMethod == 'Cash on Pickup'
+                        ? 'Confirm Pay at Pickup (₹${widget.amount.toInt()})'
+                        : 'Pay ₹${widget.amount.toInt()} Now'),
+                icon: _selectedMethod == 'Cash on Pickup'
+                    ? Icons.handshake_rounded
+                    : Icons.shield_rounded,
                 isExpanded: true,
                 onPressed: _isProcessing ? null : _initiatePayment,
               ),
@@ -613,7 +809,9 @@ class _UpiPaymentScreenState extends State<UpiPaymentScreen> {
   }) {
     final isSelected = _selectedMethod == value;
     return Container(
-      color: isSelected ? AppColors.primaryGreen.withAlpha(12) : Colors.transparent,
+      color: isSelected
+          ? AppColors.primaryGreen.withAlpha(12)
+          : Colors.transparent,
       child: ListTile(
         leading: iconWidget,
         title: Text(
@@ -630,11 +828,7 @@ class _UpiPaymentScreenState extends State<UpiPaymentScreen> {
         ),
         trailing: Radio<String>(
           value: value,
-          groupValue: _selectedMethod,
           activeColor: AppColors.primaryGreen,
-          onChanged: (val) {
-            if (val != null) setState(() => _selectedMethod = val);
-          },
         ),
         onTap: () => setState(() => _selectedMethod = value),
       ),

@@ -59,18 +59,23 @@ class NewsService {
   Future<List<NewsArticle>> getFarmingNews() async {
     try {
       // Use a single, broader search query for better consistency
-      final uri = Uri.parse('$_baseUrl/everything').replace(queryParameters: {
-        'q': 'agriculture India farming crops tractor monsoon',
-        'apiKey': _apiKey,
-        'language': 'en',
-        'sortBy': 'publishedAt',
-        'pageSize': '10',
-        'from':
-            DateTime.now().subtract(const Duration(days: 3)).toIso8601String(),
-        'to': DateTime.now().toIso8601String(),
-      });
+      final uri = Uri.parse('$_baseUrl/everything').replace(
+        queryParameters: {
+          'q': 'agriculture India farming crops tractor monsoon',
+          'apiKey': _apiKey,
+          'language': 'en',
+          'sortBy': 'publishedAt',
+          'pageSize': '10',
+          'from': DateTime.now()
+              .subtract(const Duration(days: 3))
+              .toIso8601String(),
+          'to': DateTime.now().toIso8601String(),
+        },
+      );
 
-      final response = await http.get(uri).timeout(
+      final response = await http
+          .get(uri)
+          .timeout(
             const Duration(seconds: 10),
             onTimeout: () => throw TimeoutException('News request timeout'),
           );
@@ -80,10 +85,12 @@ class NewsService {
         if (data['status'] == 'ok' && data['articles'] != null) {
           final articles = (data['articles'] as List)
               .map((article) => NewsArticle.fromJson(article))
-              .where((article) =>
-                  article.title.isNotEmpty &&
-                  article.description.isNotEmpty &&
-                  !article.title.toLowerCase().contains('[removed]'))
+              .where(
+                (article) =>
+                    article.title.isNotEmpty &&
+                    article.description.isNotEmpty &&
+                    !article.title.toLowerCase().contains('[removed]'),
+              )
               .take(8) // Limit to 8 articles
               .toList();
 

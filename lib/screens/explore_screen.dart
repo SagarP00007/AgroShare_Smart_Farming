@@ -167,8 +167,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 height: 160,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                  ),
                   itemCount: _knowledgeItems.length,
                   itemBuilder: (context, index) {
                     final item = _knowledgeItems[index];
@@ -246,8 +247,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   return ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                    ),
                     itemCount: newsArticles.length,
                     itemBuilder: (context, index) {
                       final news = newsArticles[index];
@@ -299,8 +301,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Center(
-                    child:
-                        Text(item.emoji, style: const TextStyle(fontSize: 28)),
+                    child: Text(
+                      item.emoji,
+                      style: const TextStyle(fontSize: 28),
+                    ),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -355,7 +359,8 @@ const _knowledgeItems = [
     emoji: '🚜',
     title: 'Tractor Usage Guide',
     subtitle: 'Ploughing, tilling & hauling',
-    detail: 'Tractors are the backbone of modern farming. They are used for '
+    detail:
+        'Tractors are the backbone of modern farming. They are used for '
         'ploughing fields, tilling soil, hauling heavy loads, and powering '
         'implements like rotavators and seed drills.\n\n'
         'Key tips:\n'
@@ -379,7 +384,8 @@ const _knowledgeItems = [
     emoji: '🌱',
     title: 'Seed Drill Benefits',
     subtitle: 'Precision seed placement',
-    detail: 'Seed drills ensure uniform seed spacing and depth, leading to '
+    detail:
+        'Seed drills ensure uniform seed spacing and depth, leading to '
         'better germination rates and higher yields.\n\n'
         'Benefits:\n'
         '• 20-30% seed savings compared to broadcast sowing.\n'
@@ -390,7 +396,8 @@ const _knowledgeItems = [
     emoji: '💧',
     title: 'Smart Irrigation',
     subtitle: 'Water management',
-    detail: 'Smart irrigation systems use soil moisture sensors and weather '
+    detail:
+        'Smart irrigation systems use soil moisture sensors and weather '
         'data to optimize water usage.\n\n'
         'Advantages:\n'
         '• Save up to 40% water compared to flood irrigation.\n'
@@ -425,14 +432,16 @@ const _techItems = [
   _TechItem(
     icon: Icons.water_drop_rounded,
     title: 'Smart Irrigation Systems',
-    description: 'IoT-based sensors monitor soil moisture in real-time and '
+    description:
+        'IoT-based sensors monitor soil moisture in real-time and '
         'automatically trigger irrigation only when needed.',
     color: Colors.cyan,
   ),
   _TechItem(
     icon: Icons.flight_rounded,
     title: 'Drone-based Spraying',
-    description: 'Agricultural drones deliver precise fertilizer and pesticide '
+    description:
+        'Agricultural drones deliver precise fertilizer and pesticide '
         'application, reducing chemical usage by up to 40%.',
     color: Colors.deepPurple,
   ),
@@ -467,8 +476,10 @@ class _KnowledgeCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Center(
-                      child: Text(item.emoji,
-                          style: const TextStyle(fontSize: 20)),
+                      child: Text(
+                        item.emoji,
+                        style: const TextStyle(fontSize: 20),
+                      ),
                     ),
                   ),
                   const Spacer(),
@@ -528,10 +539,7 @@ class _TechCard extends StatelessWidget {
               height: 52,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    item.color.withAlpha(30),
-                    item.color.withAlpha(15),
-                  ],
+                  colors: [item.color.withAlpha(30), item.color.withAlpha(15)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),

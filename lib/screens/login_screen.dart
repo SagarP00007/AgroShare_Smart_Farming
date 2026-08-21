@@ -57,7 +57,13 @@ class _LoginScreenState extends State<LoginScreen> {
         MaterialPageRoute(builder: (_) => const MainShell()),
       );
     } catch (e) {
-      _showError(e.toString().replaceAll('Exception: ', '').replaceAll(RegExp(r'\[.*?\]'), '').trim());
+      _showError(
+        e
+            .toString()
+            .replaceAll('Exception: ', '')
+            .replaceAll(RegExp(r'\[.*?\]'), '')
+            .trim(),
+      );
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -66,7 +72,10 @@ class _LoginScreenState extends State<LoginScreen> {
   void _showError(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(msg, style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
+        content: Text(
+          msg,
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+        ),
         backgroundColor: Colors.redAccent,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
@@ -146,7 +155,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: GoogleFonts.poppins(fontSize: 15),
                     decoration: InputDecoration(
                       labelText: L.tr(context, 'full_name'),
-                      labelStyle: GoogleFonts.poppins(color: AppColors.textMuted),
+                      labelStyle: GoogleFonts.poppins(
+                        color: AppColors.textMuted,
+                      ),
                       prefixIcon: const Icon(
                         Icons.badge_outlined,
                         color: AppColors.primaryGreen,
@@ -192,8 +203,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             : Icons.visibility_rounded,
                         color: AppColors.textMuted,
                       ),
-                      onPressed: () =>
-                          setState(() => _obscure = !_obscure),
+                      onPressed: () => setState(() => _obscure = !_obscure),
                     ),
                   ),
                 ),
@@ -206,7 +216,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         color: AppColors.primaryGreen,
                       )
                     : AgButton(
-                        label: _isRegister ? L.tr(context, 'register') : L.tr(context, 'login'),
+                        label: _isRegister
+                            ? L.tr(context, 'register')
+                            : L.tr(context, 'login'),
                         icon: _isRegister
                             ? Icons.person_add_rounded
                             : Icons.login_rounded,

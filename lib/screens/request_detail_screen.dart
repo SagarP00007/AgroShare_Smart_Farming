@@ -37,7 +37,9 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
     final currentUid = AuthService.instance.currentUser?.uid ?? 'guest';
 
     return StreamBuilder<DocumentSnapshot>(
-      stream: FirestoreService.instance.equipmentRequestStream(widget.requestId),
+      stream: FirestoreService.instance.equipmentRequestStream(
+        widget.requestId,
+      ),
       builder: (context, snapshot) {
         EquipmentRequest? request = widget.fallbackRequest;
         if (snapshot.hasData && snapshot.data!.exists) {
@@ -49,9 +51,14 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
 
         request ??= FirestoreService.instance
             .getFallbackEquipmentRequests()
-            .firstWhere((r) => r.id == widget.requestId,
-                orElse: () => widget.fallbackRequest ??
-                    FirestoreService.instance.getFallbackEquipmentRequests().first);
+            .firstWhere(
+              (r) => r.id == widget.requestId,
+              orElse: () =>
+                  widget.fallbackRequest ??
+                  FirestoreService.instance
+                      .getFallbackEquipmentRequests()
+                      .first,
+            );
 
         final isRequester = currentUid == request.requesterId;
 
@@ -81,14 +88,16 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                       label: 'Offer My Equipment',
                       icon: Icons.handshake_rounded,
                       isExpanded: true,
-                      onPressed: () => _showOfferEquipmentModal(context, request!),
+                      onPressed: () =>
+                          _showOfferEquipmentModal(context, request!),
                     ),
                     const SizedBox(height: AppSpacing.lg),
                   ],
 
                   // Responses Section
                   SectionTitle(
-                    title: 'Owner Offers & Responses (${request.responseCount})',
+                    title:
+                        'Owner Offers & Responses (${request.responseCount})',
                     padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                   ),
 
@@ -105,8 +114,18 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
 
   Widget _buildRequestCard(EquipmentRequest req) {
     final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     final dateStr =
         '${req.requiredDate.day} ${months[req.requiredDate.month - 1]} ${req.requiredDate.year}';
@@ -156,7 +175,10 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: req.isOpen
                       ? AppColors.primaryGreen.withAlpha(20)
@@ -186,7 +208,12 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                 child: _infoItem(Icons.eco_rounded, 'Task/Crop', req.taskCrop),
               ),
               Expanded(
-                child: _infoItem(Icons.currency_rupee_rounded, 'Max Budget', '₹${req.maxBudgetPerHour.toInt()}/hr', color: AppColors.primaryGreen),
+                child: _infoItem(
+                  Icons.currency_rupee_rounded,
+                  'Max Budget',
+                  '₹${req.maxBudgetPerHour.toInt()}/hr',
+                  color: AppColors.primaryGreen,
+                ),
               ),
             ],
           ),
@@ -194,10 +221,18 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
           Row(
             children: [
               Expanded(
-                child: _infoItem(Icons.calendar_today_rounded, 'Required Date', dateStr),
+                child: _infoItem(
+                  Icons.calendar_today_rounded,
+                  'Required Date',
+                  dateStr,
+                ),
               ),
               Expanded(
-                child: _infoItem(Icons.location_on_outlined, 'Location', req.locationName),
+                child: _infoItem(
+                  Icons.location_on_outlined,
+                  'Location',
+                  req.locationName,
+                ),
               ),
             ],
           ),
@@ -206,12 +241,20 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
             const SizedBox(height: AppSpacing.md),
             Text(
               'Details:',
-              style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textDark),
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textDark,
+              ),
             ),
             const SizedBox(height: 2),
             Text(
               req.description,
-              style: GoogleFonts.poppins(fontSize: 13, color: AppColors.textMuted, height: 1.4),
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                color: AppColors.textMuted,
+                height: 1.4,
+              ),
             ),
           ],
         ],
@@ -227,7 +270,13 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
           children: [
             Icon(icon, size: 14, color: AppColors.textMuted),
             const SizedBox(width: 4),
-            Text(label, style: GoogleFonts.poppins(fontSize: 11, color: AppColors.textMuted)),
+            Text(
+              label,
+              style: GoogleFonts.poppins(
+                fontSize: 11,
+                color: AppColors.textMuted,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 2),
@@ -251,12 +300,18 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
       builder: (context, snapshot) {
         final docs = snapshot.data?.docs ?? [];
         var responses = docs
-            .map((d) => EquipmentRequestResponse.fromMap(
-                d.id, d.data() as Map<String, dynamic>))
+            .map(
+              (d) => EquipmentRequestResponse.fromMap(
+                d.id,
+                d.data() as Map<String, dynamic>,
+              ),
+            )
             .toList();
 
         if (responses.isEmpty || snapshot.hasError) {
-          responses = FirestoreService.instance.getFallbackRequestResponses(req.id);
+          responses = FirestoreService.instance.getFallbackRequestResponses(
+            req.id,
+          );
         }
 
         if (responses.isEmpty) {
@@ -267,7 +322,10 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
               child: Text(
                 'No offers received yet. Machinery owners nearby will respond soon.',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(fontSize: 13, color: AppColors.textMuted),
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  color: AppColors.textMuted,
+                ),
               ),
             ),
           );
@@ -318,8 +376,13 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
 
   void _showOfferEquipmentModal(BuildContext context, EquipmentRequest req) {
     final currentUid = AuthService.instance.currentUser?.uid ?? 'seed';
-    final priceCtrl = TextEditingController(text: req.maxBudgetPerHour.toInt().toString());
-    final msgCtrl = TextEditingController(text: 'I have an available machine ready for your farm on requested date.');
+    final priceCtrl = TextEditingController(
+      text: req.maxBudgetPerHour.toInt().toString(),
+    );
+    final msgCtrl = TextEditingController(
+      text:
+          'I have an available machine ready for your farm on requested date.',
+    );
     Equipment? selectedMachine;
 
     showModalBottomSheet(
@@ -367,21 +430,32 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                     ),
                     Text(
                       'Offer equipment to ${req.requesterName} for ${req.equipmentType}.',
-                      style: GoogleFonts.poppins(fontSize: 12, color: AppColors.textMuted),
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: AppColors.textMuted,
+                      ),
                     ),
                     const SizedBox(height: AppSpacing.lg),
 
                     // Select Machine Dropdown from owner listings
                     StreamBuilder<QuerySnapshot>(
-                      stream: FirestoreService.instance.userEquipmentStream(currentUid),
+                      stream: FirestoreService.instance.userEquipmentStream(
+                        currentUid,
+                      ),
                       builder: (context, snapshot) {
                         final docs = snapshot.data?.docs ?? [];
                         var myMachines = docs
-                            .map((d) => Equipment.fromMap(d.id, d.data() as Map<String, dynamic>))
+                            .map(
+                              (d) => Equipment.fromMap(
+                                d.id,
+                                d.data() as Map<String, dynamic>,
+                              ),
+                            )
                             .toList();
 
                         if (myMachines.isEmpty) {
-                          myMachines = FirestoreService.instance.getFallbackEquipment();
+                          myMachines = FirestoreService.instance
+                              .getFallbackEquipment();
                         }
 
                         selectedMachine ??= myMachines.first;
@@ -390,16 +464,25 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                           initialValue: selectedMachine,
                           decoration: InputDecoration(
                             labelText: 'Select Equipment to Offer',
-                            labelStyle: GoogleFonts.poppins(color: AppColors.textMuted),
-                            prefixIcon: const Icon(Icons.agriculture_rounded, color: AppColors.primaryGreen),
+                            labelStyle: GoogleFonts.poppins(
+                              color: AppColors.textMuted,
+                            ),
+                            prefixIcon: const Icon(
+                              Icons.agriculture_rounded,
+                              color: AppColors.primaryGreen,
+                            ),
                           ),
                           items: myMachines.map((m) {
                             return DropdownMenuItem(
                               value: m,
-                              child: Text('${m.name} (₹${m.pricePerHour.toInt()}/hr)', style: GoogleFonts.poppins(fontSize: 13)),
+                              child: Text(
+                                '${m.name} (₹${m.pricePerHour.toInt()}/hr)',
+                                style: GoogleFonts.poppins(fontSize: 13),
+                              ),
                             );
                           }).toList(),
-                          onChanged: (val) => setModalState(() => selectedMachine = val),
+                          onChanged: (val) =>
+                              setModalState(() => selectedMachine = val),
                         );
                       },
                     ),
@@ -412,7 +495,10 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
                         labelText: 'Offered Price Per Hour (₹)',
-                        prefixIcon: const Icon(Icons.currency_rupee_rounded, color: AppColors.primaryGreen),
+                        prefixIcon: const Icon(
+                          Icons.currency_rupee_rounded,
+                          color: AppColors.primaryGreen,
+                        ),
                       ),
                     ),
 
@@ -424,7 +510,8 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                       maxLines: 3,
                       decoration: InputDecoration(
                         labelText: 'Message to Farmer',
-                        hintText: 'e.g. Includes driver and fuel. Ready on date.',
+                        hintText:
+                            'e.g. Includes driver and fuel. Ready on date.',
                       ),
                     ),
 
@@ -439,8 +526,12 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                         String ownerName = 'Equipment Owner';
                         if (user != null) {
                           try {
-                            final userDoc = await FirestoreService.instance.getUser(user.uid);
-                            ownerName = (userDoc.data() as Map<String, dynamic>?)?['name'] ?? 'Equipment Owner';
+                            final userDoc = await FirestoreService.instance
+                                .getUser(user.uid);
+                            ownerName =
+                                (userDoc.data()
+                                    as Map<String, dynamic>?)?['name'] ??
+                                'Equipment Owner';
                           } catch (_) {}
                         }
 
@@ -449,9 +540,14 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                           'ownerId': currentUid,
                           'ownerName': ownerName,
                           'equipmentId': selectedMachine?.id ?? 'eq_offer',
-                          'equipmentName': selectedMachine?.name ?? req.equipmentType,
-                          'equipmentImage': selectedMachine?.imageUrl ?? 'assets/images/tractor.webp',
-                          'offeredPricePerHour': double.tryParse(priceCtrl.text.trim()) ?? req.maxBudgetPerHour,
+                          'equipmentName':
+                              selectedMachine?.name ?? req.equipmentType,
+                          'equipmentImage':
+                              selectedMachine?.imageUrl ??
+                              'assets/images/tractor.webp',
+                          'offeredPricePerHour':
+                              double.tryParse(priceCtrl.text.trim()) ??
+                              req.maxBudgetPerHour,
                           'message': msgCtrl.text.trim(),
                           'status': 'pending',
                           'createdAt': FieldValue.serverTimestamp(),
@@ -461,7 +557,10 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                         Navigator.pop(context);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('Offer sent to ${req.requesterName}!', style: GoogleFonts.poppins()),
+                            content: Text(
+                              'Offer sent to ${req.requesterName}!',
+                              style: GoogleFonts.poppins(),
+                            ),
                             backgroundColor: AppColors.primaryGreen,
                           ),
                         );
@@ -507,8 +606,13 @@ class _ResponseCard extends StatelessWidget {
                 radius: 20,
                 backgroundColor: AppColors.primaryGreen.withAlpha(20),
                 child: Text(
-                  response.ownerName.isNotEmpty ? response.ownerName[0].toUpperCase() : 'O',
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.w700, color: AppColors.primaryGreen),
+                  response.ownerName.isNotEmpty
+                      ? response.ownerName[0].toUpperCase()
+                      : 'O',
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primaryGreen,
+                  ),
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
@@ -518,18 +622,29 @@ class _ResponseCard extends StatelessWidget {
                   children: [
                     Text(
                       response.ownerName,
-                      style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textDark),
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textDark,
+                      ),
                     ),
                     Text(
                       'Offered: ${response.equipmentName}',
-                      style: GoogleFonts.poppins(fontSize: 12, color: AppColors.textMuted),
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: AppColors.textMuted,
+                      ),
                     ),
                   ],
                 ),
               ),
               Text(
                 '₹${response.offeredPricePerHour.toInt()}/hr',
-                style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.primaryGreen),
+                style: GoogleFonts.poppins(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primaryGreen,
+                ),
               ),
             ],
           ),
@@ -545,7 +660,11 @@ class _ResponseCard extends StatelessWidget {
               ),
               child: Text(
                 '"${response.message}"',
-                style: GoogleFonts.poppins(fontSize: 12, color: AppColors.textDark, fontStyle: FontStyle.italic),
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  color: AppColors.textDark,
+                  fontStyle: FontStyle.italic,
+                ),
               ),
             ),
           ],
@@ -574,11 +693,19 @@ class _ResponseCard extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.check_circle_rounded, color: AppColors.primaryGreen, size: 16),
+                  const Icon(
+                    Icons.check_circle_rounded,
+                    color: AppColors.primaryGreen,
+                    size: 16,
+                  ),
                   const SizedBox(width: 6),
                   Text(
                     'Offer Accepted ✓',
-                    style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryGreen),
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primaryGreen,
+                    ),
                   ),
                 ],
               ),

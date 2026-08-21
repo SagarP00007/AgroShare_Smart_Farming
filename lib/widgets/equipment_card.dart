@@ -201,8 +201,7 @@ class EquipmentCard extends StatelessWidget {
                   children: [
                     CircleAvatar(
                       radius: 12,
-                      backgroundColor:
-                          AppColors.secondaryGreen.withAlpha(40),
+                      backgroundColor: AppColors.secondaryGreen.withAlpha(40),
                       child: Icon(
                         Icons.person_rounded,
                         size: 14,

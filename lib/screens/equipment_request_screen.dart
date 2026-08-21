@@ -138,9 +138,14 @@ class _EquipmentRequestScreenState extends State<EquipmentRequestScreen>
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryGreen,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                          borderRadius: BorderRadius.circular(
+                            AppSpacing.radiusSm,
+                          ),
                         ),
                       ),
                       child: Text(
@@ -161,10 +166,7 @@ class _EquipmentRequestScreenState extends State<EquipmentRequestScreen>
             Expanded(
               child: TabBarView(
                 controller: _tabController,
-                children: [
-                  _OpenRequestsTab(),
-                  _MyRequestsTab(),
-                ],
+                children: [_OpenRequestsTab(), _MyRequestsTab()],
               ),
             ),
           ],
@@ -182,8 +184,12 @@ class _OpenRequestsTab extends StatelessWidget {
       builder: (context, snapshot) {
         final docs = snapshot.data?.docs ?? [];
         var requests = docs
-            .map((d) => EquipmentRequest.fromMap(
-                d.id, d.data() as Map<String, dynamic>))
+            .map(
+              (d) => EquipmentRequest.fromMap(
+                d.id,
+                d.data() as Map<String, dynamic>,
+              ),
+            )
             .where((r) => r.isOpen)
             .toList();
 
@@ -228,7 +234,10 @@ class _OpenRequestsTab extends StatelessWidget {
         }
 
         return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm,
+          ),
           physics: const BouncingScrollPhysics(),
           itemCount: requests.length,
           itemBuilder: (context, index) {
@@ -251,8 +260,12 @@ class _MyRequestsTab extends StatelessWidget {
       builder: (context, snapshot) {
         final docs = snapshot.data?.docs ?? [];
         var myRequests = docs
-            .map((d) => EquipmentRequest.fromMap(
-                d.id, d.data() as Map<String, dynamic>))
+            .map(
+              (d) => EquipmentRequest.fromMap(
+                d.id,
+                d.data() as Map<String, dynamic>,
+              ),
+            )
             .toList();
 
         if (myRequests.isEmpty || snapshot.hasError) {
@@ -300,7 +313,10 @@ class _MyRequestsTab extends StatelessWidget {
         }
 
         return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm,
+          ),
           physics: const BouncingScrollPhysics(),
           itemCount: myRequests.length,
           itemBuilder: (context, index) {
@@ -321,8 +337,18 @@ class _RequestCardItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     final dateStr =
         '${request.requiredDate.day} ${months[request.requiredDate.month - 1]} ${request.requiredDate.year}';
@@ -404,11 +430,19 @@ class _RequestCardItem extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.calendar_today_rounded, size: 14, color: AppColors.textMuted),
+                  const Icon(
+                    Icons.calendar_today_rounded,
+                    size: 14,
+                    color: AppColors.textMuted,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     '$dateStr (${request.durationHours} hrs)',
-                    style: GoogleFonts.poppins(fontSize: 12, color: AppColors.textDark, fontWeight: FontWeight.w500),
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: AppColors.textDark,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ],
               ),
@@ -421,7 +455,11 @@ class _RequestCardItem extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.reply_all_rounded, size: 14, color: AppColors.primaryGreen),
+                    const Icon(
+                      Icons.reply_all_rounded,
+                      size: 14,
+                      color: AppColors.primaryGreen,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       '${request.responseCount} Offers',
